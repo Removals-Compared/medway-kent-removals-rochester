@@ -60,8 +60,8 @@ async function submitForm(e){
   btn.textContent='Sending...';
   btn.disabled=true;
 
-  var SUPABASE_URL='YOUR_SUPABASE_URL';
-  var SUPABASE_KEY='YOUR_SUPABASE_ANON_KEY';
+  var SUPABASE_URL='https://sdkvvyzugvephelyugcn.supabase.co';
+  var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNka3Z2eXp1Z3ZlcGhlbHl1Z2NuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NTU1MzIsImV4cCI6MjA5MjMzMTUzMn0.wEAGpfbwWX66nmWn81fdIqCJmsr3f_0Xp_elmnFNEeM';
   var HS_TOKEN='YOUR_HUBSPOT_PRIVATE_APP_TOKEN';
 
   var fname=document.getElementById('cf-fname').value.trim();
