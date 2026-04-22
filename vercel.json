@@ -1,13 +1,29 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
+  "rewrites": [
+    { "source": "/blog", "destination": "/blog.html" },
+    { "source": "/blog/posts/:slug", "destination": "/blog/posts/:slug.html" },
+    { "source": "/removals-chatham", "destination": "/removals-chatham.html" },
+    { "source": "/removals-gillingham", "destination": "/removals-gillingham.html" },
+    { "source": "/removals-maidstone", "destination": "/removals-maidstone.html" },
+    { "source": "/removals-strood", "destination": "/removals-strood.html" },
+    { "source": "/removals-gravesend", "destination": "/removals-gravesend.html" },
+    { "source": "/removals-canterbury", "destination": "/removals-canterbury.html" },
+    { "source": "/removals-dartford", "destination": "/removals-dartford.html" },
+    { "source": "/removals-sittingbourne", "destination": "/removals-sittingbourne.html" },
+    { "source": "/removals-faversham", "destination": "/removals-faversham.html" },
+    { "source": "/removals-tonbridge", "destination": "/removals-tonbridge.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" }
+        { "key": "X-XSS-Protection", "value": "1; mode=block" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
       ]
     }
   ]
