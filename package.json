@@ -1,0 +1,11 @@
+{
+  "name": "mkr-blog-automation",
+  "version": "1.0.0",
+  "description": "Automated blog post generation and social media posting for Medway & Kent Removals",
+  "type": "commonjs",
+  "scripts": {
+    "generate": "node scripts/generate-post.js",
+    "test": "DAY_OVERRIDE=1 node scripts/generate-post.js"
+  },
+  "dependencies": {}
+}
