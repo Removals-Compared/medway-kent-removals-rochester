@@ -1,0 +1,48 @@
+name: MKR Daily Blog + Social Post
+
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+    inputs:
+      day_override:
+        description: 'Override day number (1-30) for testing'
+        required: false
+        default: ''
+
+jobs:
+  publish-blog-and-social:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run blog and social post generator
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DAY_OVERRIDE: ${{ github.event.inputs.day_override }}
+        run: node scripts/generate-post.js
+
+      - name: Commit and push new blog post
+        run: |
+          git config --global user.name "MKR Blog Bot"
+          git config --global user.email "bot@medwaykentremovals.co.uk"
+          git add blog/posts/*.html
+          git add scripts/state.json
+          git diff --staged --quiet || git commit -m "Auto-publish blog post day $(cat scripts/current-day.txt)"
+          git push
