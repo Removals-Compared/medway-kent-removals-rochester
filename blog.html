@@ -52,6 +52,13 @@
 .sidebar-card ul li a::before{content:'→';color:var(--accent);flex-shrink:0;font-size:12px;margin-top:2px}
 .blog-layout{display:grid;grid-template-columns:1fr 300px;gap:48px;align-items:start}
 @media(max-width:900px){.blog-layout{grid-template-columns:1fr}}
+
+.nav-dropdown{position:relative}
+.nav-dropdown-menu{display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);min-width:220px;padding:8px 0;z-index:999;list-style:none}
+.nav-dropdown:hover .nav-dropdown-menu{display:block}
+.nav-dropdown-menu li a{display:block;padding:8px 16px;font-size:13px;color:#333;text-decoration:none;font-weight:500;transition:background 0.15s}
+.nav-dropdown-menu li a:hover{background:#F4F8F6;color:var(--navy)}
+.nav-dropdown-toggle{cursor:pointer}
 </style>
 </head>
 <body>
@@ -74,7 +81,17 @@
 </nav>
 <div id="mobile-overlay" role="dialog" aria-modal="true"><button class="mob-close" onclick="toggleMobile()">&#10005;</button>
   <a class="mob-nav-link" href="/">Home</a><a class="mob-nav-link" href="/services">Services</a>
-  <a class="mob-nav-link" href="/areas">Areas We Cover</a><a class="mob-nav-link" href="/about">About Us</a>
+  <a class="mob-nav-link" href="/areas">Areas We Cover</a>
+  <a class="mob-nav-link" href="/removals-chatham" style="font-size:14px;padding-left:24px">↳ Removals Chatham</a>
+  <a class="mob-nav-link" href="/removals-gillingham" style="font-size:14px;padding-left:24px">↳ Removals Gillingham</a>
+  <a class="mob-nav-link" href="/removals-maidstone" style="font-size:14px;padding-left:24px">↳ Removals Maidstone</a>
+  <a class="mob-nav-link" href="/removals-strood" style="font-size:14px;padding-left:24px">↳ Removals Strood</a>
+  <a class="mob-nav-link" href="/removals-gravesend" style="font-size:14px;padding-left:24px">↳ Removals Gravesend</a>
+  <a class="mob-nav-link" href="/removals-canterbury" style="font-size:14px;padding-left:24px">↳ Removals Canterbury</a>
+  <a class="mob-nav-link" href="/removals-dartford" style="font-size:14px;padding-left:24px">↳ Removals Dartford</a>
+  <a class="mob-nav-link" href="/removals-sittingbourne" style="font-size:14px;padding-left:24px">↳ Removals Sittingbourne</a>
+  <a class="mob-nav-link" href="/removals-faversham" style="font-size:14px;padding-left:24px">↳ Removals Faversham</a>
+  <a class="mob-nav-link" href="/removals-tonbridge" style="font-size:14px;padding-left:24px">↳ Removals Tonbridge</a><a class="mob-nav-link" href="/about">About Us</a>
   <a class="mob-nav-link" href="/blog" style="color:var(--accent)">Blog</a>
   <a class="mob-nav-link" href="/contact" style="color:var(--accent)">Get a Free Quote &#8594;</a>
 </div>
