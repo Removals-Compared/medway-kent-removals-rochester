@@ -243,4 +243,16 @@
     <p style="font-size:12px;color:rgba(255,255,255,0.35)">&copy; 2025 Medway &amp; Kent Removals. All rights reserved. Registered in England &amp; Wales. 47 Knight Templar Way, Rochester, Kent, ME2 2ZE</p>
     <div style="display:flex;gap:18px"><a href="/privacy-policy" style="font-size:12px;color:rgba(255,255,255,0.35)">Privacy Policy</a><a href="/contact" style="font-size:12px;color:rgba(255,255,255,0.35)">Contact</a></div>
   </div>
-</footer><script src="/script.js"></script></body></html>
+</footer><script src="/script.js"></script>
+<script>
+function toggleAreasDropdown(e){
+  e.stopPropagation();
+  var dd = document.getElementById('areas-dropdown');
+  dd.classList.toggle('open');
+}
+document.addEventListener('click', function(){
+  var dd = document.getElementById('areas-dropdown');
+  if(dd) dd.classList.remove('open');
+});
+</script>
+</body></html>
