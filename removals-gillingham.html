@@ -389,10 +389,11 @@
 
 .nav-dropdown{position:relative}
 .nav-dropdown-menu{display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);min-width:220px;padding:8px 0;z-index:999;list-style:none}
-.nav-dropdown:hover .nav-dropdown-menu{display:block}
+.nav-dropdown.is-open .nav-dropdown-menu{display:block}
 .nav-dropdown-menu li a{display:block;padding:8px 16px;font-size:13px;color:#333;text-decoration:none;font-weight:500;transition:background 0.15s}
 .nav-dropdown-menu li a:hover{background:#F4F8F6;color:var(--navy)}
 .nav-dropdown-toggle{cursor:pointer}
+.chevron{width:14px;height:14px;flex-shrink:0}
 </style>
 </head><body>
 <nav id="site-nav" role="navigation" aria-label="Main navigation">
@@ -400,7 +401,7 @@
     <a class="nav-logo" href="/" aria-label="Medway and Kent Removals Home"><img src="/images/mkr-logo-on-dark.webp" alt="" width="44" height="44" fetchpriority="high" decoding="async"><span class="nav-logo-text">Medway &amp; Kent <span>Removals</span></span></a>
     <ul class="nav-links" role="list">
       <li><a href="/">Home</a></li>
-      <li><a href="/services">Services<svg class="chevron" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 4l5 5 5-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <li><a href="/services">Services<svg class="chevron" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" style="width:14px;height:14px;flex-shrink:0"><path d="M2 4l5 5 5-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
         <div class="dropdown" role="menu"><div class="dropdown-inner"><a href="/services#house" role="menuitem"><span class="dico">&#127968;</span>House Removals</a><a href="/services#office" role="menuitem"><span class="dico">&#127970;</span>Office Removals</a><a href="/services#packing" role="menuitem"><span class="dico">&#128230;</span>Packing Services</a><a href="/services#manvan" role="menuitem"><span class="dico">&#128654;</span>Man &amp; Van</a><a href="/services#storage" role="menuitem"><span class="dico">&#128274;</span>Storage</a><a href="/services#longdist" role="menuitem"><span class="dico">&#128506;</span>Long Distance</a></div></div>
       </li>
             <li class="nav-dropdown" id="areas-dropdown">
