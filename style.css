@@ -70,14 +70,17 @@ section.cream2{background:var(--cream2)}
 .nav-dropdown{position:relative}
 .nav-dropdown-btn{display:flex;align-items:center;gap:5px;cursor:pointer}
 .nav-dropdown-btn::after{content:'';width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-left:4px;transition:transform .2s}
-.nav-dropdown:hover .nav-dropdown-btn::after,.nav-dropdown:focus-within .nav-dropdown-btn::after{transform:rotate(225deg)}
-.nav-dropdown-menu{visibility:hidden;opacity:0;position:absolute;top:100%;left:0;list-style:none;padding:8px;margin:8px 0 0;background:var(--white);border-radius:var(--r-md);box-shadow:var(--sh-lg);border:1px solid var(--border);min-width:240px;z-index:1000;transition:opacity .15s ease,visibility .15s ease}
-.nav-dropdown:hover .nav-dropdown-menu,.nav-dropdown:focus-within .nav-dropdown-menu{visibility:visible;opacity:1}
+.nav-dropdown.is-open .nav-dropdown-btn::after{transform:rotate(225deg)}
+.nav-dropdown.is-open .nav-dropdown-btn{color:var(--white);background:rgba(255,255,255,0.1)}
+.nav-dropdown-menu{visibility:hidden;opacity:0;transform:translateY(-4px);position:absolute;top:calc(100% + 6px);left:0;list-style:none;padding:8px;margin:0;background:var(--white);border-radius:var(--r-md);box-shadow:var(--sh-lg);border:1px solid var(--border);min-width:240px;z-index:1000;transition:opacity .18s ease,visibility .18s ease,transform .18s ease}
+.nav-dropdown.is-open .nav-dropdown-menu{visibility:visible;opacity:1;transform:translateY(0)}
 .nav-dropdown-menu li{list-style:none}
 .nav-dropdown-menu li a{display:block;padding:9px 12px;border-radius:var(--r-sm);color:var(--text);font-size:14px;font-weight:500;transition:var(--trans);white-space:nowrap}
 .nav-dropdown-menu li a:hover{background:var(--cream);color:var(--accent)}
 .nav-dropdown-menu .dd-divider{border:none;border-top:1px solid var(--border);margin:6px 0}
 .nav-dropdown-menu .dd-all{font-weight:700;color:var(--accent)}
+.nav-dropdown-menu .dd-active{background:var(--cream);color:var(--accent)!important;font-weight:700}
+.nav-dropdown-menu .dd-active::before{content:'• ';color:var(--accent)}
 
 /* ─── Logo image inside .nav-logo ─── */
 .nav-logo{display:flex;align-items:center;gap:10px;flex-shrink:0;line-height:1}

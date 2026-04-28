@@ -397,19 +397,19 @@
 </head><body>
 <nav id="site-nav" role="navigation" aria-label="Main navigation">
   <div class="nav-inner">
-    <a class="nav-logo" href="/" aria-label="Medway and Kent Removals Home">Medway &amp; Kent <span>Removals</span></a>
+    <a class="nav-logo" href="/" aria-label="Medway and Kent Removals Home"><img src="/images/mkr-logo-on-dark.webp" alt="" width="44" height="44" fetchpriority="high" decoding="async"><span class="nav-logo-text">Medway &amp; Kent <span>Removals</span></span></a>
     <ul class="nav-links" role="list">
       <li><a href="/">Home</a></li>
       <li><a href="/services">Services<svg class="chevron" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 4l5 5 5-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
         <div class="dropdown" role="menu"><div class="dropdown-inner"><a href="/services#house" role="menuitem"><span class="dico">&#127968;</span>House Removals</a><a href="/services#office" role="menuitem"><span class="dico">&#127970;</span>Office Removals</a><a href="/services#packing" role="menuitem"><span class="dico">&#128230;</span>Packing Services</a><a href="/services#manvan" role="menuitem"><span class="dico">&#128654;</span>Man &amp; Van</a><a href="/services#storage" role="menuitem"><span class="dico">&#128274;</span>Storage</a><a href="/services#longdist" role="menuitem"><span class="dico">&#128506;</span>Long Distance</a></div></div>
       </li>
             <li class="nav-dropdown" id="areas-dropdown">
-        <button class="nav-dropdown-btn" onclick="toggleAreasDropdown(event)">Areas We Cover</button>
+        <button class="nav-dropdown-btn" type="button" aria-haspopup="true" aria-expanded="false">Areas We Cover</button>
         <ul class="nav-dropdown-menu">
           <li><a href="/removals-chatham">Removals Chatham</a></li>
           <li><a href="/removals-gillingham">Removals Gillingham</a></li>
           <li><a href="/removals-maidstone">Removals Maidstone</a></li>
-          <li><a href="/removals-strood">Removals Strood</a></li>
+          <li><a href="/removals-strood" aria-current="page" class="dd-active">Removals Strood</a></li>
           <li><a href="/removals-gravesend">Removals Gravesend</a></li>
           <li><a href="/removals-canterbury">Removals Canterbury</a></li>
           <li><a href="/removals-dartford">Removals Dartford</a></li>
@@ -609,7 +609,7 @@
 </div>
 <footer id="site-footer" role="contentinfo">
   <div class="footer-grid">
-    <div class="footer-brand"><img src="/images/mkr-logo-on-dark.webp" alt="Medway and Kent Removals" width="120" height="120" loading="lazy" decoding="async" style="display:block;margin-bottom:18px;border-radius:10px"><a class="nav-logo" href="/">Medway &amp; Kent <span>Removals</span></a>
+    <div class="footer-brand"><img src="/images/mkr-logo-on-dark.webp" alt="Medway and Kent Removals" width="120" height="120" loading="lazy" decoding="async" style="display:block;margin-bottom:18px;border-radius:10px"><a class="nav-logo" href="/"><span class="nav-logo-text">Medway &amp; Kent <span>Removals</span></span></a>
       <p>Professional, fully insured removal company based in Rochester, Kent. Serving Medway and all of Kent with honest pricing and exceptional care since 2020.</p>
       <div class="footer-contact-item">&#128205; <span>Knight Templar Way, Rochester, Kent, ME2 2ZE</span></div>
       <div class="footer-contact-item">&#128222; <a href="tel:01634971005">01634 971005</a></div>

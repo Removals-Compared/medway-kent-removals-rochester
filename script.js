@@ -168,3 +168,48 @@ async function submitForm(e){
   fixAbout();
   window.addEventListener('resize', fixAbout);
 })();
+
+/* ─── Areas We Cover dropdown: click toggle ─── */
+document.addEventListener('DOMContentLoaded', function () {
+  var dd = document.getElementById('areas-dropdown');
+  if (!dd) return;
+  var btn = dd.querySelector('.nav-dropdown-btn');
+  if (!btn) return;
+
+  function close() {
+    dd.classList.remove('is-open');
+    btn.setAttribute('aria-expanded', 'false');
+  }
+  function open() {
+    dd.classList.add('is-open');
+    btn.setAttribute('aria-expanded', 'true');
+  }
+
+  btn.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dd.classList.contains('is-open')) {
+      close();
+    } else {
+      open();
+    }
+  });
+
+  /* close when clicking outside */
+  document.addEventListener('click', function (e) {
+    if (!dd.contains(e.target)) close();
+  });
+
+  /* close on Escape */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && dd.classList.contains('is-open')) {
+      close();
+      btn.focus();
+    }
+  });
+
+  /* close after clicking a link inside the menu */
+  dd.querySelectorAll('.nav-dropdown-menu a').forEach(function (a) {
+    a.addEventListener('click', close);
+  });
+});
