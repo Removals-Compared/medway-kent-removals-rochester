@@ -1,118 +1,189 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-
-  <!-- ══ CORE PAGES ══ -->
   <url>
-    <loc>https://www.medwaykentremovals.co.uk/</loc>
-    <lastmod>2025-01-01</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://medwaykentremovals.co.uk/</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://www.medwaykentremovals.co.uk/services</loc>
-    <lastmod>2025-01-01</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://medwaykentremovals.co.uk/services</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.medwaykentremovals.co.uk/areas</loc>
-    <lastmod>2025-01-01</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://medwaykentremovals.co.uk/areas</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.medwaykentremovals.co.uk/about</loc>
-    <lastmod>2025-01-01</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://medwaykentremovals.co.uk/about</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.medwaykentremovals.co.uk/contact</loc>
-    <lastmod>2025-01-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.medwaykentremovals.co.uk/privacy-policy</loc>
-    <lastmod>2025-01-01</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <!-- ══ BLOG ══ -->
-  <url>
-    <loc>https://www.medwaykentremovals.co.uk/blog</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://medwaykentremovals.co.uk/contact</loc>
+    <lastmod>2026-04-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.medwaykentremovals.co.uk/blog/posts/how-to-choose-removal-company-rochester</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://medwaykentremovals.co.uk/removals-rochester</loc>
+    <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <!-- ══ LOCATION PAGES ══ -->
-  <url>
-    <loc>https://www.medwaykentremovals.co.uk/removals-chatham</loc>
-    <lastmod>2025-01-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://www.medwaykentremovals.co.uk/removals-gillingham</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://medwaykentremovals.co.uk/removals-strood</loc>
+    <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://www.medwaykentremovals.co.uk/removals-maidstone</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://medwaykentremovals.co.uk/removals-chatham</loc>
+    <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://www.medwaykentremovals.co.uk/removals-strood</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://medwaykentremovals.co.uk/removals-gillingham</loc>
+    <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://www.medwaykentremovals.co.uk/removals-gravesend</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://medwaykentremovals.co.uk/removals-hempstead</loc>
+    <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://www.medwaykentremovals.co.uk/removals-canterbury</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://medwaykentremovals.co.uk/removals-walderslade</loc>
+    <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://www.medwaykentremovals.co.uk/removals-dartford</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://medwaykentremovals.co.uk/removals-lordswood</loc>
+    <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://www.medwaykentremovals.co.uk/removals-sittingbourne</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://medwaykentremovals.co.uk/removals-hoo</loc>
+    <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://www.medwaykentremovals.co.uk/removals-faversham</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://medwaykentremovals.co.uk/removals-cliffe</loc>
+    <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://www.medwaykentremovals.co.uk/removals-tonbridge</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://medwaykentremovals.co.uk/removals-gravesend</loc>
+    <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.85</priority>
   </url>
-
+  <url>
+    <loc>https://medwaykentremovals.co.uk/removals-dartford</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://medwaykentremovals.co.uk/removals-sevenoaks</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://medwaykentremovals.co.uk/removals-tonbridge</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://medwaykentremovals.co.uk/removals-tunbridge-wells</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://medwaykentremovals.co.uk/removals-maidstone</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://medwaykentremovals.co.uk/removals-sittingbourne</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://medwaykentremovals.co.uk/removals-ashford</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://medwaykentremovals.co.uk/removals-faversham</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://medwaykentremovals.co.uk/removals-whitstable</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://medwaykentremovals.co.uk/removals-herne-bay</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://medwaykentremovals.co.uk/removals-canterbury</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://medwaykentremovals.co.uk/removals-margate</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://medwaykentremovals.co.uk/removals-ramsgate</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://medwaykentremovals.co.uk/removals-folkestone</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://medwaykentremovals.co.uk/removals-dover</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://medwaykentremovals.co.uk/removals-deal</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
 </urlset>
