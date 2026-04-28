@@ -47,11 +47,11 @@ section.cream2{background:var(--cream2)}
 /* ─── NAV ─── */
 #site-nav{position:sticky;top:0;z-index:999;background:var(--navy);height:68px;display:flex;align-items:center;box-shadow:0 2px 12px rgba(0,0,0,0.2)}
 .nav-inner{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:1120px;margin:0 auto;padding:0 5%}
-.nav-logo{font-family:var(--ff-display);font-size:26px;color:var(--white);font-weight:800;letter-spacing:-0.8px}
-.nav-logo span{color:var(--accent)}
-.nav-links{display:flex;align-items:center;gap:4px;list-style:none}
+.nav-logo-text{font-family:var(--ff-display);font-size:22px;color:var(--white);font-weight:800;letter-spacing:-0.6px}
+.nav-logo-text span{color:var(--accent)}
+.nav-links{display:flex;align-items:center;gap:2px;list-style:none}
 .nav-links > li{position:relative}
-.nav-links > li > a,.nav-links > li > button{padding:8px 14px;border-radius:var(--r-sm);color:rgba(255,255,255,0.8);font-size:14px;font-weight:500;background:none;border:none;display:flex;align-items:center;gap:5px;transition:var(--trans)}
+.nav-links > li > a,.nav-links > li > button{padding:8px 12px;border-radius:var(--r-sm);color:rgba(255,255,255,0.8);font-size:14px;font-weight:500;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;transition:var(--trans)}
 .nav-links > li > a:hover,.nav-links > li > button:hover{color:var(--white);background:rgba(255,255,255,0.08)}
 .nav-links > li > a.active{color:var(--white);background:rgba(255,255,255,0.1)}
 .nav-cta{background:var(--accent)!important;color:var(--white)!important;padding:9px 20px!important}
@@ -65,6 +65,26 @@ section.cream2{background:var(--cream2)}
 .dropdown a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-sm);color:var(--text);font-size:14px;font-weight:500;transition:var(--trans)}
 .dropdown a:hover{background:var(--cream);color:var(--accent)}
 .dropdown a .dico{width:30px;height:30px;border-radius:6px;background:var(--accent-pale);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+
+/* ─── Areas We Cover dropdown (matches .dropdown behaviour) ─── */
+.nav-dropdown{position:relative}
+.nav-dropdown-btn{display:flex;align-items:center;gap:5px;cursor:pointer}
+.nav-dropdown-btn::after{content:'';width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-left:4px;transition:transform .2s}
+.nav-dropdown:hover .nav-dropdown-btn::after,.nav-dropdown:focus-within .nav-dropdown-btn::after{transform:rotate(225deg)}
+.nav-dropdown-menu{visibility:hidden;opacity:0;position:absolute;top:100%;left:0;list-style:none;padding:8px;margin:8px 0 0;background:var(--white);border-radius:var(--r-md);box-shadow:var(--sh-lg);border:1px solid var(--border);min-width:240px;z-index:1000;transition:opacity .15s ease,visibility .15s ease}
+.nav-dropdown:hover .nav-dropdown-menu,.nav-dropdown:focus-within .nav-dropdown-menu{visibility:visible;opacity:1}
+.nav-dropdown-menu li{list-style:none}
+.nav-dropdown-menu li a{display:block;padding:9px 12px;border-radius:var(--r-sm);color:var(--text);font-size:14px;font-weight:500;transition:var(--trans);white-space:nowrap}
+.nav-dropdown-menu li a:hover{background:var(--cream);color:var(--accent)}
+.nav-dropdown-menu .dd-divider{border:none;border-top:1px solid var(--border);margin:6px 0}
+.nav-dropdown-menu .dd-all{font-weight:700;color:var(--accent)}
+
+/* ─── Logo image inside .nav-logo ─── */
+.nav-logo{display:flex;align-items:center;gap:10px;flex-shrink:0;line-height:1}
+.nav-logo img{flex-shrink:0;display:block;border-radius:6px}
+.footer-brand .nav-logo{flex-direction:column;align-items:flex-start;gap:14px}
+.footer-brand .nav-logo img{margin-bottom:0}
+
 /* Mobile nav */
 .hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;padding:6px;cursor:pointer}
 .hamburger span{display:block;width:22px;height:2px;background:var(--white);border-radius:2px;transition:var(--trans)}
@@ -282,12 +302,12 @@ section.cream2{background:var(--cream2)}
 /* ─── FOOTER ─── */
 #site-footer{background:var(--navy);color:rgba(255,255,255,0.7);padding:64px 0 0}
 .footer-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:48px;max-width:1120px;margin:0 auto;padding:0 5% 48px}
-.footer-brand .nav-logo{font-size:28px;margin-bottom:14px;display:block}
+.footer-brand .nav-logo-text{font-size:24px;margin-bottom:6px}
 .footer-brand p{font-size:14px;line-height:1.8;color:rgba(255,255,255,0.55);margin-bottom:18px}
 .footer-contact-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:10px;line-height:1.55}
 .footer-contact-item a{color:rgba(255,255,255,0.6);transition:var(--trans)}
 .footer-contact-item a:hover{color:var(--white)}
-.footer-col h3,.footer-col h4{font-family:var(--ff-display);font-size:14px;color:var(--white);margin-bottom:18px;font-weight:700;letter-spacing:0.3px}
+.footer-col h4{font-family:var(--ff-display);font-size:14px;color:var(--white);margin-bottom:18px;font-weight:700;letter-spacing:0.3px}
 .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:9px}
 .footer-col ul a{font-size:13px;color:rgba(255,255,255,0.55);transition:var(--trans)}
 .footer-col ul a:hover{color:var(--accent);padding-left:3px}
