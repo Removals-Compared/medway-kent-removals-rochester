@@ -1,0 +1,359 @@
+<!--
+  ═══════════════════════════════════════════════════════════════════════════
+  NEW HERO BLOCK  (drop into index.html)
+  ═══════════════════════════════════════════════════════════════════════════
+
+  HOW TO USE:
+  In your current index.html, find your hero section. It probably starts
+  with something like <section class="hero"> or contains the eyebrow text
+  "Established in Rochester, Kent, since 2020" and the H1 starting with
+  "Medway and Kent's most trusted...". Replace the entire section with
+  the markup below.
+
+  Add the <style> block below to <head> (after existing styles).
+
+  IMPORTANT — FORM FIELDS:
+  Your /api/quote.js expects these fields: fname, lname, phone, email,
+  service, from_postcode, to_postcode, property_size, move_date, access,
+  notes. The hero form below is the SHORT version (4 visible fields:
+  full name, phone, email, service). The Full Name input is split into
+  fname/lname automatically by JS just before submit, so the API gets
+  what it expects. Postcode/date/notes default to empty in HubSpot/Supabase
+  (which is what they already do today on a short submission).
+  ═══════════════════════════════════════════════════════════════════════════
+-->
+
+
+<!-- ──────────────────  HERO MARKUP  ────────────────── -->
+
+<section class="hero-v2" aria-label="Hero">
+  <div class="hero-v2-bg" aria-hidden="true">
+    <img src="/images/family-moving-in.webp" alt=""
+         width="1224" height="816"
+         fetchpriority="high" decoding="async">
+    <div class="hero-v2-bg-overlay"></div>
+  </div>
+
+  <div class="hero-v2-container">
+    <div class="hero-v2-content">
+      <span class="hero-v2-eyebrow">Established in Rochester, Kent, since 2020</span>
+
+      <h1 class="hero-v2-h1">
+        Medway and Kent's most trusted removal company,
+        based right here in <em>Rochester.</em>
+      </h1>
+
+      <p class="hero-v2-lead">
+        Fully insured house and office removals across Rochester, Medway and all
+        of Kent. Experienced crew, honest fixed pricing, and a service you can
+        rely on completely. From the first call to the last box in your new home.
+      </p>
+
+      <div class="hero-v2-ctas">
+        <a class="hero-v2-btn-primary" href="/contact">Get Your Free Quote Today</a>
+        <a class="hero-v2-btn-phone" href="tel:01634971005">
+          <span aria-hidden="true">&#128222;</span>
+          <span>01634 971005</span>
+        </a>
+      </div>
+
+      <ul class="hero-v2-trust" role="list">
+        <li>
+          <span class="ico" aria-hidden="true">&#128737;</span>
+          <span><strong>Fully Insured</strong><br><span class="muted">Goods in transit &amp; public liability</span></span>
+        </li>
+        <li>
+          <span class="ico" aria-hidden="true">&#128205;</span>
+          <span><strong>Rochester Based</strong><br><span class="muted">Knight Templar Way, ME2 2ZE</span></span>
+        </li>
+        <li>
+          <span class="ico" aria-hidden="true">&#11088;</span>
+          <span><strong>5-Star Rated</strong><br><span class="muted">200+ Google reviews</span></span>
+        </li>
+        <li>
+          <span class="ico" aria-hidden="true">&#128178;</span>
+          <span><strong>Fixed Pricing</strong><br><span class="muted">No hidden charges, ever</span></span>
+        </li>
+      </ul>
+    </div>
+
+    <aside class="hero-v2-formcard" aria-label="Quick quote form">
+      <h2>Get a Free Quote Now</h2>
+      <p class="hero-v2-formcard-sub">Reply within 60 mins. No obligation.</p>
+
+      <form id="hero-quote-form" action="/api/quote" method="post" novalidate>
+        <label class="hero-v2-field">
+          <span>Full name</span>
+          <input id="hero-fullname" type="text" placeholder="e.g. Sarah Johnson" required autocomplete="name">
+        </label>
+
+        <label class="hero-v2-field">
+          <span>Phone number</span>
+          <input name="phone" type="tel" placeholder="07123 456789" required autocomplete="tel" inputmode="tel">
+        </label>
+
+        <label class="hero-v2-field">
+          <span>Email</span>
+          <input name="email" type="email" placeholder="you@example.com" required autocomplete="email">
+        </label>
+
+        <label class="hero-v2-field">
+          <span>Type of move</span>
+          <select name="service" required>
+            <option value="" disabled selected>Select...</option>
+            <option value="House Removal">House Removal</option>
+            <option value="Office Removal">Office Removal</option>
+            <option value="Man and Van">Man and Van</option>
+            <option value="Packing Service">Packing Service</option>
+            <option value="Storage">Storage</option>
+            <option value="Long Distance Move">Long Distance Move</option>
+          </select>
+        </label>
+
+        <!-- Hidden fields the API expects so it doesn't barf on undefined -->
+        <input type="hidden" name="fname" value="">
+        <input type="hidden" name="lname" value="">
+        <input type="hidden" name="from_postcode" value="">
+        <input type="hidden" name="to_postcode" value="">
+        <input type="hidden" name="property_size" value="">
+        <input type="hidden" name="move_date" value="">
+        <input type="hidden" name="access" value="">
+        <input type="hidden" name="notes" value="Submitted from homepage hero (short form)">
+
+        <button type="submit" class="hero-v2-submit">Get My Free Quote &rarr;</button>
+        <p class="hero-v2-formnote">By submitting you agree to be contacted about your removal enquiry.</p>
+      </form>
+
+      <div id="hero-quote-success" hidden>
+        <p style="font-size:30px;margin:0 0 8px">&#10003;</p>
+        <h3 style="margin:0 0 8px">Thanks, we'll be in touch shortly.</h3>
+        <p style="margin:0;color:#666;font-size:14px">We respond within 60 minutes during business hours. If urgent, call <a href="tel:01634971005" style="color:#e04e1b;font-weight:600">01634 971005</a>.</p>
+      </div>
+    </aside>
+  </div>
+</section>
+
+
+<!-- ──────────────────  HERO STYLES (add to <head>)  ────────────────── -->
+
+<style>
+.hero-v2{
+  position:relative;
+  background:#0d1f3c;
+  color:#fff;
+  overflow:hidden;
+  padding:64px 0 80px;
+}
+
+/* Background image with dark gradient overlay */
+.hero-v2-bg{
+  position:absolute;inset:0;z-index:0;
+  pointer-events:none;
+}
+.hero-v2-bg img{
+  width:100%;height:100%;object-fit:cover;object-position:center 40%;
+  opacity:0.35;        /* faint, warm but legible */
+}
+.hero-v2-bg-overlay{
+  position:absolute;inset:0;
+  background:
+    linear-gradient(135deg, rgba(13,31,60,0.88) 0%, rgba(13,31,60,0.62) 60%, rgba(13,31,60,0.85) 100%),
+    radial-gradient(ellipse at 70% 30%, rgba(224,78,27,0.18), transparent 55%);
+}
+
+.hero-v2-container{
+  position:relative;z-index:1;
+  max-width:1280px;margin:0 auto;padding:0 24px;
+  display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,0.9fr);
+  gap:56px;align-items:start;
+}
+
+.hero-v2-content{padding-top:8px}
+
+.hero-v2-eyebrow{
+  display:inline-block;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.15);
+  color:#ffd9c8;
+  padding:7px 14px;border-radius:30px;
+  font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
+  margin-bottom:24px;
+}
+
+.hero-v2-h1{
+  font-family:var(--ff-display, "Syne", sans-serif);
+  font-size:clamp(36px, 5vw, 60px);
+  line-height:1.05;letter-spacing:-0.025em;
+  font-weight:800;color:#fff;
+  margin:0 0 22px;
+}
+.hero-v2-h1 em{
+  color:var(--accent, #e04e1b);
+  font-style:italic;font-weight:800;
+}
+
+.hero-v2-lead{
+  font-size:17px;line-height:1.6;
+  color:rgba(255,255,255,0.82);
+  margin:0 0 32px;max-width:60ch;
+}
+
+.hero-v2-ctas{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:38px}
+.hero-v2-btn-primary{
+  display:inline-block;
+  background:var(--accent, #e04e1b);color:#fff;
+  padding:16px 28px;border-radius:8px;
+  font-size:15px;font-weight:700;text-decoration:none;
+  box-shadow:0 6px 18px rgba(224,78,27,0.25);
+  transition:transform 0.1s, background 0.15s;
+}
+.hero-v2-btn-primary:hover{background:#c4400e;transform:translateY(-1px)}
+.hero-v2-btn-phone{
+  display:inline-flex;align-items:center;gap:8px;
+  background:transparent;color:#fff;
+  padding:15px 22px;border-radius:8px;
+  border:1.5px solid rgba(255,255,255,0.3);
+  font-size:15px;font-weight:600;text-decoration:none;
+  transition:border-color 0.15s, background 0.15s;
+}
+.hero-v2-btn-phone:hover{
+  border-color:var(--accent, #e04e1b);
+  background:rgba(224,78,27,0.08);
+}
+
+.hero-v2-trust{
+  list-style:none;padding:0;margin:0;
+  display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:16px 24px;
+  max-width:540px;
+}
+.hero-v2-trust li{
+  display:flex;align-items:flex-start;gap:10px;
+  font-size:13.5px;line-height:1.4;
+}
+.hero-v2-trust .ico{
+  font-size:22px;line-height:1;flex-shrink:0;width:30px;
+}
+.hero-v2-trust strong{color:#fff;font-weight:700;font-size:14px}
+.hero-v2-trust .muted{color:rgba(255,255,255,0.6);font-size:12.5px}
+
+/* The form card */
+.hero-v2-formcard{
+  background:#fff;color:#1a1a1a;
+  border-radius:14px;
+  padding:30px 30px 26px;
+  box-shadow:0 24px 60px rgba(0,0,0,0.35);
+  position:sticky;top:96px;
+}
+.hero-v2-formcard h2{
+  font-family:var(--ff-display, "Syne", sans-serif);
+  font-size:22px;color:#0d1f3c;
+  margin:0 0 4px;letter-spacing:-0.01em;
+}
+.hero-v2-formcard-sub{
+  font-size:13px;color:#666;margin:0 0 18px;
+}
+.hero-v2-field{
+  display:block;margin-bottom:12px;
+}
+.hero-v2-field > span{
+  display:block;font-size:12.5px;font-weight:600;color:#444;margin-bottom:4px;
+}
+.hero-v2-field input,
+.hero-v2-field select{
+  width:100%;
+  padding:11px 13px;
+  font-size:15px;font-family:inherit;color:#111;
+  background:#f7f8fa;
+  border:1.5px solid #e3e6ec;
+  border-radius:7px;
+  transition:border-color 0.15s, background 0.15s;
+  -webkit-appearance:none;appearance:none;
+}
+.hero-v2-field input:focus,
+.hero-v2-field select:focus{
+  outline:0;border-color:var(--accent, #e04e1b);background:#fff;
+  box-shadow:0 0 0 3px rgba(224,78,27,0.12);
+}
+.hero-v2-field select{
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' width='14' height='14'><path d='M2 4l5 5 5-5' stroke='%23666' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat:no-repeat;background-position:right 14px center;
+  padding-right:36px;
+}
+.hero-v2-submit{
+  width:100%;
+  background:var(--accent, #e04e1b);color:#fff;
+  padding:14px 18px;border:0;border-radius:8px;
+  font-size:15px;font-weight:700;cursor:pointer;
+  margin-top:6px;
+  transition:background 0.15s, transform 0.1s;
+}
+.hero-v2-submit:hover{background:#c4400e}
+.hero-v2-submit:active{transform:translateY(1px)}
+.hero-v2-submit:disabled{background:#ccc;cursor:wait}
+.hero-v2-formnote{
+  font-size:11.5px;color:#888;text-align:center;
+  margin:12px 0 0;line-height:1.45;
+}
+
+#hero-quote-success{
+  text-align:center;padding:30px 10px;
+}
+
+/* Mobile */
+@media (max-width: 880px){
+  .hero-v2{padding:40px 0 56px}
+  .hero-v2-container{
+    grid-template-columns:1fr;gap:32px;
+  }
+  .hero-v2-formcard{position:static;padding:24px 22px}
+  .hero-v2-h1{font-size:34px}
+  .hero-v2-trust{grid-template-columns:1fr;gap:10px}
+}
+</style>
+
+
+<!-- ──────────────────  HERO FORM SCRIPT (add before </body>)  ────────────────── -->
+
+<script>
+(function () {
+  var form = document.getElementById('hero-quote-form');
+  if (!form) return;
+  var fullnameInput = document.getElementById('hero-fullname');
+  var fnameHidden   = form.querySelector('input[name="fname"]');
+  var lnameHidden   = form.querySelector('input[name="lname"]');
+  var submitBtn     = form.querySelector('button[type="submit"]');
+  var successBlock  = document.getElementById('hero-quote-success');
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    // Split full name into fname / lname for the API
+    var parts = (fullnameInput.value || '').trim().split(/\s+/);
+    fnameHidden.value = parts[0] || '';
+    lnameHidden.value = parts.slice(1).join(' ') || '';
+
+    // Build a plain object from the form
+    var data = {};
+    new FormData(form).forEach(function (v, k) { data[k] = v; });
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending...';
+
+    fetch('/api/quote', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data),
+    })
+    .then(function (r) { return r.json(); })
+    .then(function () {
+      form.style.display = 'none';
+      if (successBlock) successBlock.hidden = false;
+    })
+    .catch(function () {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Get My Free Quote &rarr;';
+      alert('Sorry, something went wrong. Please call 01634 971005 instead.');
+    });
+  });
+})();
+</script>
