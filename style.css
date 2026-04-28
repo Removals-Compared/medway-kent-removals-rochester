@@ -287,7 +287,7 @@ section.cream2{background:var(--cream2)}
 .footer-contact-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:10px;line-height:1.55}
 .footer-contact-item a{color:rgba(255,255,255,0.6);transition:var(--trans)}
 .footer-contact-item a:hover{color:var(--white)}
-.footer-col h4{font-family:var(--ff-display);font-size:14px;color:var(--white);margin-bottom:18px;font-weight:700;letter-spacing:0.3px}
+.footer-col h3,.footer-col h4{font-family:var(--ff-display);font-size:14px;color:var(--white);margin-bottom:18px;font-weight:700;letter-spacing:0.3px}
 .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:9px}
 .footer-col ul a{font-size:13px;color:rgba(255,255,255,0.55);transition:var(--trans)}
 .footer-col ul a:hover{color:var(--accent);padding-left:3px}

@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════
-//  Medway & Kent Removals — script.js
+//  Medway & Kent Removals, script.js
 //  All API calls now go through /api/quote (Vercel function)
-//  No credentials stored in this file — all secrets are in
+//  No credentials stored in this file, all secrets are in
 //  Vercel environment variables server-side
 // ════════════════════════════════════════════════════════════
 
@@ -44,21 +44,44 @@ function quickQuote(e){
 }
 
 // ── PRE-FILL CONTACT FORM FROM URL PARAMS ──
+// Supports: name, phone, service, email, from, to, property
+// Runs whenever any supported parameter is present.
 (function(){
   var params = new URLSearchParams(window.location.search);
-  if(!params.get('name')) return;
-  var nameParts = (params.get('name') || '').split(' ');
-  var fn = document.getElementById('cf-fname');
-  var ln = document.getElementById('cf-lname');
-  var ph = document.getElementById('cf-phone');
+  var supported = ['name','phone','service','email','from','to','property'];
+  var hasAny = supported.some(function(k){ return params.get(k) !== null; });
+  if(!hasAny) return;
+
+  function setVal(id, val){
+    var el = document.getElementById(id);
+    if(el && val) el.value = val;
+  }
+
+  if(params.get('name')){
+    var nameParts = params.get('name').split(' ');
+    setVal('cf-fname', nameParts[0] || '');
+    setVal('cf-lname', nameParts.slice(1).join(' ') || '');
+  }
+  setVal('cf-phone', params.get('phone'));
+  setVal('cf-email', params.get('email'));
+  setVal('cf-from',  params.get('from'));
+  setVal('cf-to',    params.get('to'));
+
   var sv = document.getElementById('cf-service');
-  if(fn) fn.value = nameParts[0] || '';
-  if(ln) ln.value = nameParts.slice(1).join(' ') || '';
-  if(ph) ph.value = params.get('phone') || '';
   if(sv && params.get('service')){
     for(var i=0; i<sv.options.length; i++){
       if(sv.options[i].text === params.get('service')){
         sv.selectedIndex = i;
+        break;
+      }
+    }
+  }
+
+  var pr = document.getElementById('cf-property');
+  if(pr && params.get('property')){
+    for(var j=0; j<pr.options.length; j++){
+      if(pr.options[j].text === params.get('property')){
+        pr.selectedIndex = j;
         break;
       }
     }
@@ -131,7 +154,7 @@ async function submitForm(e){
     console.error('Form submission error:', err);
     btn.textContent = originalText;
     btn.disabled = false;
-    alert('Something went wrong. Please call us directly on 01634 570 000 and we will get your quote sorted right away.');
+    alert('Something went wrong. Please call us directly on 01634 971005 and we will get your quote sorted right away.');
   }
 }
 
