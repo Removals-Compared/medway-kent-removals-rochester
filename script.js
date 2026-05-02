@@ -143,7 +143,18 @@ async function submitForm(e){
     var data = await response.json();
 
     if(response.ok && data.success){
-      // ── Redirect to thank-you page for GA4 conversion tracking ──
+      // ── Fire GA4 conversion event ONLY on real form submit ──
+      // This is the single source of truth for lead conversions.
+      // The thank-you page no longer fires conversion events.
+      if(typeof gtag === 'function'){
+        gtag('event', 'generate_lead', {
+          'event_category': 'Quote Form',
+          'event_label':    'Quote Submitted',
+          'value':          1,
+          'currency':       'GBP'
+        });
+      }
+      // ── Redirect to thank-you page (display only, no tracking) ──
       window.location.href = '/thank-you';
     } else {
       throw new Error('Server returned an error');
