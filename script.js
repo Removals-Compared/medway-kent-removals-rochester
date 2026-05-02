@@ -143,9 +143,8 @@ async function submitForm(e){
     var data = await response.json();
 
     if(response.ok && data.success){
-      // ── Show success state ──
-      document.getElementById('contact-form').style.display = 'none';
-      document.getElementById('form-success').classList.add('show');
+      // ── Redirect to thank-you page for GA4 conversion tracking ──
+      window.location.href = '/thank-you';
     } else {
       throw new Error('Server returned an error');
     }
