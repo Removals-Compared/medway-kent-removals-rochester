@@ -33,19 +33,117 @@ function toggleFaq(btn){
   if(!isOpen) item.classList.add('open');
 }
 
-// ── QUICK HERO QUOTE FORM (home page only) ──
+// ── QUICK HERO QUOTE FORM (legacy — kept for safety) ──
 function quickQuote(e){
   e.preventDefault();
-  var name    = document.getElementById('qq-name').value;
-  var phone   = document.getElementById('qq-phone').value;
-  var service = document.getElementById('qq-move').value;
-  var params  = new URLSearchParams({name:name, phone:phone, service:service});
-  window.location.href = '/contact?' + params.toString();
 }
+
+// ── HERO QUOTE FORM HANDLER ──
+// Handles the short 4-field form on the homepage hero section
+// Validates all fields, submits to /api/quote, redirects to /thank-you
+document.addEventListener('DOMContentLoaded', function(){
+  var heroForm = document.getElementById('hero-quote-form');
+  if(!heroForm) return;
+
+  heroForm.addEventListener('submit', async function(e){
+    e.preventDefault();
+
+    var btn = heroForm.querySelector('button[type="submit"]');
+    var originalText = btn.textContent;
+
+    // ── Collect values ──
+    var fullname = (document.getElementById('hero-fullname') || {}).value || '';
+    var phone    = (heroForm.querySelector('[name="phone"]') || {}).value || '';
+    var email    = (heroForm.querySelector('[name="email"]') || {}).value || '';
+    var service  = (heroForm.querySelector('[name="service"]') || {}).value || '';
+
+    fullname = fullname.trim();
+    phone    = phone.trim();
+    email    = email.trim();
+
+    // ── Validation ──
+    if(!fullname){
+      showHeroError('Please enter your full name.');
+      return;
+    }
+    if(!phone || phone.replace(/\s/g,'').length < 10){
+      showHeroError('Please enter a valid phone number.');
+      return;
+    }
+    if(!email || !email.includes('@') || !email.includes('.')){
+      showHeroError('Please enter a valid email address.');
+      return;
+    }
+    if(!service){
+      showHeroError('Please select the type of move.');
+      return;
+    }
+
+    clearHeroError();
+
+    // ── Split full name into fname / lname ──
+    var parts = fullname.split(' ');
+    var fname = parts[0];
+    var lname = parts.slice(1).join(' ') || '';
+
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+
+    try {
+      var response = await fetch('/api/quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fname:         fname,
+          lname:         lname,
+          phone:         phone,
+          email:         email,
+          service:       service,
+          from_postcode: '',
+          to_postcode:   '',
+          property_size: '',
+          move_date:     '',
+          access:        '',
+          notes:         'Submitted from homepage hero (short form)',
+        }),
+      });
+
+      var data = await response.json();
+
+      if(response.ok && data.success){
+        window.location.href = '/thank-you';
+      } else {
+        throw new Error('Server error');
+      }
+
+    } catch(err){
+      console.error('Hero form error:', err);
+      btn.textContent = originalText;
+      btn.disabled = false;
+      showHeroError('Something went wrong. Please call us on 01634 971005.');
+    }
+  });
+
+  function showHeroError(msg){
+    var el = document.getElementById('hero-form-error');
+    if(!el){
+      el = document.createElement('p');
+      el.id = 'hero-form-error';
+      el.style.cssText = 'color:#e04e1b;font-size:13px;margin:8px 0 0;font-weight:600;';
+      var form = document.getElementById('hero-quote-form');
+      form.appendChild(el);
+    }
+    el.textContent = msg;
+  }
+
+  function clearHeroError(){
+    var el = document.getElementById('hero-form-error');
+    if(el) el.textContent = '';
+  }
+});
 
 // ── PRE-FILL CONTACT FORM FROM URL PARAMS ──
 // Supports: name, phone, service, email, from, to, property
-// Runs whenever any supported parameter is present.
 (function(){
   var params = new URLSearchParams(window.location.search);
   var supported = ['name','phone','service','email','from','to','property'];
@@ -90,7 +188,6 @@ function quickQuote(e){
 
 // ── CONTACT FORM SUBMISSION ──
 // Posts all form data to /api/quote (Vercel serverless function)
-// The function handles Resend email + HubSpot CRM + Supabase
 async function submitForm(e){
   e.preventDefault();
 
@@ -99,7 +196,6 @@ async function submitForm(e){
   btn.textContent = 'Sending...';
   btn.disabled = true;
 
-  // ── Collect all form values ──
   var fname     = document.getElementById('cf-fname').value.trim();
   var lname     = document.getElementById('cf-lname').value.trim();
   var phone     = document.getElementById('cf-phone').value.trim();
@@ -112,7 +208,6 @@ async function submitForm(e){
   var access    = document.getElementById('cf-access') ? document.getElementById('cf-access').value : '';
   var notes     = document.getElementById('cf-notes').value.trim();
 
-  // ── Basic validation ──
   if(!fname || !phone || !email || !service || !fromPost || !toPost){
     alert('Please fill in all required fields before submitting.');
     btn.textContent = originalText;
@@ -120,7 +215,6 @@ async function submitForm(e){
     return;
   }
 
-  // ── Send to /api/quote ──
   try {
     var response = await fetch('/api/quote', {
       method: 'POST',
@@ -143,18 +237,6 @@ async function submitForm(e){
     var data = await response.json();
 
     if(response.ok && data.success){
-      // ── Fire GA4 conversion event ONLY on real form submit ──
-      // This is the single source of truth for lead conversions.
-      // The thank-you page no longer fires conversion events.
-      if(typeof gtag === 'function'){
-        gtag('event', 'generate_lead', {
-          'event_category': 'Quote Form',
-          'event_label':    'Quote Submitted',
-          'value':          1,
-          'currency':       'GBP'
-        });
-      }
-      // ── Redirect to thank-you page (display only, no tracking) ──
       window.location.href = '/thank-you';
     } else {
       throw new Error('Server returned an error');
@@ -205,12 +287,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  /* close when clicking outside */
   document.addEventListener('click', function (e) {
     if (!dd.contains(e.target)) close();
   });
 
-  /* close on Escape */
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && dd.classList.contains('is-open')) {
       close();
@@ -218,7 +298,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  /* close after clicking a link inside the menu */
   dd.querySelectorAll('.nav-dropdown-menu a').forEach(function (a) {
     a.addEventListener('click', close);
   });
