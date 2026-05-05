@@ -1357,7 +1357,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
-    var parts = (fullnameInput.value || '').trim().split(/\s+/);
+
+    // ── Validation ──
+    var fullname = (fullnameInput.value || '').trim();
+    var phone    = (form.querySelector('[name="phone"]').value || '').trim();
+    var email    = (form.querySelector('[name="email"]').value || '').trim();
+    var service  = (form.querySelector('[name="service"]').value || '').trim();
+
+    var errEl = document.getElementById('hero-form-error');
+    if (!errEl) {
+      errEl = document.createElement('p');
+      errEl.id = 'hero-form-error';
+      errEl.style.cssText = 'color:#e04e1b;font-size:13px;margin:8px 0 0;font-weight:600;';
+      form.appendChild(errEl);
+    }
+    errEl.textContent = '';
+
+    if (!fullname) { errEl.textContent = 'Please enter your full name.'; return; }
+    if (!phone || phone.replace(/\s/g,'').length < 10) { errEl.textContent = 'Please enter a valid phone number.'; return; }
+    if (!email || !email.includes('@')) { errEl.textContent = 'Please enter a valid email address.'; return; }
+    if (!service) { errEl.textContent = 'Please select the type of move.'; return; }
+
+    var parts = fullname.split(/\s+/);
     fnameHidden.value = parts[0] || '';
     lnameHidden.value = parts.slice(1).join(' ') || '';
 
@@ -1374,8 +1395,7 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     .then(function (r) { return r.json(); })
     .then(function () {
-      form.style.display = 'none';
-      if (successBlock) successBlock.hidden = false;
+      window.location.href = '/thank-you';
     })
     .catch(function () {
       submitBtn.disabled = false;
