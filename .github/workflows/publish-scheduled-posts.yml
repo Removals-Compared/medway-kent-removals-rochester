@@ -1,0 +1,41 @@
+name: Publish Scheduled Blog Posts
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Publish scheduled posts
+        run: |
+          TODAY=$(date +%Y-%m-%d)
+          echo "Checking for posts scheduled for: $TODAY"
+          PUBLISHED=0
+          for file in blog/scheduled/${TODAY}-*.html; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              slug="${filename#${TODAY}-}"
+              dest="blog/posts/${slug}"
+              echo "Publishing: $file -> $dest"
+              cp "$file" "$dest"
+              git add "$dest"
+              PUBLISHED=$((PUBLISHED + 1))
+            fi
+          done
+          if [ $PUBLISHED -gt 0 ]; then
+            git config user.name "MKR Blog Bot"
+            git config user.email "info@medwaykentremovals.co.uk"
+            git commit -m "Auto-publish $PUBLISHED blog post(s) for $TODAY"
+            git push
+            echo "Published $PUBLISHED post(s)"
+          else
+            echo "No posts scheduled for today"
+          fi
