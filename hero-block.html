@@ -1,25 +1,12 @@
-<!--
-  ═══════════════════════════════════════════════════════════════════════════
-  NEW HERO BLOCK  (drop into index.html)
-  ═══════════════════════════════════════════════════════════════════════════
 
-  HOW TO USE:
-  In your current index.html, find your hero section. It probably starts
-  with something like <section class="hero"> or contains the eyebrow text
-  "Established in Rochester, Kent, since 2020" and the H1 starting with
-  "Medway and Kent's most trusted...". Replace the entire section with
-  the markup below.
-
-  Add the <style> block below to <head>
-<!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','GTM-WQHT5D2L');</script>
-<!-- End Google Tag Manager --> (after existing styles).
+ (after existing styles).
 
-  IMPORTANT — FORM FIELDS:
+  IMPORTANT - FORM FIELDS:
   Your /api/quote.js expects these fields: fname, lname, phone, email,
   service, from_postcode, to_postcode, property_size, move_date, access,
   notes. The hero form below is the SHORT version (4 visible fields:
@@ -31,7 +18,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 -->
 
 
-<!-- ──────────────────  HERO MARKUP  ────────────────── -->
+
 
 <section class="hero-v2" aria-label="Hero">
   <div class="hero-v2-bg" aria-hidden="true">
@@ -117,7 +104,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           </select>
         </label>
 
-        <!-- Hidden fields the API expects so it doesn't barf on undefined -->
+        
         <input type="hidden" name="fname" value="">
         <input type="hidden" name="lname" value="">
         <input type="hidden" name="from_postcode" value="">
@@ -141,7 +128,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 </section>
 
 
-<!-- ──────────────────  HERO STYLES (add to <head>)  ────────────────── -->
+
 
 <style>
 .hero-v2{
@@ -319,7 +306,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 </style>
 
 
-<!-- ──────────────────  HERO FORM SCRIPT (add before </body>)  ────────────────── -->
+
 
 <script>
 (function () {
