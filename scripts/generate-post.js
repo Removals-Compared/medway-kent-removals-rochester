@@ -124,7 +124,9 @@ Requirements:
 - Include specific references to Rochester, Medway, Kent and relevant local towns throughout
 - Structure with clear H2 and H3 subheadings
 - Include practical, actionable advice throughout
-- Do NOT use em dashes (—), use hyphens or rewrite the sentence instead
+- Do NOT use em dashes (the — character) anywhere. Use hyphens or rewrite the sentence instead
+- Do NOT use AI watermark phrases such as: "In conclusion", "It is worth noting", "It is important to note", "In today's world", "Dive into", "Delve into", "Leverage", "Unleash", "Game-changer", "Transformative", "Comprehensive guide", "Navigating", "In the realm of", "Bustling", "Vibrant community", "Tapestry", "Pivotal"
+- Write like a real human removal company owner — direct, practical, no corporate fluff
 - Do NOT mention competitors by name
 - End with a clear call to action to call 01634 971005 or visit medwaykentremovals.co.uk/contact
 
