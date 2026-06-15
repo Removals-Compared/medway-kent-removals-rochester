@@ -75,8 +75,13 @@ export async function createQuote(input = {}) {
   ];
   const row = { status: 'new' };
   allowed.forEach((k) => {
-    if (input[k] !== undefined && input[k] !== null) row[k] = input[k];
+    if (input[k] !== undefined && input[k] !== null && input[k] !== '') row[k] = input[k];
   });
+  // Quoted value maps to the numeric "value" column (added by the migration).
+  if (input.value !== undefined && input.value !== null && input.value !== '') {
+    const n = Number(input.value);
+    if (!Number.isNaN(n)) row.value = n;
+  }
   const r = await fetch(`${base()}/${TABLE}`, {
     method: 'POST',
     headers: headers({ Prefer: 'return=representation' }),
