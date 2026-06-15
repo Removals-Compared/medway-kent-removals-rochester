@@ -10,6 +10,9 @@
     }
   ],
   "rewrites": [
+    { "source": "/admin", "destination": "/admin/index.html" },
+    { "source": "/admin/dashboard", "destination": "/admin/dashboard.html" },
+    { "source": "/admin/quote/:id", "destination": "/admin/lead?id=:id" },
     { "source": "/blog", "destination": "/blog.html" },
     { "source": "/blog/posts/:slug", "destination": "/blog/posts/:slug.html" },
     { "source": "/removals-chatham", "destination": "/removals-chatham.html" },

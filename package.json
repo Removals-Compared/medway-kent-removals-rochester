@@ -7,5 +7,7 @@
     "generate": "node scripts/generate-post.js",
     "test": "DAY_OVERRIDE=1 node scripts/generate-post.js"
   },
-  "dependencies": {}
+  "dependencies": {
+    "nodemailer": "^6.9.14"
+  }
 }

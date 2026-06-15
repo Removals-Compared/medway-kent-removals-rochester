@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Quotes — Admin — Medway &amp; Kent Removals</title>
+<style>
+  :root{ --navy:#0d1f3c; --orange:#e04e1b; --bg:#f4f5f7; --line:#e3e6ec; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; background:var(--bg); color:#1a2233; }
+  .topbar{ background:var(--navy); color:#fff; padding:14px 24px; display:flex; align-items:center; gap:14px; }
+  .topbar .brand{ font-weight:700; }
+  .topbar .crumb{ color:#ff9a75; font-size:14px; }
+  .topbar .spacer{ flex:1; }
+  .topbar a{ color:#cfd6e4; text-decoration:none; font-size:14px; }
+  .wrap{ max-width:1180px; margin:0 auto; padding:24px; }
+  .stats{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+  .stat{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px 18px; cursor:pointer; min-width:120px; flex:1; transition:.15s; }
+  .stat:hover{ border-color:var(--navy); }
+  .stat.active{ border-color:var(--orange); box-shadow:0 0 0 2px rgba(224,78,27,.15); }
+  .stat .n{ font-size:26px; font-weight:800; color:var(--navy); }
+  .stat .l{ font-size:12px; color:#667; text-transform:uppercase; letter-spacing:.4px; margin-top:2px; }
+  .controls{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
+  .controls input, .controls select{ padding:10px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px; }
+  .controls input[type=search]{ flex:1; min-width:200px; }
+  .btn{ padding:10px 16px; border-radius:8px; border:1px solid var(--line); background:#fff; cursor:pointer; font-size:14px; font-weight:600; }
+  .btn.primary{ background:var(--orange); color:#fff; border-color:var(--orange); }
+  table{ width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  th,td{ text-align:left; padding:12px 14px; font-size:14px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th{ background:#fafbfc; font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:#667; }
+  tbody tr{ cursor:pointer; }
+  tbody tr:hover{ background:#fafbff; }
+  .sub{ color:#889; font-size:12px; }
+  .pill{ display:inline-block; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:700; }
+  .pill.new{ background:#e8f0ff; color:#1d4ed8; }
+  .pill.contacted{ background:#fff4e0; color:#b45309; }
+  .pill.survey_booked{ background:#ede9fe; color:#6d28d9; }
+  .pill.move_booked{ background:#dcfce7; color:#15803d; }
+  .pill.won{ background:#16a34a; color:#fff; }
+  .pill.lost{ background:#fee2e2; color:#b91c1c; }
+  .trash{ background:none; border:none; cursor:pointer; font-size:16px; opacity:.6; padding:4px; }
+  .trash:hover{ opacity:1; }
+  .empty{ text-align:center; padding:40px; color:#889; }
+  /* modal */
+  .modal-bg{ display:none; position:fixed; inset:0; background:rgba(13,31,60,.5); align-items:flex-start; justify-content:center; padding:40px 16px; overflow:auto; }
+  .modal-bg.open{ display:flex; }
+  .modal{ background:#fff; border-radius:12px; width:100%; max-width:520px; padding:26px; }
+  .modal h2{ margin:0 0 16px; color:var(--navy); font-size:19px; }
+  .modal label{ display:block; font-size:13px; font-weight:600; margin:10px 0 4px; }
+  .modal input, .modal select{ width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px; }
+  .modal .actions{ display:flex; gap:10px; margin-top:20px; }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="brand">Medway &amp; Kent Removals</span>
+    <span class="crumb">Admin / Quotes</span>
+    <span class="spacer"></span>
+    <a href="#" id="signout">Sign out</a>
+  </div>
+
+  <div class="wrap">
+    <div class="stats" id="stats"></div>
+
+    <div class="controls">
+      <input type="search" id="search" placeholder="Search name, email or phone…">
+      <select id="status-filter">
+        <option value="all">All statuses</option>
+        <option value="new">New</option>
+        <option value="contacted">Contacted</option>
+        <option value="survey_booked">Survey booked</option>
+        <option value="move_booked">Move booked</option>
+        <option value="won">Won</option>
+        <option value="lost">Lost</option>
+      </select>
+      <button class="btn" id="refresh">Refresh</button>
+      <button class="btn primary" id="add-btn">+ Add customer</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Received</th><th>Name</th><th>Phone</th><th>Service</th>
+          <th>From / To</th><th>Move date</th><th>Status</th><th>Value</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="rows"><tr><td colspan="9" class="empty">Loading…</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- Add customer modal -->
+  <div class="modal-bg" id="modal-bg">
+    <form class="modal" id="add-form">
+      <h2>Add a customer</h2>
+      <div class="grid2">
+        <div><label>Name</label><input name="name" required></div>
+        <div><label>Phone</label><input name="phone"></div>
+      </div>
+      <label>Email</label><input name="email" type="email">
+      <label>Service</label>
+      <select name="service">
+        <option value="">Select…</option>
+        <option>House removal</option>
+        <option>Office removal</option>
+        <option>Packing service</option>
+        <option>Storage</option>
+        <option>Single item / small move</option>
+      </select>
+      <div class="grid2">
+        <div><label>Moving from</label><input name="from_postcode"></div>
+        <div><label>Moving to</label><input name="to_postcode"></div>
+      </div>
+      <div class="grid2">
+        <div><label>Property size</label><input name="property_size"></div>
+        <div><label>Move date</label><input name="move_date" type="date"></div>
+      </div>
+      <label>Notes</label><input name="notes">
+      <div class="actions">
+        <button type="submit" class="btn primary" style="flex:1">Add customer</button>
+        <button type="button" class="btn" id="modal-cancel">Cancel</button>
+      </div>
+    </form>
+  </div>
+
+<script>
+  const STATUSES = [
+    ['all','All'], ['new','New'], ['contacted','Contacted'],
+    ['survey_booked','Survey booked'], ['move_booked','Move booked'], ['won','Won'],
+  ];
+  const labelFor = (s) => ({
+    new:'New', contacted:'Contacted', survey_booked:'Survey booked',
+    move_booked:'Move booked', won:'Won', lost:'Lost',
+  }[s] || s || 'New');
+
+  let activeStatus = 'all';
+  let allRows = [];
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  function fmtDate(v){ if(!v) return '—'; try{ return new Date(v).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch{ return v; } }
+  function fmtMoney(v){ return (v===null||v===undefined||v==='') ? '—' : '£'+Number(v).toLocaleString('en-GB'); }
+
+  async function api(url, opts){
+    const r = await fetch(url, opts);
+    if (r.status === 401){ window.location.href = '/admin'; throw new Error('unauth'); }
+    return r;
+  }
+
+  async function load(){
+    const search = $('search').value.trim();
+    const params = new URLSearchParams();
+    if (activeStatus !== 'all') params.set('status', activeStatus);
+    if (search) params.set('search', search);
+    $('rows').innerHTML = '<tr><td colspan="9" class="empty">Loading…</td></tr>';
+    try {
+      const r = await api('/api/admin/quotes?' + params);
+      const data = await r.json();
+      allRows = data.quotes || [];
+      renderRows(allRows);
+      renderStats();
+    } catch (e) {
+      if (String(e.message) !== 'unauth')
+        $('rows').innerHTML = '<tr><td colspan="9" class="empty">Could not load leads.</td></tr>';
+    }
+  }
+
+  // Stats are computed from a separate unfiltered fetch so the counts are stable.
+  async function renderStats(){
+    let rows = allRows;
+    if (activeStatus !== 'all' || $('search').value.trim()) {
+      try { rows = (await (await api('/api/admin/quotes')).json()).quotes || []; } catch { rows = allRows; }
+    }
+    const counts = { all: rows.length };
+    rows.forEach((r) => { const s = r.status || 'new'; counts[s] = (counts[s]||0)+1; });
+    $('stats').innerHTML = STATUSES.map(([key,label]) => `
+      <div class="stat ${activeStatus===key?'active':''}" data-status="${key}">
+        <div class="n">${counts[key]||0}</div><div class="l">${label}</div>
+      </div>`).join('');
+    document.querySelectorAll('.stat').forEach((el) => {
+      el.addEventListener('click', () => {
+        activeStatus = el.dataset.status;
+        $('status-filter').value = activeStatus;
+        load();
+      });
+    });
+  }
+
+  function renderRows(rows){
+    if (!rows.length){ $('rows').innerHTML = '<tr><td colspan="9" class="empty">No leads found.</td></tr>'; return; }
+    $('rows').innerHTML = rows.map((r) => {
+      const st = r.status || 'new';
+      return `<tr data-id="${esc(r.id)}">
+        <td>${fmtDate(r.created_at)}</td>
+        <td><strong>${esc(r.name||'—')}</strong><div class="sub">${esc(r.email||'')}</div></td>
+        <td>${esc(r.phone||'—')}</td>
+        <td>${esc(r.service||'—')}</td>
+        <td>${esc(r.from_postcode||'—')} <span class="sub">→</span> ${esc(r.to_postcode||'—')}</td>
+        <td>${fmtDate(r.move_date)}</td>
+        <td><span class="pill ${st}">${labelFor(st)}</span></td>
+        <td>${fmtMoney(r.value)}</td>
+        <td><button class="trash" data-action="delete" title="Delete">🗑</button></td>
+      </tr>`;
+    }).join('');
+
+    document.querySelectorAll('#rows tr[data-id]').forEach((tr) => {
+      tr.addEventListener('click', (e) => {
+        if (e.target.closest('[data-action="delete"]')) return;
+        window.location.href = '/admin/quote/' + tr.dataset.id;
+      });
+    });
+    document.querySelectorAll('[data-action="delete"]').forEach((b) => {
+      b.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const tr = e.target.closest('tr');
+        const id = tr.dataset.id;
+        if (!confirm('Delete this lead permanently?')) return;
+        try {
+          const r = await api('/api/admin/quote/' + id, { method:'DELETE' });
+          if (r.ok){ tr.style.opacity = '.3'; setTimeout(load, 250); }
+        } catch {}
+      });
+    });
+  }
+
+  // ── Add customer modal ──
+  $('add-btn').addEventListener('click', () => $('modal-bg').classList.add('open'));
+  $('modal-cancel').addEventListener('click', () => $('modal-bg').classList.remove('open'));
+  $('modal-bg').addEventListener('click', (e) => { if (e.target === $('modal-bg')) $('modal-bg').classList.remove('open'); });
+  $('add-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const body = Object.fromEntries(fd.entries());
+    try {
+      const r = await api('/api/admin/quotes', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body),
+      });
+      if (r.ok){ $('modal-bg').classList.remove('open'); e.target.reset(); load(); }
+      else alert('Could not add customer.');
+    } catch {}
+  });
+
+  // ── Controls ──
+  let t;
+  $('search').addEventListener('input', () => { clearTimeout(t); t = setTimeout(load, 300); });
+  $('status-filter').addEventListener('change', (e) => { activeStatus = e.target.value; load(); });
+  $('refresh').addEventListener('click', load);
+  $('signout').addEventListener('click', async (e) => {
+    e.preventDefault();
+    await fetch('/api/admin/logout', { method:'POST' });
+    window.location.href = '/admin';
+  });
+
+  load();
+</script>
+</body>
+</html>

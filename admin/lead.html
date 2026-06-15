@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Lead — Admin — Medway &amp; Kent Removals</title>
+<style>
+  :root{ --navy:#0d1f3c; --orange:#e04e1b; --bg:#f4f5f7; --line:#e3e6ec; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; background:var(--bg); color:#1a2233; }
+  .topbar{ background:var(--navy); color:#fff; padding:14px 24px; display:flex; align-items:center; gap:14px; }
+  .topbar .brand{ font-weight:700; }
+  .topbar a{ color:#cfd6e4; text-decoration:none; font-size:14px; }
+  .topbar .spacer{ flex:1; }
+  .wrap{ max-width:1100px; margin:0 auto; padding:24px; }
+  .back{ display:inline-block; margin-bottom:16px; color:#556; text-decoration:none; font-size:14px; }
+  .cols{ display:grid; grid-template-columns:1.3fr 1fr; gap:20px; align-items:start; }
+  @media(max-width:820px){ .cols{ grid-template-columns:1fr; } }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:22px; margin-bottom:20px; }
+  .card h2{ margin:0 0 16px; font-size:17px; color:var(--navy); }
+  dl{ margin:0; display:grid; grid-template-columns:130px 1fr; gap:8px 12px; font-size:14px; }
+  dt{ color:#778; } dd{ margin:0; font-weight:600; }
+  .pill{ display:inline-block; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+  .pill.new{ background:#e8f0ff; color:#1d4ed8; } .pill.contacted{ background:#fff4e0; color:#b45309; }
+  .pill.survey_booked{ background:#ede9fe; color:#6d28d9; } .pill.move_booked{ background:#dcfce7; color:#15803d; }
+  .pill.won{ background:#16a34a; color:#fff; } .pill.lost{ background:#fee2e2; color:#b91c1c; }
+  label{ display:block; font-size:13px; font-weight:600; margin:14px 0 5px; color:#445; }
+  input,select,textarea{ width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px; font-family:inherit; }
+  textarea{ min-height:70px; resize:vertical; }
+  .btn{ padding:10px 16px; border-radius:8px; border:1px solid var(--line); background:#fff; cursor:pointer; font-size:14px; font-weight:600; }
+  .btn.primary{ background:var(--navy); color:#fff; border-color:var(--navy); }
+  .btn.orange{ background:var(--orange); color:#fff; border-color:var(--orange); }
+  .btn.green{ background:#16a34a; color:#fff; border-color:#16a34a; }
+  .btn.red{ background:#fff; color:#b91c1c; border-color:#f3c0c0; }
+  .btn-row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:16px; }
+  .inline{ display:flex; gap:8px; align-items:flex-end; }
+  .inline > div{ flex:1; }
+  .flash{ font-size:13px; font-weight:600; margin:10px 0 0; min-height:18px; }
+  .flash.ok{ color:#15803d; } .flash.err{ color:var(--orange); }
+  .note{ background:#fafbfc; border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-bottom:8px; font-size:14px; }
+  .note .when{ color:#99a; font-size:12px; margin-top:4px; }
+  .appt{ border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:10px; }
+  .appt .when{ font-weight:700; } .appt .meta{ font-size:13px; color:#667; margin-top:4px; }
+  .appt .tag{ font-size:11px; text-transform:uppercase; letter-spacing:.4px; font-weight:700; color:var(--orange); }
+  hr{ border:none; border-top:1px solid var(--line); margin:18px 0; }
+  .muted{ color:#99a; font-size:13px; }
+  .divider-btn{ display:block; width:100%; margin-top:8px; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="brand">Medway &amp; Kent Removals</span>
+    <span class="spacer"></span>
+    <a href="/admin/dashboard">← All quotes</a>
+  </div>
+
+  <div class="wrap">
+    <a class="back" href="/admin/dashboard">← Back to dashboard</a>
+    <div id="content"><p class="muted">Loading…</p></div>
+  </div>
+
+<script>
+  // ── Resolve the lead id robustly ──
+  // The rewrite /admin/quote/:id -> /admin/lead?id=:id passes it as ?id, but we
+  // also read it from the path as a fallback, and strip a stray ".html" that a
+  // cleanUrls/catch-all rewrite could leave behind.
+  function resolveId(){
+    const p = new URLSearchParams(location.search);
+    let id = p.get('id');
+    if (!id){ const m = location.pathname.match(/\/admin\/quote\/([^/?#]+)/); if (m) id = m[1]; }
+    if (id) id = id.replace(/\.html$/, '');
+    return id;
+  }
+  const LEAD_ID = resolveId();
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const labelFor = (s) => ({ new:'New', contacted:'Contacted', survey_booked:'Survey booked', move_booked:'Move booked', won:'Won', lost:'Lost' }[s] || s || 'New');
+  function fmtDate(v){ if(!v) return '—'; try{ return new Date(v).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch{ return v; } }
+  function fmtDT(v){ if(!v) return '—'; try{ return new Date(v).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); }catch{ return v; } }
+
+  async function api(url, opts){
+    const r = await fetch(url, opts);
+    if (r.status === 401){ window.location.href = '/admin'; throw new Error('unauth'); }
+    return r;
+  }
+
+  let QUOTE = null, APPTS = [];
+
+  async function load(){
+    if (!LEAD_ID){ $('content').innerHTML = '<p class="muted">No lead id supplied.</p>'; return; }
+    try {
+      const r = await api('/api/admin/quote/' + LEAD_ID);
+      if (r.status === 404){ $('content').innerHTML = '<p class="muted">Lead not found.</p>'; return; }
+      const data = await r.json();
+      QUOTE = data.quote; APPTS = data.appointments || [];
+      render();
+    } catch (e) {
+      if (String(e.message) !== 'unauth') $('content').innerHTML = '<p class="muted">Could not load this lead.</p>';
+    }
+  }
+
+  function render(){
+    const q = QUOTE, st = q.status || 'new';
+    const notes = Array.isArray(q.admin_notes) ? q.admin_notes : [];
+
+    $('content').innerHTML = `
+    <div class="cols">
+      <!-- LEFT -->
+      <div>
+        <div class="card">
+          <h2>Customer details <span class="pill ${st}" style="margin-left:8px">${labelFor(st)}</span></h2>
+          <dl>
+            <dt>Name</dt><dd>${esc(q.name||'—')}</dd>
+            <dt>Phone</dt><dd>${q.phone?`<a href="tel:${esc(q.phone)}">${esc(q.phone)}</a>`:'—'}</dd>
+            <dt>Email</dt><dd>${q.email?`<a href="mailto:${esc(q.email)}">${esc(q.email)}</a>`:'—'}</dd>
+            <dt>Service</dt><dd>${esc(q.service||'—')}</dd>
+            <dt>Moving from</dt><dd>${esc(q.from_postcode||'—')}</dd>
+            <dt>Moving to</dt><dd>${esc(q.to_postcode||'—')}</dd>
+            <dt>Property</dt><dd>${esc(q.property_size||'—')}</dd>
+            <dt>Move date</dt><dd>${fmtDate(q.move_date)}</dd>
+            <dt>Customer notes</dt><dd>${esc(q.notes||'—')}</dd>
+            <dt>Received</dt><dd>${fmtDate(q.created_at)}</dd>
+          </dl>
+
+          <hr>
+          <label>Job value (£)</label>
+          <div class="inline">
+            <div><input type="number" id="value" step="0.01" value="${q.value ?? ''}" placeholder="0.00"></div>
+            <button class="btn" id="save-value">Save</button>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn primary" data-status="contacted">Mark contacted</button>
+            <button class="btn green" data-status="won">Mark WON</button>
+            <button class="btn red" data-status="lost">Mark lost</button>
+          </div>
+          <p class="flash" id="flash-left"></p>
+
+          <hr>
+          <button class="btn red divider-btn" id="delete-lead">Delete this quote</button>
+        </div>
+
+        <div class="card">
+          <h2>Internal notes</h2>
+          <div id="notes-list">${
+            notes.length ? notes.map((n) => `<div class="note">${esc(n.text)}<div class="when">${fmtDT(n.at)}</div></div>`).join('')
+                         : '<p class="muted">No notes yet.</p>'
+          }</div>
+          <textarea id="note-text" placeholder="Add an internal note…"></textarea>
+          <div class="btn-row"><button class="btn" id="add-note">Add note</button></div>
+          <p class="flash" id="flash-note"></p>
+        </div>
+
+        <div class="card">
+          <h2>Appointments &amp; bookings</h2>
+          <div id="appt-list">${renderAppts()}</div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div>
+        <div class="card">
+          <h2>Book a survey</h2>
+          <div class="inline">
+            <div><label>Date</label><input type="date" id="sv-date"></div>
+            <div><label>Time</label><input type="time" id="sv-time" value="10:00"></div>
+          </div>
+          <label>Duration (mins)</label><input type="number" id="sv-dur" value="45">
+          <label>Address</label><input id="sv-addr" value="${esc(q.from_postcode||'')}">
+          <label>Notes</label><textarea id="sv-notes"></textarea>
+          <div class="btn-row"><button class="btn orange" id="book-survey">Book survey</button></div>
+          <p class="flash" id="flash-survey"></p>
+        </div>
+
+        <div class="card">
+          <h2>Book the moving date</h2>
+          <div class="inline">
+            <div><label>Date</label><input type="date" id="mv-date" value="${q.move_date||''}"></div>
+            <div><label>Time</label><input type="time" id="mv-time" value="08:00"></div>
+          </div>
+          <label>Duration (mins)</label><input type="number" id="mv-dur" value="240">
+          <label>Address</label><input id="mv-addr" value="${esc(q.from_postcode||'')}">
+          <label>Notes</label><textarea id="mv-notes"></textarea>
+          <div class="btn-row"><button class="btn orange" id="book-move">Book move</button></div>
+          <p class="flash" id="flash-move"></p>
+        </div>
+      </div>
+    </div>`;
+
+    wire();
+  }
+
+  function renderAppts(){
+    if (!APPTS.length) return '<p class="muted">No appointments booked yet.</p>';
+    return APPTS.map((a) => `
+      <div class="appt" data-appt="${esc(a.id)}">
+        <div class="tag">${a.type==='survey'?'Survey':'Moving day'}</div>
+        <div class="when">${fmtDT(a.scheduled_for)}</div>
+        <div class="meta">${a.duration_minutes||60} mins${a.address?' · '+esc(a.address):''}
+          · Calendar: ${a.gcal_event_id?'✓':'—'} · Email: ${a.email_sent?'✓ sent':'not sent'}</div>
+      </div>`).join('');
+  }
+
+  function flash(id, msg, ok){ const el = $(id); el.textContent = msg; el.className = 'flash ' + (ok?'ok':'err'); }
+
+  async function patchStatus(status){
+    const r = await api('/api/admin/quote/' + LEAD_ID, {
+      method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ status }),
+    });
+    if (r.ok) QUOTE = (await r.json()).quote;
+    return r.ok;
+  }
+
+  function wire(){
+    $('save-value').addEventListener('click', async () => {
+      try {
+        const r = await api('/api/admin/quote/' + LEAD_ID, {
+          method:'PATCH', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ value: $('value').value }),
+        });
+        flash('flash-left', r.ok ? 'Value saved.' : 'Could not save value.', r.ok);
+      } catch {}
+    });
+
+    document.querySelectorAll('[data-status]').forEach((b) => {
+      b.addEventListener('click', async () => {
+        const ok = await patchStatus(b.dataset.status);
+        if (ok){ flash('flash-left', 'Status updated to “'+labelFor(b.dataset.status)+'”.', true); render(); }
+        else flash('flash-left', 'Could not update status.', false);
+      });
+    });
+
+    $('delete-lead').addEventListener('click', async () => {
+      if (!confirm('Delete this quote permanently?')) return;
+      try {
+        const r = await api('/api/admin/quote/' + LEAD_ID, { method:'DELETE' });
+        if (r.ok) window.location.href = '/admin/dashboard';
+      } catch {}
+    });
+
+    $('add-note').addEventListener('click', async () => {
+      const text = $('note-text').value.trim();
+      if (!text) return;
+      try {
+        const r = await api('/api/admin/quote/' + LEAD_ID + '/note', {
+          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text }),
+        });
+        if (r.ok){ QUOTE = (await r.json()).quote; render(); }
+        else flash('flash-note', 'Could not add note.', false);
+      } catch {}
+    });
+
+    $('book-survey').addEventListener('click', () => book('survey', 'sv', 'survey_booked', 'flash-survey'));
+    $('book-move').addEventListener('click',   () => book('move',   'mv', 'move_booked',   'flash-move'));
+  }
+
+  async function book(type, prefix, newStatus, flashId){
+    const date = $(prefix+'-date').value;
+    const time = $(prefix+'-time').value;
+    if (!date || !time){ flash(flashId, 'Please choose a date and time.', false); return; }
+    const scheduled_for = new Date(date + 'T' + time).toISOString();
+    const payload = {
+      lead_id: LEAD_ID, type, scheduled_for,
+      duration_minutes: Number($(prefix+'-dur').value) || 60,
+      address: $(prefix+'-addr').value, notes: $(prefix+'-notes').value,
+    };
+    try {
+      const r = await api('/api/admin/appointment', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload),
+      });
+      const data = await r.json();
+      if (r.ok && data.ok){
+        await patchStatus(newStatus);
+        const warn = (data.errors||[]).map((e) => e.step).join(', ');
+        flash(flashId, warn ? 'Booked, but '+warn+' did not complete.' : 'Booked, calendar + email sent.', !warn);
+        await load();
+      } else {
+        flash(flashId, 'Could not book: ' + (data.error||'error'), false);
+      }
+    } catch {}
+  }
+
+  load();
+</script>
+</body>
+</html>

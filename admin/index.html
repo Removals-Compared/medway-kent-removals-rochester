@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin — Medway &amp; Kent Removals</title>
+<style>
+  :root{ --navy:#0d1f3c; --orange:#e04e1b; --bg:#f4f5f7; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+        background:var(--bg); min-height:100vh; display:flex; align-items:center; justify-content:center; }
+  .card{ background:#fff; width:100%; max-width:380px; padding:36px 32px; border-radius:12px;
+         box-shadow:0 8px 30px rgba(13,31,60,.12); }
+  .brand{ color:var(--orange); font-size:13px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; margin:0; }
+  h1{ font-size:22px; color:var(--navy); margin:6px 0 24px; }
+  label{ display:block; font-size:13px; font-weight:600; color:#444; margin-bottom:6px; }
+  input{ width:100%; padding:12px 14px; border:1px solid #d4d8e0; border-radius:8px; font-size:15px; }
+  button{ width:100%; margin-top:18px; padding:13px; background:var(--navy); color:#fff; border:none;
+          border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; }
+  button:disabled{ opacity:.6; cursor:default; }
+  .err{ color:var(--orange); font-size:13px; font-weight:600; margin:12px 0 0; min-height:18px; }
+</style>
+</head>
+<body>
+  <form class="card" id="login-form">
+    <p class="brand">Medway &amp; Kent Removals</p>
+    <h1>Admin sign in</h1>
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" autocomplete="current-password" autofocus required>
+    <button type="submit" id="submit">Sign in</button>
+    <p class="err" id="err"></p>
+  </form>
+
+<script>
+  const form = document.getElementById('login-form');
+  const btn = document.getElementById('submit');
+  const err = document.getElementById('err');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    err.textContent = '';
+    btn.disabled = true; btn.textContent = 'Signing in…';
+    try {
+      const r = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: document.getElementById('password').value }),
+      });
+      if (r.ok) { window.location.href = '/admin/dashboard'; return; }
+      err.textContent = 'Incorrect password. Please try again.';
+    } catch {
+      err.textContent = 'Something went wrong. Please try again.';
+    }
+    btn.disabled = false; btn.textContent = 'Sign in';
+  });
+</script>
+</body>
+</html>
