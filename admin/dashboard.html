@@ -55,6 +55,13 @@
   .hint{ margin:5px 0 2px; font-size:12px; color:#99a; }
   .flash{ font-size:13px; font-weight:600; margin:10px 0 0; min-height:18px; color:var(--orange); }
   .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .bulkbar{ display:none; align-items:center; gap:14px; background:#fff; border:1px solid var(--line); border-left:4px solid var(--orange); border-radius:10px; padding:10px 16px; margin-bottom:12px; }
+  .bulkbar.open{ display:flex; }
+  .bulkbar #bulk-count{ font-weight:700; color:var(--navy); }
+  .cb-col{ width:34px; text-align:center; }
+  td.cb-col, th.cb-col{ text-align:center; }
+  #rows input[type=checkbox]{ width:16px; height:16px; cursor:pointer; }
+  tr.selected{ background:#fff6f2 !important; }
 </style>
 </head>
 <body>
@@ -83,14 +90,21 @@
       <button class="btn primary" id="add-btn">+ Add customer</button>
     </div>
 
+    <div class="bulkbar" id="bulkbar">
+      <span id="bulk-count">0 selected</span>
+      <button class="btn red" id="bulk-delete">Delete selected</button>
+      <button class="btn" id="bulk-clear">Clear</button>
+    </div>
+
     <table>
       <thead>
         <tr>
+          <th class="cb-col"><input type="checkbox" id="select-all" title="Select all"></th>
           <th>Received</th><th>Name</th><th>Phone</th><th>Service</th>
           <th>From / To</th><th>Move date</th><th>Status</th><th>Value</th><th></th>
         </tr>
       </thead>
-      <tbody id="rows"><tr><td colspan="9" class="empty">Loading…</td></tr></tbody>
+      <tbody id="rows"><tr><td colspan="10" class="empty">Loading…</td></tr></tbody>
     </table>
   </div>
 
@@ -184,7 +198,7 @@
     const params = new URLSearchParams();
     if (activeStatus !== 'all') params.set('status', activeStatus);
     if (search) params.set('search', search);
-    $('rows').innerHTML = '<tr><td colspan="9" class="empty">Loading…</td></tr>';
+    $('rows').innerHTML = '<tr><td colspan="10" class="empty">Loading…</td></tr>';
     try {
       const r = await api('/api/admin/quotes?' + params);
       const data = await r.json();
@@ -193,7 +207,7 @@
       renderStats();
     } catch (e) {
       if (String(e.message) !== 'unauth')
-        $('rows').innerHTML = '<tr><td colspan="9" class="empty">Could not load leads.</td></tr>';
+        $('rows').innerHTML = '<tr><td colspan="10" class="empty">Could not load leads.</td></tr>';
     }
   }
 
@@ -219,10 +233,13 @@
   }
 
   function renderRows(rows){
-    if (!rows.length){ $('rows').innerHTML = '<tr><td colspan="9" class="empty">No leads found.</td></tr>'; return; }
+    selected.clear(); updateBulkBar();
+    if ($('select-all')) $('select-all').checked = false;
+    if (!rows.length){ $('rows').innerHTML = '<tr><td colspan="10" class="empty">No leads found.</td></tr>'; return; }
     $('rows').innerHTML = rows.map((r) => {
       const st = r.status || 'new';
       return `<tr data-id="${esc(r.id)}">
+        <td class="cb-col"><input type="checkbox" class="row-cb" data-id="${esc(r.id)}"></td>
         <td>${fmtDate(r.created_at)}</td>
         <td><strong>${esc(r.name||'—')}</strong><div class="sub">${esc(r.email||'')}</div></td>
         <td>${esc(r.phone||'—')}</td>
@@ -237,8 +254,20 @@
 
     document.querySelectorAll('#rows tr[data-id]').forEach((tr) => {
       tr.addEventListener('click', (e) => {
-        if (e.target.closest('[data-action="delete"]')) return;
+        if (e.target.closest('[data-action="delete"]') || e.target.closest('.row-cb')) return;
         window.location.href = '/admin/quote/' + tr.dataset.id;
+      });
+    });
+    document.querySelectorAll('.row-cb').forEach((cb) => {
+      cb.addEventListener('click', (e) => e.stopPropagation());
+      cb.addEventListener('change', (e) => {
+        const id = e.target.dataset.id;
+        const tr = e.target.closest('tr');
+        if (e.target.checked){ selected.add(id); tr.classList.add('selected'); }
+        else { selected.delete(id); tr.classList.remove('selected'); }
+        const all = document.querySelectorAll('.row-cb');
+        if ($('select-all')) $('select-all').checked = selected.size === all.length && all.length > 0;
+        updateBulkBar();
       });
     });
     document.querySelectorAll('[data-action="delete"]').forEach((b) => {
@@ -253,6 +282,13 @@
         } catch {}
       });
     });
+  }
+
+  // ── Multi-select bulk delete ──
+  const selected = new Set();
+  function updateBulkBar(){
+    $('bulk-count').textContent = selected.size + ' selected';
+    $('bulkbar').classList.toggle('open', selected.size > 0);
   }
 
   // ── Add customer modal ──
@@ -283,6 +319,38 @@
     } catch {
       $('add-error').textContent = 'Network error — please try again.';
     }
+  });
+
+  // ── Bulk select / delete ──
+  $('select-all').addEventListener('change', (e) => {
+    document.querySelectorAll('.row-cb').forEach((cb) => {
+      cb.checked = e.target.checked;
+      const tr = cb.closest('tr');
+      if (e.target.checked){ selected.add(cb.dataset.id); tr.classList.add('selected'); }
+      else { selected.delete(cb.dataset.id); tr.classList.remove('selected'); }
+    });
+    updateBulkBar();
+  });
+  $('bulk-clear').addEventListener('click', () => {
+    selected.clear();
+    document.querySelectorAll('.row-cb').forEach((cb) => { cb.checked = false; cb.closest('tr').classList.remove('selected'); });
+    $('select-all').checked = false;
+    updateBulkBar();
+  });
+  $('bulk-delete').addEventListener('click', async () => {
+    const ids = [...selected];
+    if (!ids.length) return;
+    if (!confirm('Delete ' + ids.length + ' lead' + (ids.length > 1 ? 's' : '') + ' permanently? This cannot be undone.')) return;
+    const btn = $('bulk-delete');
+    btn.disabled = true; btn.textContent = 'Deleting…';
+    const results = await Promise.allSettled(
+      ids.map((id) => api('/api/admin/quote/' + id, { method:'DELETE' }))
+    );
+    const failed = results.filter((r) => r.status === 'rejected' || (r.value && !r.value.ok)).length;
+    btn.disabled = false; btn.textContent = 'Delete selected';
+    if (failed) alert(failed + ' of ' + ids.length + ' could not be deleted. The rest were removed.');
+    selected.clear();
+    load();
   });
 
   // ── Controls ──
