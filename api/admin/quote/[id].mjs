@@ -19,12 +19,23 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'PATCH') {
-      const { status, value } = req.body || {};
+      const b = req.body || {};
       const fields = { updated_at: new Date().toISOString() };
-      if (status !== undefined) fields.status = status;
-      if (value !== undefined) {
-        fields.value = value === '' || value === null ? null : Number(value);
+
+      // Editable lead details — empty string clears the column to null.
+      const editable = [
+        'name', 'phone', 'email', 'service', 'from_postcode',
+        'to_postcode', 'property_size', 'move_date', 'notes', 'address',
+      ];
+      editable.forEach((k) => {
+        if (b[k] !== undefined) fields[k] = b[k] === '' ? null : b[k];
+      });
+
+      if (b.status !== undefined) fields.status = b.status;
+      if (b.value !== undefined) {
+        fields.value = b.value === '' || b.value === null ? null : Number(b.value);
       }
+
       const quote = await updateQuote(id, fields);
       return res.status(200).json({ quote });
     }

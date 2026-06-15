@@ -86,7 +86,7 @@
     return r;
   }
 
-  let QUOTE = null, APPTS = [];
+  let QUOTE = null, APPTS = [], pendingFlash = null;
 
   async function load(){
     if (!LEAD_ID){ $('content').innerHTML = '<p class="muted">No lead id supplied.</p>'; return; }
@@ -110,19 +110,51 @@
       <!-- LEFT -->
       <div>
         <div class="card">
-          <h2>Customer details <span class="pill ${st}" style="margin-left:8px">${labelFor(st)}</span></h2>
-          <dl>
-            <dt>Name</dt><dd>${esc(q.name||'—')}</dd>
-            <dt>Phone</dt><dd>${q.phone?`<a href="tel:${esc(q.phone)}">${esc(q.phone)}</a>`:'—'}</dd>
-            <dt>Email</dt><dd>${q.email?`<a href="mailto:${esc(q.email)}">${esc(q.email)}</a>`:'—'}</dd>
-            <dt>Service</dt><dd>${esc(q.service||'—')}</dd>
-            <dt>Moving from</dt><dd>${esc(q.from_postcode||'—')}</dd>
-            <dt>Moving to</dt><dd>${esc(q.to_postcode||'—')}</dd>
-            <dt>Property</dt><dd>${esc(q.property_size||'—')}</dd>
-            <dt>Move date</dt><dd>${fmtDate(q.move_date)}</dd>
-            <dt>Customer notes</dt><dd>${esc(q.notes||'—')}</dd>
-            <dt>Received</dt><dd>${fmtDate(q.created_at)}</dd>
-          </dl>
+          <h2>Customer details
+            <span class="pill ${st}" style="margin-left:8px">${labelFor(st)}</span>
+            <button class="btn" id="edit-toggle" style="float:right;padding:6px 12px">Edit</button>
+          </h2>
+
+          <!-- View mode -->
+          <div id="details-view">
+            <dl>
+              <dt>Name</dt><dd>${esc(q.name||'—')}</dd>
+              <dt>Phone</dt><dd>${q.phone?`<a href="tel:${esc(q.phone)}">${esc(q.phone)}</a>`:'—'}</dd>
+              <dt>Email</dt><dd>${q.email?`<a href="mailto:${esc(q.email)}">${esc(q.email)}</a>`:'—'}</dd>
+              <dt>Service</dt><dd>${esc(q.service||'—')}</dd>
+              <dt>Moving from</dt><dd>${esc(q.from_postcode||'—')}</dd>
+              <dt>Moving to</dt><dd>${esc(q.to_postcode||'—')}</dd>
+              <dt>Address</dt><dd>${esc(q.address||'—')}</dd>
+              <dt>Property</dt><dd>${esc(q.property_size||'—')}</dd>
+              <dt>Move date</dt><dd>${fmtDate(q.move_date)}</dd>
+              <dt>Customer notes</dt><dd>${esc(q.notes||'—')}</dd>
+              <dt>Received</dt><dd>${fmtDate(q.created_at)}</dd>
+            </dl>
+          </div>
+
+          <!-- Edit mode -->
+          <form id="details-edit" style="display:none">
+            <div class="inline">
+              <div><label>Name</label><input id="e-name" value="${esc(q.name||'')}"></div>
+              <div><label>Phone</label><input id="e-phone" value="${esc(q.phone||'')}"></div>
+            </div>
+            <label>Email</label><input id="e-email" type="email" value="${esc(q.email||'')}">
+            <label>Service</label><input id="e-service" value="${esc(q.service||'')}">
+            <div class="inline">
+              <div><label>Moving from</label><input id="e-from" value="${esc(q.from_postcode||'')}"></div>
+              <div><label>Moving to</label><input id="e-to" value="${esc(q.to_postcode||'')}"></div>
+            </div>
+            <div class="inline">
+              <div><label>Property</label><input id="e-property" value="${esc(q.property_size||'')}"></div>
+              <div><label>Move date</label><input id="e-date" type="date" value="${esc((q.move_date||'').slice(0,10))}"></div>
+            </div>
+            <label>Full address</label><textarea id="e-address">${esc(q.address||'')}</textarea>
+            <label>Customer notes</label><textarea id="e-notes">${esc(q.notes||'')}</textarea>
+            <div class="btn-row">
+              <button type="submit" class="btn primary">Save changes</button>
+              <button type="button" class="btn" id="edit-cancel">Cancel</button>
+            </div>
+          </form>
 
           <hr>
           <label>Job value (£)</label>
@@ -190,6 +222,7 @@
     </div>`;
 
     wire();
+    if (pendingFlash){ flash(pendingFlash.id, pendingFlash.msg, pendingFlash.ok); pendingFlash = null; }
   }
 
   function renderAppts(){
@@ -214,6 +247,47 @@
   }
 
   function wire(){
+    // ── Edit customer details ──
+    $('edit-toggle').addEventListener('click', () => {
+      const editing = $('details-edit').style.display !== 'none';
+      $('details-edit').style.display = editing ? 'none' : 'block';
+      $('details-view').style.display = editing ? 'block' : 'none';
+      $('edit-toggle').textContent = editing ? 'Edit' : 'Close';
+    });
+    $('edit-cancel').addEventListener('click', () => {
+      $('details-edit').style.display = 'none';
+      $('details-view').style.display = 'block';
+      $('edit-toggle').textContent = 'Edit';
+    });
+    $('details-edit').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        name: $('e-name').value.trim(),
+        phone: $('e-phone').value.trim(),
+        email: $('e-email').value.trim(),
+        service: $('e-service').value.trim(),
+        from_postcode: $('e-from').value.trim(),
+        to_postcode: $('e-to').value.trim(),
+        property_size: $('e-property').value.trim(),
+        move_date: $('e-date').value,
+        address: $('e-address').value.trim(),
+        notes: $('e-notes').value.trim(),
+      };
+      try {
+        const r = await api('/api/admin/quote/' + LEAD_ID, {
+          method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload),
+        });
+        if (r.ok){
+          QUOTE = (await r.json()).quote;
+          pendingFlash = { id:'flash-left', msg:'Customer details saved.', ok:true };
+          render();
+        } else {
+          const d = await r.json().catch(() => ({}));
+          flash('flash-left', 'Could not save: ' + (d.error || 'error'), false);
+        }
+      } catch { flash('flash-left', 'Network error — please try again.', false); }
+    });
+
     $('save-value').addEventListener('click', async () => {
       try {
         const r = await api('/api/admin/quote/' + LEAD_ID, {

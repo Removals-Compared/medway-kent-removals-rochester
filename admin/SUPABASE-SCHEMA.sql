@@ -30,6 +30,7 @@ ALTER TABLE quote_requests
   ADD COLUMN IF NOT EXISTS admin_notes jsonb DEFAULT '[]'::jsonb,
   ADD COLUMN IF NOT EXISTS updated_at  timestamptz DEFAULT now(),
   ADD COLUMN IF NOT EXISTS value       numeric(10,2),
+  ADD COLUMN IF NOT EXISTS address     text,
   ADD COLUMN IF NOT EXISTS created_at  timestamptz DEFAULT now();
 
 UPDATE quote_requests SET status = 'new' WHERE status IS NULL;
