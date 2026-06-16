@@ -347,13 +347,20 @@
       const data = await r.json();
       if (r.ok && data.ok){
         await patchStatus(newStatus);
-        const warn = (data.errors||[]).map((e) => e.step).join(', ');
-        flash(flashId, warn ? 'Booked, but '+warn+' did not complete.' : 'Booked, calendar + email sent.', !warn);
+        const errs = data.errors || [];
+        if (errs.length){
+          // Surface the real reason (e.g. the exact Google Calendar / email error).
+          const msg = errs.map((e) => e.step + ': ' + (e.message || 'failed')).join(' — ');
+          flash(flashId, 'Saved, but ' + msg, false);
+          console.warn('Appointment partial failure:', errs);
+        } else {
+          flash(flashId, 'Booked — calendar event created and email sent.', true);
+        }
         await load();
       } else {
         flash(flashId, 'Could not book: ' + (data.error||'error'), false);
       }
-    } catch {}
+    } catch { flash(flashId, 'Network error — please try again.', false); }
   }
 
   load();
