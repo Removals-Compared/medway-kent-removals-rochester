@@ -376,4 +376,10 @@ section.cream2{background:var(--cream2)}
   .contact-box{padding:24px 18px}
 }
 
+/* Mobile: stack CTA button groups so the mobile number sits under the CTA */
+@media(max-width:600px){
+  .loc-hero-actions,.cta-actions,.hero-actions{flex-direction:column;align-items:stretch}
+  .loc-hero-actions .btn,.cta-actions .btn,.hero-actions .btn{width:100%;justify-content:center}
+}
+
 .nav-links > li > a.active{color:var(--white);background:rgba(255,255,255,0.12);}
