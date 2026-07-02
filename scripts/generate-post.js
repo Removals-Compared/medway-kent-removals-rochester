@@ -379,6 +379,18 @@ async function main() {
     fs.writeFileSync(outputPath, html, 'utf8');
     console.log(`Saved: blog/posts/${post.slug}.html`);
 
+    // Add the new post to sitemap.xml so Google can discover it
+    const sitemapPath = path.join(__dirname, '..', 'sitemap.xml');
+    let sitemap = fs.readFileSync(sitemapPath, 'utf8');
+    const postLoc = `https://www.medwaykentremovals.co.uk/blog/posts/${post.slug}`;
+    if (!sitemap.includes(`<loc>${postLoc}</loc>`)) {
+      const today = new Date().toISOString().slice(0, 10);
+      const entry = `  <url>\n    <loc>${postLoc}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>\n</urlset>`;
+      sitemap = sitemap.replace('</urlset>', entry);
+      fs.writeFileSync(sitemapPath, sitemap, 'utf8');
+      console.log(`Added to sitemap: ${postLoc}`);
+    }
+
     // Save current day for git commit message
     fs.writeFileSync(path.join(__dirname, 'current-day.txt'), String(todayDay));
 
