@@ -291,11 +291,11 @@ function buildHtmlPage(post, articleContent) {
         <div class="side-card" style="background:var(--navy);border-color:var(--navy)">
           <h4 style="color:#fff">Our services</h4>
           <ul style="list-style:none;display:flex;flex-direction:column;gap:10px">
-            <li><a href="/services#house" style="font-size:14px;color:rgba(255,255,255,0.7);text-decoration:none">House Removals Rochester</a></li>
-            <li><a href="/services#packing" style="font-size:14px;color:rgba(255,255,255,0.7);text-decoration:none">Packing Services</a></li>
-            <li><a href="/services#office" style="font-size:14px;color:rgba(255,255,255,0.7);text-decoration:none">Office Removals</a></li>
-            <li><a href="/services#manvan" style="font-size:14px;color:rgba(255,255,255,0.7);text-decoration:none">Man and Van</a></li>
-            <li><a href="/services#storage" style="font-size:14px;color:rgba(255,255,255,0.7);text-decoration:none">Storage Solutions</a></li>
+            <li><a href="/house-removals" style="font-size:14px;color:rgba(255,255,255,0.7);text-decoration:none">House Removals Rochester</a></li>
+            <li><a href="/packing-services" style="font-size:14px;color:rgba(255,255,255,0.7);text-decoration:none">Packing Services</a></li>
+            <li><a href="/office-removals" style="font-size:14px;color:rgba(255,255,255,0.7);text-decoration:none">Office Removals</a></li>
+            <li><a href="/man-and-van" style="font-size:14px;color:rgba(255,255,255,0.7);text-decoration:none">Man and Van</a></li>
+            <li><a href="/storage" style="font-size:14px;color:rgba(255,255,255,0.7);text-decoration:none">Storage Solutions</a></li>
           </ul>
         </div>
       </aside>
@@ -318,7 +318,7 @@ function buildHtmlPage(post, articleContent) {
       <div class="footer-contact-item">&#128205; <span>47 Knight Templar Way, Rochester, Kent, ME2 2ZE</span></div>
       <div class="footer-contact-item">&#128222; <a href="tel:01634971005">01634 971005</a></div>
     </div>
-    <div class="footer-col"><h4>Services</h4><ul><li><a href="/services#house">House Removals</a></li><li><a href="/services#packing">Packing Services</a></li><li><a href="/services#office">Office Removals</a></li><li><a href="/services#manvan">Man and Van</a></li></ul></div>
+    <div class="footer-col"><h4>Services</h4><ul><li><a href="/house-removals">House Removals</a></li><li><a href="/packing-services">Packing Services</a></li><li><a href="/office-removals">Office Removals</a></li><li><a href="/man-and-van">Man and Van</a></li></ul></div>
     <div class="footer-col"><h4>Blog</h4><ul><li><a href="/blog">All Articles</a></li></ul></div>
     <div class="footer-col"><h4>Company</h4><ul><li><a href="/about">About Us</a></li><li><a href="/contact">Get a Quote</a></li><li><a href="/privacy-policy">Privacy Policy</a></li></ul></div>
   </div>
