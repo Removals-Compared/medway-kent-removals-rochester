@@ -31,7 +31,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,600&display=swap" rel="stylesheet">
 
 <!-- Existing site stylesheet (kept for global tokens / shared rules) -->
 <link rel="stylesheet" href="/style.css">
@@ -114,23 +114,24 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- Inline styles -->
 <style>
 :root{
-  --navy:#0d1f3c;
-  --navy-deep:#070f1f;
-  --accent:#e04e1b;
-  --accent-dark:#c4400e;
-  --cream:#fff7f0;
-  --border:#e3e6ec;
-  --muted:#666;
-  --text:#1a1a1a;
-  --ff-display:"Syne", system-ui, sans-serif;
+  --navy:#16294a;
+  --navy-deep:#0e1c33;
+  --accent:#c94d1e;
+  --accent-dark:#b0431a;
+  --paper:#fbf8f2;
+  --cream:#f6f0e4;
+  --border:#e9e0cd;
+  --muted:#57647e;
+  --text:#22304a;
+  --ff-display:"Fraunces", Georgia, "Times New Roman", serif;
   --ff-body:"DM Sans", system-ui, sans-serif;
-  --sh:0 12px 32px rgba(0,0,0,0.10);
+  --sh:0 12px 32px rgba(74,58,30,0.10);
 }
 html{scroll-behavior:smooth}
 body{
   margin:0;padding:0;
   font-family:var(--ff-body);font-size:16px;line-height:1.6;color:var(--text);
-  background:#fff;
+  background:var(--paper);
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
 }
 *,*::before,*::after{box-sizing:border-box}
@@ -141,8 +142,8 @@ a{color:var(--accent)}
 /* ============== HEADER ============== */
 #site-nav{
   position:sticky;top:0;z-index:1000;
-  background:var(--navy);
-  box-shadow:0 1px 0 rgba(255,255,255,0.04), 0 4px 16px rgba(0,0,0,0.18);
+  background:var(--paper);
+  box-shadow:0 1px 0 var(--border), 0 4px 16px rgba(74,58,30,0.07);
 }
 #site-nav .nav-inner{
   max-width:1280px;margin:0 auto;padding:18px 24px;
@@ -151,11 +152,11 @@ a{color:var(--accent)}
 }
 #site-nav .nav-logo{
   display:flex;align-items:center;gap:10px;
-  text-decoration:none;color:#fff;
+  text-decoration:none;color:var(--navy);
   font-family:var(--ff-display);font-weight:700;
 }
 #site-nav .nav-logo img{display:block;border-radius:6px}
-#site-nav .nav-logo-text{font-size:16px;line-height:1;letter-spacing:-0.01em;color:#fff}
+#site-nav .nav-logo-text{font-size:16px;line-height:1;letter-spacing:0;color:var(--navy)}
 #site-nav .nav-logo-text span{color:var(--accent)}
 
 #site-nav .nav-links{
@@ -166,15 +167,15 @@ a{color:var(--accent)}
 #site-nav .nav-links li > button{
   display:inline-flex;align-items:center;gap:5px;
   padding:10px 14px;
-  color:#ffffff !important;text-decoration:none;
-  font-size:15px;font-weight:700 !important;font-family:var(--ff-body);
+  color:var(--navy) !important;text-decoration:none;
+  font-size:15px;font-weight:600 !important;font-family:var(--ff-body);
   background:none;border:0;cursor:pointer;
   border-radius:6px;
   white-space:nowrap !important;
   transition:color 0.15s, background 0.15s;
 }
 #site-nav .nav-links li > a:hover,
-#site-nav .nav-links li > button:hover{color:#fff !important;background:rgba(255,255,255,0.08)}
+#site-nav .nav-links li > button:hover{color:var(--accent) !important;background:var(--cream)}
 
 /* services dropdown */
 #site-nav .nav-links li{position:relative}
@@ -225,14 +226,14 @@ li:hover .dropdown{display:block}
 }
 #site-nav .nav-phone{
   display:inline-flex;align-items:center;gap:8px;
-  padding:9px 14px;color:#fff;text-decoration:none;
+  padding:9px 14px;color:var(--navy);text-decoration:none;
   font-size:14.5px;font-weight:600;
-  border:1.5px solid rgba(255,255,255,0.22);border-radius:8px;
+  border:1.5px solid var(--border);border-radius:8px;
   white-space:nowrap;
   transition:border-color 0.15s, background 0.15s;
 }
 #site-nav .nav-phone:hover{
-  border-color:var(--accent);background:rgba(224,78,27,0.10);
+  border-color:var(--accent);background:rgba(201,77,30,0.08);
 }
 #site-nav .nav-phone-icon{font-size:14px;line-height:1}
 #site-nav .nav-cta{
@@ -254,26 +255,26 @@ li:hover .dropdown{display:block}
   flex-direction:column;justify-content:center;gap:5px;align-items:center;
 }
 #site-nav .mob-toggle span{
-  display:block;width:22px;height:2px;background:#fff;border-radius:2px;
+  display:block;width:22px;height:2px;background:var(--navy);border-radius:2px;
 }
 
 /* mobile overlay */
 #mobile-overlay{
   display:none;position:fixed;inset:0;z-index:1100;
-  background:var(--navy);overflow-y:auto;padding:20px 18px 40px;
+  background:var(--paper);overflow-y:auto;padding:20px 18px 40px;
 }
 #mobile-overlay.open{display:block}
 #mobile-overlay .mob-close{
   position:absolute;top:14px;right:14px;
-  background:transparent;border:0;color:#fff;font-size:22px;cursor:pointer;
+  background:transparent;border:0;color:var(--navy);font-size:22px;cursor:pointer;
   width:40px;height:40px;
 }
 .mob-nav-link{
   display:block;padding:12px 14px;
-  color:#fff;text-decoration:none;font-size:16px;font-weight:500;
-  border-bottom:1px solid rgba(255,255,255,0.06);
+  color:var(--text);text-decoration:none;font-size:16px;font-weight:500;
+  border-bottom:1px solid var(--border);
 }
-.mob-nav-link:hover{background:rgba(255,255,255,0.04)}
+.mob-nav-link:hover{background:var(--cream)}
 
 @media (max-width:980px){
   #site-nav .nav-inner{min-height:64px;padding:12px 16px;gap:12px}
@@ -285,22 +286,23 @@ li:hover .dropdown{display:block}
 /* ============== HERO ============== */
 .hero-v2{
   position:relative;
-  background:var(--navy);color:#fff;
+  background:var(--paper);color:var(--text);
   overflow:hidden;
   padding:64px 0 80px;
+  border-bottom:1px solid var(--border);
 }
 .hero-v2-bg{
   position:absolute;inset:0;z-index:0;pointer-events:none;
 }
 .hero-v2-bg img{
   width:100%;height:100%;object-fit:cover;object-position:center 40%;
-  opacity:0.35;
+  opacity:0.22;
 }
 .hero-v2-bg-overlay{
   position:absolute;inset:0;
   background:
-    linear-gradient(135deg, rgba(13,31,60,0.88) 0%, rgba(13,31,60,0.62) 60%, rgba(13,31,60,0.85) 100%),
-    radial-gradient(ellipse at 70% 30%, rgba(224,78,27,0.18), transparent 55%);
+    linear-gradient(135deg, rgba(251,248,242,0.96) 0%, rgba(251,248,242,0.82) 55%, rgba(246,240,228,0.94) 100%),
+    radial-gradient(ellipse at 70% 30%, rgba(201,77,30,0.07), transparent 55%);
 }
 .hero-v2-container{
   position:relative;z-index:1;
@@ -311,23 +313,24 @@ li:hover .dropdown{display:block}
 .hero-v2-content{padding-top:8px}
 .hero-v2-eyebrow{
   display:inline-block;
-  background:rgba(255,255,255,0.08);
-  border:1px solid rgba(255,255,255,0.15);
-  color:#ffd9c8;
+  background:var(--cream);
+  border:1px solid var(--border);
+  color:var(--accent);
   padding:7px 14px;border-radius:30px;
   font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
   margin-bottom:24px;
 }
 .hero-v2-h1{
   font-family:var(--ff-display);
-  font-size:clamp(36px, 5vw, 60px);
-  line-height:1.05;letter-spacing:-0.025em;font-weight:800;
-  color:#fff;margin:0 0 22px;
+  font-size:clamp(36px, 5vw, 58px);
+  line-height:1.08;letter-spacing:0;font-weight:700;
+  font-optical-sizing:auto;
+  color:var(--navy);margin:0 0 22px;
 }
-.hero-v2-h1 em{color:var(--accent);font-style:italic;font-weight:800}
+.hero-v2-h1 em{color:var(--accent);font-style:italic;font-weight:700}
 .hero-v2-lead{
-  font-size:17px;line-height:1.6;
-  color:rgba(255,255,255,0.82);
+  font-size:17px;line-height:1.65;
+  color:var(--muted);
   margin:0 0 32px;max-width:60ch;
 }
 .hero-v2-ctas{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:38px}
@@ -336,21 +339,21 @@ li:hover .dropdown{display:block}
   background:var(--accent);color:#fff;
   padding:16px 28px;border-radius:8px;
   font-size:15px;font-weight:700;text-decoration:none;
-  box-shadow:0 6px 18px rgba(224,78,27,0.25);
+  box-shadow:0 6px 18px rgba(201,77,30,0.25);
   transition:transform 0.1s, background 0.15s;
 }
 .hero-v2-btn-primary:hover{background:var(--accent-dark);transform:translateY(-1px)}
 .hero-v2-btn-phone{
   display:inline-flex;align-items:center;gap:8px;
-  background:transparent;color:#fff;
+  background:#fff;color:var(--navy);
   padding:15px 22px;border-radius:8px;
-  border:1.5px solid rgba(255,255,255,0.3);
+  border:1.5px solid var(--border);
   font-size:15px;font-weight:600;text-decoration:none;
   transition:border-color 0.15s, background 0.15s;
 }
 .hero-v2-btn-phone:hover{
   border-color:var(--accent);
-  background:rgba(224,78,27,0.10);
+  background:var(--cream);
 }
 .hero-v2-trust{
   list-style:none;padding:0;margin:0;
@@ -362,16 +365,17 @@ li:hover .dropdown{display:block}
   font-size:13.5px;line-height:1.4;
 }
 .hero-v2-trust .ico{font-size:22px;line-height:1;flex-shrink:0;width:30px}
-.hero-v2-trust strong{color:#fff;font-weight:700;font-size:14px;display:block}
-.hero-v2-trust .muted-t{color:rgba(255,255,255,0.6);font-size:12.5px;display:block}
+.hero-v2-trust strong{color:var(--navy);font-weight:700;font-size:14px;display:block}
+.hero-v2-trust .muted-t{color:var(--muted);font-size:12.5px;display:block}
 .hero-v2-trust .hero-v2-stars{
-  display:block;color:#fbbf24;font-size:13px;letter-spacing:1.5px;margin:2px 0;line-height:1;
+  display:block;color:#e0a52e;font-size:13px;letter-spacing:1.5px;margin:2px 0;line-height:1;
 }
 
 .hero-v2-formcard{
-  background:#fff;color:#1a1a1a;
+  background:#fff;color:var(--text);
   border-radius:14px;padding:30px 30px 26px;
-  box-shadow:0 24px 60px rgba(0,0,0,0.35);
+  border:1px solid var(--border);
+  box-shadow:0 20px 48px rgba(74,58,30,0.14);
   position:sticky;top:96px;
 }
 .hero-v2-formcard h2{
@@ -394,7 +398,7 @@ li:hover .dropdown{display:block}
 .hero-v2-field input:focus,
 .hero-v2-field select:focus{
   outline:0;border-color:var(--accent);background:#fff;
-  box-shadow:0 0 0 3px rgba(224,78,27,0.12);
+  box-shadow:0 0 0 3px rgba(201,77,30,0.12);
 }
 .hero-v2-field select{
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' width='14' height='14'><path d='M2 4l5 5 5-5' stroke='%23666' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
@@ -524,7 +528,7 @@ section.s-block.alt{background:var(--cream)}
 .rev{
   background:#fff;border:1px solid var(--border);border-radius:14px;padding:28px;
 }
-.rev .stars{color:#fbbf24;font-size:16px;margin-bottom:14px;letter-spacing:2px}
+.rev .stars{color:#e0a52e;font-size:16px;margin-bottom:14px;letter-spacing:2px}
 .rev p{font-size:14.5px;color:var(--text);line-height:1.7;margin:0 0 22px;font-style:italic}
 .rev .who{display:flex;align-items:center;gap:12px;border-top:1px solid var(--border);padding-top:18px}
 .rev .who .av{
@@ -712,7 +716,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <nav id="site-nav" role="navigation" aria-label="Main navigation">
   <div class="nav-inner">
     <a class="nav-logo" href="/" aria-label="Medway and Kent Removals Home">
-      <img src="/images/mkr-logo-on-dark.webp" alt="" width="48" height="48" fetchpriority="high" decoding="async">
+      <img src="/images/mkr-logo-on-light.webp" alt="" width="48" height="48" fetchpriority="high" decoding="async">
       <span class="nav-logo-text">Medway &amp; Kent <span>Removals</span></span>
     </a>
 
@@ -792,7 +796,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <div id="mobile-overlay" role="dialog" aria-modal="true">
   <button class="mob-close" onclick="toggleMobile()" aria-label="Close menu">&#10005;</button>
-  <img src="/images/mkr-logo-on-dark.webp" alt="Medway and Kent Removals" width="90" height="90" loading="lazy" decoding="async" style="display:block;margin:8px auto 18px;border-radius:8px">
+  <img src="/images/mkr-logo-on-light.webp" alt="Medway and Kent Removals" width="90" height="90" loading="lazy" decoding="async" style="display:block;margin:8px auto 18px;border-radius:8px">
 
   <a class="mob-nav-link" href="tel:01634971005" style="background:var(--accent);color:#fff;border-radius:8px;padding:12px 16px;margin-bottom:6px;font-weight:700;text-align:center">&#128222; Call 01634 971005</a>
 
