@@ -32,6 +32,8 @@
   tbody tr{ cursor:pointer; }
   tbody tr:hover{ background:#fafbff; }
   .sub{ color:#889; font-size:12px; }
+  .tel-link{ color:var(--orange); text-decoration:none; font-weight:600; white-space:nowrap; }
+  .tel-link:hover{ text-decoration:underline; }
   .pill{ display:inline-block; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:700; }
   .pill.new{ background:#e8f0ff; color:#1d4ed8; }
   .pill.contacted{ background:#fff4e0; color:#b45309; }
@@ -276,7 +278,7 @@
         <td><strong>${esc(r.name||'—')}</strong><div class="sub">${esc(r.email||'')}</div>${remHtml}</td>
         <td><span class="pill ${st}">${labelFor(st)}</span></td>
         <td>${fmtDate(r.created_at)}</td>
-        <td>${esc(r.phone||'—')}</td>
+        <td>${r.phone ? `<a class="tel-link" href="tel:${esc(String(r.phone).replace(/[^\d+]/g,''))}">${esc(r.phone)}</a>` : '—'}</td>
         <td>${esc(r.service||'—')}</td>
         <td>${esc(r.from_postcode||'—')} <span class="sub">→</span> ${esc(r.to_postcode||'—')}</td>
         <td>${fmtDate(r.move_date)}</td>
@@ -287,7 +289,7 @@
 
     document.querySelectorAll('#rows tr[data-id]').forEach((tr) => {
       tr.addEventListener('click', (e) => {
-        if (e.target.closest('[data-action="delete"]') || e.target.closest('.row-cb')) return;
+        if (e.target.closest('[data-action="delete"]') || e.target.closest('.row-cb') || e.target.closest('.tel-link')) return;
         window.location.href = '/admin/quote/' + tr.dataset.id;
       });
     });
