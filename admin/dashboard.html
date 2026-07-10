@@ -34,6 +34,7 @@
   .sub{ color:#889; font-size:12px; }
   .tel-link{ color:var(--orange); text-decoration:none; font-weight:600; white-space:nowrap; }
   .tel-link:hover{ text-decoration:underline; }
+  .tel-icon{ display:none; }
   .pill{ display:inline-block; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:700; }
   .pill.new{ background:#e8f0ff; color:#1d4ed8; }
   .pill.contacted{ background:#fff4e0; color:#b45309; }
@@ -78,15 +79,17 @@
     .stat{ min-width:88px; flex:0 0 auto; padding:10px 12px; }
     .stat .n{ font-size:20px; }
     .controls input[type=search]{ min-width:0; width:100%; flex:1 0 100%; }
-    th, td{ padding:8px 6px; font-size:12.5px; }
+    th, td{ padding:8px 5px; font-size:12.5px; }
     td .sub{ word-break:break-all; }
     .rem-badge{ white-space:normal; }
-    td:nth-child(5){ white-space:nowrap; }            /* phone on one line */
-    th:nth-child(10), td:nth-child(10){ width:26px; padding-left:0; padding-right:4px; }
-    /* keep only Name, Status, Phone, delete — tap a row for the rest */
+    /* phone shows as a clean tappable icon instead of the number */
+    .tel-num{ display:none; }
+    .tel-icon{ display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%; background:#fff4ef; color:var(--orange); }
+    th:nth-child(6), td:nth-child(6){ text-align:center; width:44px; }   /* phone */
+    th:nth-child(10), td:nth-child(10){ width:24px; padding-left:0; padding-right:4px; }
+    /* keep only Name, Status, Move date, Phone, delete — tap a row for the rest */
     th:nth-child(1), td:nth-child(1),
-    th:nth-child(4), td:nth-child(4),
-    th:nth-child(6), td:nth-child(6),
+    th:nth-child(5), td:nth-child(5),
     th:nth-child(7), td:nth-child(7),
     th:nth-child(8), td:nth-child(8),
     th:nth-child(9), td:nth-child(9){ display:none; }
@@ -130,8 +133,8 @@
       <thead>
         <tr>
           <th class="cb-col"><input type="checkbox" id="select-all" title="Select all"></th>
-          <th>Name</th><th>Status</th><th>Received</th><th>Phone</th><th>Service</th>
-          <th>From / To</th><th>Move date</th><th>Value</th><th></th>
+          <th>Name</th><th>Status</th><th>Move date</th><th>Received</th><th>Phone</th><th>Service</th>
+          <th>From / To</th><th>Value</th><th></th>
         </tr>
       </thead>
       <tbody id="rows"><tr><td colspan="10" class="empty">Loading…</td></tr></tbody>
@@ -289,11 +292,11 @@
         <td class="cb-col"><input type="checkbox" class="row-cb" data-id="${esc(r.id)}"></td>
         <td><strong>${esc(r.name||'—')}</strong><div class="sub">${esc(r.email||'')}</div>${remHtml}</td>
         <td><span class="pill ${st}">${labelFor(st)}</span></td>
+        <td>${fmtDate(r.move_date)}</td>
         <td>${fmtDate(r.created_at)}</td>
-        <td>${r.phone ? `<a class="tel-link" href="tel:${esc(String(r.phone).replace(/[^\d+]/g,''))}">${esc(r.phone)}</a>` : '—'}</td>
+        <td>${r.phone ? `<a class="tel-link" href="tel:${esc(String(r.phone).replace(/[^\d+]/g,''))}" aria-label="Call ${esc(r.phone)}"><span class="tel-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.4 0 .8-.3 1l-2.2 2.2z"/></svg></span><span class="tel-num">${esc(r.phone)}</span></a>` : '—'}</td>
         <td>${esc(r.service||'—')}</td>
         <td>${esc(r.from_postcode||'—')} <span class="sub">→</span> ${esc(r.to_postcode||'—')}</td>
-        <td>${fmtDate(r.move_date)}</td>
         <td>${fmtMoney(r.value)}</td>
         <td><button class="trash" data-action="delete" title="Delete">🗑</button></td>
       </tr>`;
