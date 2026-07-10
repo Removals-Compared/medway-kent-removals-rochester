@@ -65,6 +65,30 @@
   td.cb-col, th.cb-col{ text-align:center; }
   #rows input[type=checkbox]{ width:16px; height:16px; cursor:pointer; }
   tr.selected{ background:#fff6f2 !important; }
+
+  /* ── Mobile ── */
+  @media(max-width:640px){
+    .wrap{ padding:14px 12px; }
+    .topbar{ padding:12px 14px; gap:8px; }
+    .topbar .crumb{ display:none; }
+    /* stat cards become a swipeable strip instead of 4 stacked rows */
+    .stats{ flex-wrap:nowrap; overflow-x:auto; gap:8px; margin-bottom:16px; padding-bottom:4px; -webkit-overflow-scrolling:touch; }
+    .stat{ min-width:88px; flex:0 0 auto; padding:10px 12px; }
+    .stat .n{ font-size:20px; }
+    .controls input[type=search]{ min-width:0; width:100%; flex:1 0 100%; }
+    th, td{ padding:8px 6px; font-size:12.5px; }
+    td .sub{ word-break:break-all; }
+    .rem-badge{ white-space:normal; }
+    td:nth-child(5){ white-space:nowrap; }            /* phone on one line */
+    th:nth-child(10), td:nth-child(10){ width:26px; padding-left:0; padding-right:4px; }
+    /* keep only Name, Status, Phone, delete — tap a row for the rest */
+    th:nth-child(1), td:nth-child(1),
+    th:nth-child(4), td:nth-child(4),
+    th:nth-child(6), td:nth-child(6),
+    th:nth-child(7), td:nth-child(7),
+    th:nth-child(8), td:nth-child(8),
+    th:nth-child(9), td:nth-child(9){ display:none; }
+  }
 </style>
 </head>
 <body>
@@ -104,8 +128,8 @@
       <thead>
         <tr>
           <th class="cb-col"><input type="checkbox" id="select-all" title="Select all"></th>
-          <th>Received</th><th>Name</th><th>Phone</th><th>Service</th>
-          <th>From / To</th><th>Move date</th><th>Status</th><th>Value</th><th></th>
+          <th>Name</th><th>Status</th><th>Received</th><th>Phone</th><th>Service</th>
+          <th>From / To</th><th>Move date</th><th>Value</th><th></th>
         </tr>
       </thead>
       <tbody id="rows"><tr><td colspan="10" class="empty">Loading…</td></tr></tbody>
@@ -249,13 +273,13 @@
         : '';
       return `<tr data-id="${esc(r.id)}">
         <td class="cb-col"><input type="checkbox" class="row-cb" data-id="${esc(r.id)}"></td>
-        <td>${fmtDate(r.created_at)}</td>
         <td><strong>${esc(r.name||'—')}</strong><div class="sub">${esc(r.email||'')}</div>${remHtml}</td>
+        <td><span class="pill ${st}">${labelFor(st)}</span></td>
+        <td>${fmtDate(r.created_at)}</td>
         <td>${esc(r.phone||'—')}</td>
         <td>${esc(r.service||'—')}</td>
         <td>${esc(r.from_postcode||'—')} <span class="sub">→</span> ${esc(r.to_postcode||'—')}</td>
         <td>${fmtDate(r.move_date)}</td>
-        <td><span class="pill ${st}">${labelFor(st)}</span></td>
         <td>${fmtMoney(r.value)}</td>
         <td><button class="trash" data-action="delete" title="Delete">🗑</button></td>
       </tr>`;
