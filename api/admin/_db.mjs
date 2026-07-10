@@ -155,6 +155,27 @@ export async function createReminder(row) {
   return rows[0] || null;
 }
 
+export async function updateReminder(id, fields) {
+  const r = await fetch(`${base()}/${REMIND}?id=eq.${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: headers({ Prefer: 'return=representation' }),
+    body: JSON.stringify(fields),
+  });
+  if (!r.ok) throw new Error(`updateReminder ${r.status}: ${await r.text()}`);
+  const rows = await r.json();
+  return rows[0] || null;
+}
+
+export async function fetchReminder(id) {
+  const r = await fetch(
+    `${base()}/${REMIND}?id=eq.${encodeURIComponent(id)}&select=*&limit=1`,
+    { headers: headers() }
+  );
+  if (!r.ok) throw new Error(`fetchReminder ${r.status}: ${await r.text()}`);
+  const rows = await r.json();
+  return rows[0] || null;
+}
+
 export async function deleteReminder(id) {
   const r = await fetch(`${base()}/${REMIND}?id=eq.${encodeURIComponent(id)}`, {
     method: 'DELETE',
@@ -185,7 +206,7 @@ export async function fetchRemindersByLeadIds(ids) {
 export async function fetchPendingReminders() {
   try {
     const r = await fetch(
-      `${base()}/${REMIND}?sent=eq.false&select=lead_id,remind_on,note&order=remind_on.asc`,
+      `${base()}/${REMIND}?sent=eq.false&select=lead_id,remind_on,remind_time,note&order=remind_on.asc`,
       { headers: headers() }
     );
     if (!r.ok) return [];
@@ -195,10 +216,13 @@ export async function fetchPendingReminders() {
   }
 }
 
-// Cron: reminders due on/before `today` (YYYY-MM-DD) that haven't been sent.
+// Cron backup: reminders due on/before `today` that haven't been sent AND
+// never made it onto Google Calendar (gcal_event_id is null). When the
+// calendar event exists, Google itself notifies at the chosen time, so the
+// cron skips it to avoid a duplicate alert.
 export async function fetchDueReminders(today) {
   const r = await fetch(
-    `${base()}/${REMIND}?sent=eq.false&remind_on=lte.${today}&select=*&order=remind_on.asc`,
+    `${base()}/${REMIND}?sent=eq.false&gcal_event_id=is.null&remind_on=lte.${today}&select=*&order=remind_on.asc`,
     { headers: headers() }
   );
   if (!r.ok) throw new Error(`fetchDueReminders ${r.status}: ${await r.text()}`);

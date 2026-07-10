@@ -60,14 +60,22 @@ CREATE INDEX IF NOT EXISTS appointments_lead_idx ON appointments (lead_id);
 -- A daily Vercel cron (/api/admin/reminders-run) emails you when remind_on
 -- arrives. RLS stays OFF (same anon-key reasoning as above).
 CREATE TABLE IF NOT EXISTS reminders (
-  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  lead_id    bigint NOT NULL,
-  remind_on  date NOT NULL,
-  note       text,
-  sent       boolean DEFAULT false,
-  sent_at    timestamptz,
-  created_at timestamptz DEFAULT now()
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  lead_id       bigint NOT NULL,
+  remind_on     date NOT NULL,
+  remind_time   text,               -- HH:MM (local UK time) you chose
+  note          text,
+  gcal_event_id text,               -- the "Call …" Google Calendar event
+  sent          boolean DEFAULT false,
+  sent_at       timestamptz,
+  created_at    timestamptz DEFAULT now()
 );
+
+-- If the reminders table already exists from an earlier version, add the
+-- new columns (safe to run repeatedly):
+ALTER TABLE reminders
+  ADD COLUMN IF NOT EXISTS remind_time   text,
+  ADD COLUMN IF NOT EXISTS gcal_event_id text;
 
 CREATE INDEX IF NOT EXISTS reminders_due_idx  ON reminders (remind_on, sent);
 CREATE INDEX IF NOT EXISTS reminders_lead_idx ON reminders (lead_id);

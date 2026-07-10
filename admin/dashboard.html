@@ -245,7 +245,7 @@
       const st = r.status || 'new';
       const rem = r.reminder;
       const remHtml = rem
-        ? `<div class="rem-badge ${rem.remind_on <= today ? 'due' : ''}">&#128222; Call ${fmtDate(rem.remind_on)}${rem.note ? ' · ' + esc(rem.note) : ''}</div>`
+        ? `<div class="rem-badge ${rem.remind_on <= today ? 'due' : ''}">&#128222; Call ${fmtDate(rem.remind_on)}${rem.remind_time ? ' ' + esc(rem.remind_time) : ''}${rem.note ? ' · ' + esc(rem.note) : ''}</div>`
         : '';
       return `<tr data-id="${esc(r.id)}">
         <td class="cb-col"><input type="checkbox" class="row-cb" data-id="${esc(r.id)}"></td>

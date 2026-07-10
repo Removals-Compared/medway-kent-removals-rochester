@@ -224,13 +224,15 @@
         <div class="card">
           <h2>Call reminders</h2>
           <div id="rem-list">${renderReminders()}</div>
-          <label>Remind me to call on</label>
-          <input type="date" id="rem-date">
+          <div class="inline">
+            <div><label>Date</label><input type="date" id="rem-date"></div>
+            <div><label>Time</label><input type="time" id="rem-time" value="09:30"></div>
+          </div>
           <label>Note (optional)</label>
           <input id="rem-note" placeholder="e.g. Follow up after survey">
           <div class="btn-row"><button class="btn orange" id="set-reminder">Set reminder</button></div>
           <p class="flash" id="flash-rem"></p>
-          <p class="muted" style="font-size:12px;margin-top:8px">You&#39;ll get an email that morning.</p>
+          <p class="muted" style="font-size:12px;margin-top:8px">Adds a “Call” event to Google Calendar and alerts you at that time.</p>
         </div>
       </div>
     </div>`;
@@ -254,8 +256,8 @@
     if (!REMINDERS.length) return '<p class="muted">No reminders set.</p>';
     return REMINDERS.map((r) => `
       <div class="appt" data-rem="${esc(r.id)}">
-        <div class="when">&#128222; ${fmtDate(r.remind_on)}</div>
-        <div class="meta">${r.note ? esc(r.note) : 'Call reminder'} &middot; ${r.sent ? '&#9989; emailed' : 'pending'}</div>
+        <div class="when">&#128222; ${fmtDate(r.remind_on)}${r.remind_time ? ' at ' + esc(r.remind_time) : ''}</div>
+        <div class="meta">${r.note ? esc(r.note) : 'Call reminder'} &middot; ${r.gcal_event_id ? '&#128197; on calendar' : (r.sent ? '&#9989; emailed' : 'pending')}</div>
         <div class="btn-row"><button class="btn red" data-rem-del="${esc(r.id)}" style="padding:6px 12px">Delete</button></div>
       </div>`).join('');
   }
@@ -355,15 +357,20 @@
 
     $('set-reminder').addEventListener('click', async () => {
       const remind_on = $('rem-date').value;
+      const remind_time = $('rem-time').value || '09:30';
       if (!remind_on){ flash('flash-rem', 'Please pick a date.', false); return; }
       try {
         const r = await api('/api/admin/reminder', {
           method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ lead_id: LEAD_ID, remind_on, note: $('rem-note').value }),
+          body: JSON.stringify({ lead_id: LEAD_ID, remind_on, remind_time, note: $('rem-note').value }),
         });
         if (r.ok){
-          REMINDERS.push((await r.json()).reminder);
-          pendingFlash = { id:'flash-rem', msg:'Reminder set — you’ll get an email that morning.', ok:true };
+          const d = await r.json();
+          REMINDERS.push(d.reminder);
+          const warn = (d.errors || []).some((e) => e.step === 'gcal');
+          pendingFlash = warn
+            ? { id:'flash-rem', msg:'Saved, but couldn’t add to Google Calendar — you’ll get a backup email.', ok:false }
+            : { id:'flash-rem', msg:'Reminder added to your calendar for that time.', ok:true };
           render();
         } else {
           const d = await r.json().catch(() => ({}));
