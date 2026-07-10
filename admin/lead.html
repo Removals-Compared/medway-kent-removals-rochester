@@ -23,6 +23,7 @@
   dt{ color:#778; } dd{ margin:0; font-weight:600; }
   .pill{ display:inline-block; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:700; }
   .pill.new{ background:#e8f0ff; color:#1d4ed8; } .pill.contacted{ background:#fff4e0; color:#b45309; }
+  .pill.prospecting{ background:#ccfbf1; color:#0f766e; }
   .pill.survey_booked{ background:#ede9fe; color:#6d28d9; } .pill.move_booked{ background:#dcfce7; color:#15803d; }
   .pill.won{ background:#16a34a; color:#fff; } .pill.lost{ background:#fee2e2; color:#b91c1c; }
   label{ display:block; font-size:13px; font-weight:600; margin:14px 0 5px; color:#445; }
@@ -76,7 +77,7 @@
 
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const labelFor = (s) => ({ new:'New', contacted:'Contacted', survey_booked:'Survey booked', move_booked:'Move booked', won:'Won', lost:'Lost' }[s] || s || 'New');
+  const labelFor = (s) => ({ new:'New', contacted:'Contacted', prospecting:'Prospecting', survey_booked:'Survey booked', move_booked:'Move booked', won:'Won', lost:'Lost' }[s] || s || 'New');
   function fmtDate(v){ if(!v) return '—'; try{ return new Date(v).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch{ return v; } }
   function fmtDT(v){ if(!v) return '—'; try{ return new Date(v).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); }catch{ return v; } }
 
@@ -86,7 +87,7 @@
     return r;
   }
 
-  let QUOTE = null, APPTS = [], pendingFlash = null;
+  let QUOTE = null, APPTS = [], REMINDERS = [], pendingFlash = null;
 
   async function load(){
     if (!LEAD_ID){ $('content').innerHTML = '<p class="muted">No lead id supplied.</p>'; return; }
@@ -94,7 +95,7 @@
       const r = await api('/api/admin/quote/' + LEAD_ID);
       if (r.status === 404){ $('content').innerHTML = '<p class="muted">Lead not found.</p>'; return; }
       const data = await r.json();
-      QUOTE = data.quote; APPTS = data.appointments || [];
+      QUOTE = data.quote; APPTS = data.appointments || []; REMINDERS = data.reminders || [];
       render();
     } catch (e) {
       if (String(e.message) !== 'unauth') $('content').innerHTML = '<p class="muted">Could not load this lead.</p>';
@@ -165,6 +166,7 @@
 
           <div class="btn-row">
             <button class="btn primary" data-status="contacted">Mark contacted</button>
+            <button class="btn" data-status="prospecting" style="border-color:#0f766e;color:#0f766e">Mark prospecting</button>
             <button class="btn green" data-status="won">Mark WON</button>
             <button class="btn red" data-status="lost">Mark lost</button>
           </div>
@@ -218,6 +220,18 @@
           <div class="btn-row"><button class="btn orange" id="book-move">Book move</button></div>
           <p class="flash" id="flash-move"></p>
         </div>
+
+        <div class="card">
+          <h2>Call reminders</h2>
+          <div id="rem-list">${renderReminders()}</div>
+          <label>Remind me to call on</label>
+          <input type="date" id="rem-date">
+          <label>Note (optional)</label>
+          <input id="rem-note" placeholder="e.g. Follow up after survey">
+          <div class="btn-row"><button class="btn orange" id="set-reminder">Set reminder</button></div>
+          <p class="flash" id="flash-rem"></p>
+          <p class="muted" style="font-size:12px;margin-top:8px">You&#39;ll get an email that morning.</p>
+        </div>
       </div>
     </div>`;
 
@@ -233,6 +247,16 @@
         <div class="when">${fmtDT(a.scheduled_for)}</div>
         <div class="meta">${a.duration_minutes||60} mins${a.address?' · '+esc(a.address):''}
           · Calendar: ${a.gcal_event_id?'✓':'—'} · Email: ${a.email_sent?'✓ sent':'not sent'}</div>
+      </div>`).join('');
+  }
+
+  function renderReminders(){
+    if (!REMINDERS.length) return '<p class="muted">No reminders set.</p>';
+    return REMINDERS.map((r) => `
+      <div class="appt" data-rem="${esc(r.id)}">
+        <div class="when">&#128222; ${fmtDate(r.remind_on)}</div>
+        <div class="meta">${r.note ? esc(r.note) : 'Call reminder'} &middot; ${r.sent ? '&#9989; emailed' : 'pending'}</div>
+        <div class="btn-row"><button class="btn red" data-rem-del="${esc(r.id)}" style="padding:6px 12px">Delete</button></div>
       </div>`).join('');
   }
 
@@ -328,6 +352,36 @@
 
     $('book-survey').addEventListener('click', () => book('survey', 'sv', 'survey_booked', 'flash-survey'));
     $('book-move').addEventListener('click',   () => book('move',   'mv', 'move_booked',   'flash-move'));
+
+    $('set-reminder').addEventListener('click', async () => {
+      const remind_on = $('rem-date').value;
+      if (!remind_on){ flash('flash-rem', 'Please pick a date.', false); return; }
+      try {
+        const r = await api('/api/admin/reminder', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ lead_id: LEAD_ID, remind_on, note: $('rem-note').value }),
+        });
+        if (r.ok){
+          REMINDERS.push((await r.json()).reminder);
+          pendingFlash = { id:'flash-rem', msg:'Reminder set — you’ll get an email that morning.', ok:true };
+          render();
+        } else {
+          const d = await r.json().catch(() => ({}));
+          flash('flash-rem', 'Could not set reminder: ' + (d.error || 'error'), false);
+        }
+      } catch { flash('flash-rem', 'Network error — please try again.', false); }
+    });
+
+    document.querySelectorAll('[data-rem-del]').forEach((b) => {
+      b.addEventListener('click', async () => {
+        const id = b.dataset.remDel;
+        if (!confirm('Delete this reminder?')) return;
+        try {
+          const r = await api('/api/admin/reminder?id=' + encodeURIComponent(id), { method:'DELETE' });
+          if (r.ok){ REMINDERS = REMINDERS.filter((x) => String(x.id) !== String(id)); render(); }
+        } catch {}
+      });
+    });
   }
 
   async function book(type, prefix, newStatus, flashId){

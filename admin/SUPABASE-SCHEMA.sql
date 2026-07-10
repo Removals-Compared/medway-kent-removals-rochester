@@ -55,3 +55,19 @@ CREATE TABLE IF NOT EXISTS appointments (
 );
 
 CREATE INDEX IF NOT EXISTS appointments_lead_idx ON appointments (lead_id);
+
+-- ── Call reminders ─────────────────────────────────────────
+-- A daily Vercel cron (/api/admin/reminders-run) emails you when remind_on
+-- arrives. RLS stays OFF (same anon-key reasoning as above).
+CREATE TABLE IF NOT EXISTS reminders (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  lead_id    bigint NOT NULL,
+  remind_on  date NOT NULL,
+  note       text,
+  sent       boolean DEFAULT false,
+  sent_at    timestamptz,
+  created_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS reminders_due_idx  ON reminders (remind_on, sent);
+CREATE INDEX IF NOT EXISTS reminders_lead_idx ON reminders (lead_id);

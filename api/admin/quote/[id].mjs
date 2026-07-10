@@ -1,6 +1,7 @@
 import { requireAuth } from '../_session.mjs';
 import {
   getQuote, updateQuote, deleteQuote, fetchAppointmentsByLeadIds,
+  fetchRemindersByLeadIds,
 } from '../_db.mjs';
 
 export default async function handler(req, res) {
@@ -15,7 +16,8 @@ export default async function handler(req, res) {
       const quote = await getQuote(id);
       if (!quote) return res.status(404).json({ error: 'not found' });
       const appointments = await fetchAppointmentsByLeadIds([id]);
-      return res.status(200).json({ quote, appointments });
+      const reminders = await fetchRemindersByLeadIds([id]);
+      return res.status(200).json({ quote, appointments, reminders });
     }
 
     if (req.method === 'PATCH') {

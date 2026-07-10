@@ -35,6 +35,7 @@
   .pill{ display:inline-block; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:700; }
   .pill.new{ background:#e8f0ff; color:#1d4ed8; }
   .pill.contacted{ background:#fff4e0; color:#b45309; }
+  .pill.prospecting{ background:#ccfbf1; color:#0f766e; }
   .pill.survey_booked{ background:#ede9fe; color:#6d28d9; }
   .pill.move_booked{ background:#dcfce7; color:#15803d; }
   .pill.won{ background:#16a34a; color:#fff; }
@@ -81,6 +82,7 @@
         <option value="all">All statuses</option>
         <option value="new">New</option>
         <option value="contacted">Contacted</option>
+        <option value="prospecting">Prospecting</option>
         <option value="survey_booked">Survey booked</option>
         <option value="move_booked">Move booked</option>
         <option value="won">Won</option>
@@ -170,11 +172,11 @@
 
 <script>
   const STATUSES = [
-    ['all','All'], ['new','New'], ['contacted','Contacted'],
+    ['all','All'], ['new','New'], ['contacted','Contacted'], ['prospecting','Prospecting'],
     ['survey_booked','Survey booked'], ['move_booked','Move booked'], ['won','Won'],
   ];
   const labelFor = (s) => ({
-    new:'New', contacted:'Contacted', survey_booked:'Survey booked',
+    new:'New', contacted:'Contacted', prospecting:'Prospecting', survey_booked:'Survey booked',
     move_booked:'Move booked', won:'Won', lost:'Lost',
   }[s] || s || 'New');
 

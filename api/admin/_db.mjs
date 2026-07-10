@@ -7,6 +7,7 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY;
 
 const TABLE = 'quote_requests';
 const APPT = 'appointments';
+const REMIND = 'reminders';
 
 const base = () => `${SUPABASE_URL}/rest/v1`;
 
@@ -140,4 +141,62 @@ export async function fetchAppointmentsByLeadIds(ids) {
   } catch {
     return [];
   }
+}
+
+// ── Reminders ──────────────────────────────────────────────
+export async function createReminder(row) {
+  const r = await fetch(`${base()}/${REMIND}`, {
+    method: 'POST',
+    headers: headers({ Prefer: 'return=representation' }),
+    body: JSON.stringify(row),
+  });
+  if (!r.ok) throw new Error(`createReminder ${r.status}: ${await r.text()}`);
+  const rows = await r.json();
+  return rows[0] || null;
+}
+
+export async function deleteReminder(id) {
+  const r = await fetch(`${base()}/${REMIND}?id=eq.${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: headers(),
+  });
+  if (!r.ok) throw new Error(`deleteReminder ${r.status}: ${await r.text()}`);
+  return true;
+}
+
+// Swallow errors so the lead page still loads on a fresh schema.
+export async function fetchRemindersByLeadIds(ids) {
+  try {
+    if (!ids || !ids.length) return [];
+    const list = ids.map((i) => Number(i)).filter((n) => !Number.isNaN(n)).join(',');
+    if (!list) return [];
+    const r = await fetch(
+      `${base()}/${REMIND}?lead_id=in.(${list})&select=*&order=remind_on.asc`,
+      { headers: headers() }
+    );
+    if (!r.ok) return [];
+    return r.json();
+  } catch {
+    return [];
+  }
+}
+
+// Cron: reminders due on/before `today` (YYYY-MM-DD) that haven't been sent.
+export async function fetchDueReminders(today) {
+  const r = await fetch(
+    `${base()}/${REMIND}?sent=eq.false&remind_on=lte.${today}&select=*&order=remind_on.asc`,
+    { headers: headers() }
+  );
+  if (!r.ok) throw new Error(`fetchDueReminders ${r.status}: ${await r.text()}`);
+  return r.json();
+}
+
+export async function markReminderSent(id) {
+  const r = await fetch(`${base()}/${REMIND}?id=eq.${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: headers({ Prefer: 'return=minimal' }),
+    body: JSON.stringify({ sent: true, sent_at: new Date().toISOString() }),
+  });
+  if (!r.ok) throw new Error(`markReminderSent ${r.status}: ${await r.text()}`);
+  return true;
 }
