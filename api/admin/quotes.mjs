@@ -1,5 +1,5 @@
 import { requireAuth } from './_session.mjs';
-import { listQuotes, createQuote } from './_db.mjs';
+import { listQuotes, createQuote, fetchPendingReminders } from './_db.mjs';
 
 export default async function handler(req, res) {
   if (!requireAuth(req, res)) return;
@@ -11,6 +11,11 @@ export default async function handler(req, res) {
         search,
         limit: limit ? Number(limit) : 200,
       });
+      // Attach the earliest pending reminder to each lead for the 🔔 indicator.
+      const pending = await fetchPendingReminders();
+      const map = {};
+      for (const p of pending) { if (!map[p.lead_id]) map[p.lead_id] = p; }
+      quotes.forEach((q) => { if (map[q.id]) q.reminder = map[q.id]; });
       return res.status(200).json({ quotes });
     }
     if (req.method === 'POST') {

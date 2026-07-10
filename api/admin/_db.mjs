@@ -181,6 +181,20 @@ export async function fetchRemindersByLeadIds(ids) {
   }
 }
 
+// All un-sent reminders (for the dashboard 🔔 indicator). Errors → [].
+export async function fetchPendingReminders() {
+  try {
+    const r = await fetch(
+      `${base()}/${REMIND}?sent=eq.false&select=lead_id,remind_on,note&order=remind_on.asc`,
+      { headers: headers() }
+    );
+    if (!r.ok) return [];
+    return r.json();
+  } catch {
+    return [];
+  }
+}
+
 // Cron: reminders due on/before `today` (YYYY-MM-DD) that haven't been sent.
 export async function fetchDueReminders(today) {
   const r = await fetch(
