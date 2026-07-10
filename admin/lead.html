@@ -77,7 +77,7 @@
 
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const labelFor = (s) => ({ new:'New', contacted:'Contacted', prospecting:'Prospecting', survey_booked:'Survey booked', move_booked:'Move booked', won:'Won', lost:'Lost' }[s] || s || 'New');
+  const labelFor = (s) => ({ new:'New', contacted:'Contacted', prospecting:'Prospecting', survey_booked:'Survey booked', move_booked:'Move booked', won:'Completed', lost:'Lost' }[s] || s || 'New');
   function fmtDate(v){ if(!v) return '—'; try{ return new Date(v).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch{ return v; } }
   function fmtDT(v){ if(!v) return '—'; try{ return new Date(v).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); }catch{ return v; } }
 
@@ -167,7 +167,7 @@
           <div class="btn-row">
             <button class="btn primary" data-status="contacted">Mark contacted</button>
             <button class="btn" data-status="prospecting" style="border-color:#0f766e;color:#0f766e">Mark prospecting</button>
-            <button class="btn green" data-status="won">Mark WON</button>
+            <button class="btn green" data-status="won">Mark completed</button>
             <button class="btn red" data-status="lost">Mark lost</button>
           </div>
           <p class="flash" id="flash-left"></p>

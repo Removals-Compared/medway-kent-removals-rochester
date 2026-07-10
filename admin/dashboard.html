@@ -113,7 +113,7 @@
         <option value="prospecting">Prospecting</option>
         <option value="survey_booked">Survey booked</option>
         <option value="move_booked">Move booked</option>
-        <option value="won">Won</option>
+        <option value="won">Completed</option>
         <option value="lost">Lost</option>
       </select>
       <button class="btn" id="refresh">Refresh</button>
@@ -201,12 +201,24 @@
 <script>
   const STATUSES = [
     ['all','All'], ['new','New'], ['contacted','Contacted'], ['prospecting','Prospecting'],
-    ['survey_booked','Survey booked'], ['move_booked','Move booked'], ['won','Won'],
+    ['survey_booked','Survey booked'], ['move_booked','Move booked'], ['won','Completed'],
   ];
   const labelFor = (s) => ({
     new:'New', contacted:'Contacted', prospecting:'Prospecting', survey_booked:'Survey booked',
-    move_booked:'Move booked', won:'Won', lost:'Lost',
+    move_booked:'Move booked', won:'Completed', lost:'Lost',
   }[s] || s || 'New');
+
+  // Booked moves float to the top, soonest move date first; everyone else keeps
+  // the fetched order (newest lead first). Array.sort is stable.
+  function sortLeads(rows){
+    const md = (r) => ((r.move_date || '').slice(0,10)) || '9999-99-99';
+    return rows.slice().sort((a, b) => {
+      const am = a.status === 'move_booked', bm = b.status === 'move_booked';
+      if (am !== bm) return am ? -1 : 1;
+      if (am && bm) return md(a) < md(b) ? -1 : md(a) > md(b) ? 1 : 0;
+      return 0;
+    });
+  }
 
   let activeStatus = 'all';
   let allRows = [];
@@ -232,7 +244,7 @@
     try {
       const r = await api('/api/admin/quotes?' + params);
       const data = await r.json();
-      allRows = data.quotes || [];
+      allRows = sortLeads(data.quotes || []);
       renderRows(allRows);
       renderStats();
     } catch (e) {
