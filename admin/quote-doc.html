@@ -40,11 +40,12 @@
 
   .header{background:var(--navy);color:var(--white);padding:26px 44px 22px;position:relative;}
   .header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;background:linear-gradient(90deg,var(--orange),var(--orange-hover));}
-  .header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex-wrap:wrap;}
+  .header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex-wrap:nowrap;}
+  .header-top>div:first-child{min-width:0;}
   .brand{font-size:25px;font-weight:800;letter-spacing:.3px;line-height:1.15;}
   .brand .accent{color:var(--orange);}
   .brand-sub{font-size:12.5px;color:#B8C0CF;margin-top:6px;letter-spacing:.4px;text-transform:uppercase;font-weight:500;}
-  .contact-block{text-align:right;font-size:13px;color:#D5DAE3;line-height:1.7;}
+  .contact-block{text-align:right;font-size:13px;color:#D5DAE3;line-height:1.7;flex:0 0 auto;}
   .contact-block strong{color:var(--white);font-weight:600;}
   .doc-type{display:inline-block;margin-top:18px;background:var(--orange);color:var(--white);font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:8px 18px;border-radius:6px;}
 
