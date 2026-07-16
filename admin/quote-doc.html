@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Removal Quote — Medway &amp; Kent Removals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0D1F3C;
+    --orange:#E04E1B;
+    --orange-hover:#F06535;
+    --cream:#F8F6F1;
+    --white:#FFFFFF;
+    --grey:#6B7280;
+    --line:#E7E4DC;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:#EDEBE5;}
+  body{
+    font-family:'DM Sans',Inter,'Helvetica Neue',Arial,sans-serif;
+    color:var(--navy);
+    line-height:1.5;
+    font-size:14.5px;
+    -webkit-font-smoothing:antialiased;
+    padding:32px 16px;
+  }
+  .sheet{
+    max-width:820px;
+    margin:0 auto;
+    background:var(--white);
+    box-shadow:0 18px 50px rgba(13,31,60,.14);
+    border-radius:14px;
+    overflow:hidden;
+  }
+  h1,h2,h3,.brand,.total-amt,.doc-type{font-family:'Syne',Montserrat,Arial,sans-serif;}
+
+  .header{background:var(--navy);color:var(--white);padding:26px 44px 22px;position:relative;}
+  .header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;background:linear-gradient(90deg,var(--orange),var(--orange-hover));}
+  .header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex-wrap:wrap;}
+  .brand{font-size:25px;font-weight:800;letter-spacing:.3px;line-height:1.15;}
+  .brand .accent{color:var(--orange);}
+  .brand-sub{font-size:12.5px;color:#B8C0CF;margin-top:6px;letter-spacing:.4px;text-transform:uppercase;font-weight:500;}
+  .contact-block{text-align:right;font-size:13px;color:#D5DAE3;line-height:1.7;}
+  .contact-block strong{color:var(--white);font-weight:600;}
+  .doc-type{display:inline-block;margin-top:18px;background:var(--orange);color:var(--white);font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:8px 18px;border-radius:6px;}
+
+  .meta{display:flex;flex-wrap:wrap;gap:1px;background:var(--line);border-bottom:1px solid var(--line);}
+  .meta div{flex:1 1 25%;background:var(--cream);padding:14px 20px;min-width:150px;}
+  .meta .label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--grey);font-weight:600;}
+  .meta .value{font-size:15px;font-weight:600;color:var(--navy);margin-top:3px;}
+
+  .body{padding:24px 44px 8px;}
+  .section-title{font-size:13px;text-transform:uppercase;letter-spacing:1.4px;color:var(--orange);font-weight:700;margin-bottom:14px;font-family:'DM Sans',Arial,sans-serif;}
+  .greeting{font-size:14.5px;margin-bottom:20px;color:#33405A;}
+  .greeting strong{color:var(--navy);}
+
+  .grid2{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:22px;}
+  .card{flex:1 1 240px;background:var(--cream);border:1px solid var(--line);border-radius:10px;padding:18px 20px;}
+  .card h3{font-size:15px;font-weight:700;margin-bottom:8px;}
+  .card .row{font-size:14px;color:#33405A;margin-bottom:2px;}
+  .card .row span{color:var(--grey);}
+  .route-badge{display:inline-block;background:var(--navy);color:#fff;font-size:11px;font-weight:600;letter-spacing:.5px;padding:3px 10px;border-radius:20px;margin-bottom:10px;}
+
+  table{width:100%;border-collapse:collapse;margin-bottom:6px;}
+  thead th{background:var(--navy);color:var(--white);text-align:left;font-family:'Syne',Arial,sans-serif;font-size:12.5px;font-weight:600;letter-spacing:.5px;padding:12px 16px;}
+  thead th.num{text-align:right;}
+  tbody td{padding:11px 16px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:top;}
+  tbody td.num{text-align:right;white-space:nowrap;font-weight:600;}
+  tbody tr:nth-child(even){background:#FBFAF7;}
+  .item-title{font-weight:600;color:var(--navy);}
+  .item-desc{color:var(--grey);font-size:13px;margin-top:3px;}
+
+  .totals{display:flex;justify-content:flex-end;margin-top:8px;}
+  .totals-inner{width:320px;max-width:100%;}
+  .totals-row{display:flex;justify-content:space-between;padding:8px 4px;font-size:14px;color:#33405A;}
+  .totals-row.grand{margin-top:8px;background:var(--navy);color:#fff;border-radius:10px;padding:16px 20px;align-items:center;}
+  .totals-row.grand .lbl{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#C6CDD9;}
+  .total-amt{font-size:28px;font-weight:800;color:#fff;}
+  .allinc{display:inline-block;margin-top:10px;background:rgba(224,78,27,.1);color:var(--orange);border:1px solid rgba(224,78,27,.35);font-size:12px;font-weight:600;padding:6px 12px;border-radius:6px;}
+
+  .includes{margin:22px 0 6px;}
+  .includes ul{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:10px 26px;}
+  .includes li{position:relative;padding-left:26px;font-size:14px;color:#33405A;}
+  .includes li::before{content:"";position:absolute;left:0;top:3px;width:16px;height:16px;border-radius:50%;background:var(--orange);}
+  .includes li::after{content:"";position:absolute;left:5px;top:7px;width:5px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg);}
+
+  .terms{background:var(--cream);border-radius:10px;padding:18px 24px;margin:6px 0 4px;border:1px solid var(--line);}
+  .terms h3{font-size:14px;font-weight:700;margin-bottom:10px;}
+  .terms ol{margin-left:18px;font-size:13px;color:#3a4457;line-height:1.7;}
+  .terms li{margin-bottom:4px;}
+
+  .cta{background:var(--navy);color:#fff;text-align:center;padding:24px 44px;margin-top:22px;}
+  .cta h2{font-size:22px;font-weight:800;margin-bottom:8px;}
+  .cta p{color:#C6CDD9;font-size:14px;margin-bottom:18px;}
+  .cta .btn{display:inline-block;background:var(--orange);color:#fff;text-decoration:none;font-family:'Syne',Arial,sans-serif;font-weight:700;font-size:15px;letter-spacing:.5px;padding:13px 30px;border-radius:8px;}
+  .cta .phone{margin-top:16px;font-size:15px;color:#fff;font-weight:600;}
+  .footer{background:#08152B;color:#8993A5;text-align:center;font-size:12px;padding:18px 20px;line-height:1.7;}
+  .footer strong{color:#fff;}
+
+  /* Admin toolbar + editable hints (never printed) */
+  .toolbar{position:sticky;top:0;z-index:50;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+           max-width:820px;margin:0 auto 16px;background:#0d1f3c;color:#fff;border-radius:12px;padding:12px 18px;}
+  .toolbar .tbtn{background:#fff;color:#0d1f3c;border:none;border-radius:8px;padding:9px 16px;font:inherit;font-weight:700;cursor:pointer;}
+  .toolbar .tbtn.primary{background:var(--orange);color:#fff;}
+  .toolbar .thint{font-size:12.5px;color:#c6cdd9;margin-left:auto;}
+  [contenteditable="true"]{outline:1px dashed rgba(224,78,27,.5);outline-offset:2px;border-radius:3px;}
+  [contenteditable="true"]:focus{outline:2px solid var(--orange);}
+
+  @media print{
+    body{background:#fff;padding:0;font-size:12.5px;}
+    .sheet{box-shadow:none;border-radius:0;max-width:none;}
+    .toolbar{display:none !important;}
+    [contenteditable="true"]{outline:none !important;}
+    .header,.cta{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    thead th,.totals-row.grand,.includes li::before,.doc-type,.route-badge{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
+  @media(max-width:560px){
+    .body,.header,.cta{padding-left:22px;padding-right:22px;}
+    .includes ul{grid-template-columns:1fr;}
+    .contact-block{text-align:left;}
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button class="tbtn primary" onclick="window.print()">Print / Save as PDF</button>
+  <button class="tbtn" onclick="if(history.length>1)history.back();else window.close();">Back</button>
+  <span class="thint">Dashed boxes are editable. Set the van count, crew and any wording, then Print / Save as PDF.</span>
+</div>
+
+<div class="sheet" id="sheet" style="display:none">
+
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="brand">Medway &amp; Kent <span class="accent">Removals</span></div>
+        <div class="brand-sub">Professional Removals across Kent &amp; Beyond</div>
+      </div>
+      <div class="contact-block">
+        <strong>01634 971005</strong><br>
+        Mobile: +44 7359 917380<br>
+        WhatsApp: +44 7359 917380<br>
+        info@medwaykentremovals.co.uk<br>
+        medwaykentremovals.co.uk
+      </div>
+    </div>
+    <div class="doc-type">Removal Quotation</div>
+  </div>
+
+  <div class="meta">
+    <div><div class="label">Quote Reference</div><div class="value" id="q-ref">—</div></div>
+    <div><div class="label">Date Issued</div><div class="value" id="q-issued">—</div></div>
+    <div><div class="label">Move Date</div><div class="value" id="q-movedate">—</div></div>
+    <div><div class="label">Quote Valid Until</div><div class="value" id="q-valid">—</div></div>
+  </div>
+
+  <div class="body">
+    <p class="greeting">Dear <strong id="g-name">Customer</strong>, thank you for the opportunity to quote for your upcoming house move. Please find your fixed, all-inclusive price below. Everything is fully insured and carried out by our own trained, background-checked crew. If you are happy to proceed, simply call us on 01634 971005 to secure your date.</p>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Prepared For</h3>
+        <div class="row" id="pf-name">—</div>
+        <div class="row"><span>Phone:</span> <span id="pf-phone">—</span></div>
+        <div class="row"><span>Email:</span> <span id="pf-email">—</span></div>
+      </div>
+      <div class="card">
+        <span class="route-badge">Collection &nbsp;→&nbsp; Delivery</span>
+        <h3>Your Move</h3>
+        <div class="row"><span>From:</span> <span id="mv-from">—</span></div>
+        <div class="row"><span>To:</span> <span id="mv-to">—</span></div>
+        <div class="row"><span>Property:</span> <span id="mv-property">—</span></div>
+      </div>
+    </div>
+
+    <div class="section-title">Quotation Details</div>
+    <table>
+      <thead>
+        <tr><th>Service</th><th class="num">Amount</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="item-title" id="tbl-title">Full House Removal</div>
+            <div class="item-desc" id="tbl-desc">Complete door-to-door removal, including careful loading, secure transit, and unloading and placement of all furniture and boxes in your new home.</div>
+          </td>
+          <td class="num">Included</td>
+        </tr>
+        <tr>
+          <td contenteditable="true">
+            <div class="item-title">2 &times; Maxi Loader Luton Vans</div>
+            <div class="item-desc">Two large-capacity Luton vans, ample space for a full move in a single trip.</div>
+          </td>
+          <td class="num">Included</td>
+        </tr>
+        <tr>
+          <td contenteditable="true">
+            <div class="item-title">Dedicated Removal Team</div>
+            <div class="item-desc">Experienced, uniformed removers handling your move from start to finish for a fast, careful and efficient day.</div>
+          </td>
+          <td class="num">Included</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="item-title">Protection, Handling &amp; Insurance</div>
+            <div class="item-desc">Furniture blankets, straps and protective handling throughout. Goods in transit and public liability cover included on every move.</div>
+          </td>
+          <td class="num">Included</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <div class="totals-inner">
+        <div class="totals-row"><span>Subtotal</span><span id="sub-amt">—</span></div>
+        <div class="totals-row"><span>VAT</span><span>Not applicable</span></div>
+        <div class="totals-row grand">
+          <span class="lbl">Total Price</span>
+          <span class="total-amt" id="grand-amt">—</span>
+        </div>
+        <div style="text-align:right;"><span class="allinc">Fixed price &bull; All inclusive &bull; No hidden charges</span></div>
+      </div>
+    </div>
+
+    <div class="includes">
+      <div class="section-title">What's Included in Your Price</div>
+      <ul contenteditable="true">
+        <li>Two maxi loader Luton vans</li>
+        <li>Professional removal crew</li>
+        <li>Loading, transport &amp; unloading</li>
+        <li>Furniture blankets &amp; protection</li>
+        <li>Dismantling &amp; reassembly of standard beds/flat-pack</li>
+        <li>Goods in transit insurance</li>
+        <li>Public liability insurance</li>
+        <li>Placement of items in the correct rooms</li>
+      </ul>
+    </div>
+
+    <div class="terms">
+      <h3>Terms &amp; Booking</h3>
+      <ol>
+        <li>This is a fixed, all-inclusive price based on the move details provided. The price is held provided the property contents and access are as described.</li>
+        <li>To secure your moving date, a deposit of <strong>£50</strong> is payable on booking, with the balance of <strong id="t-balance">—</strong> due on completion on the day of the move.</li>
+        <li>Please ensure all boxes are packed and sealed before the crew arrives, unless a packing service has been separately arranged.</li>
+        <li>Parking should be available at both addresses. Please advise us in advance of any permits, restrictions or long carrying distances.</li>
+        <li>This quotation is valid for 14 days from the date issued and is subject to availability at the time of booking.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="cta">
+    <h2>Ready to Book Your Move?</h2>
+    <p>Call us to confirm your date, or reply to this quote and we'll take care of the rest.</p>
+    <a href="tel:01634971005" class="btn">Call 01634 971005 or 07359 917380</a>
+    <div class="phone">info@medwaykentremovals.co.uk &nbsp;|&nbsp; medwaykentremovals.co.uk</div>
+  </div>
+
+  <div class="footer">
+    <strong>Medway &amp; Kent Removals</strong><br>
+    Professional, fully insured removals &bull; Fixed prices, no hidden charges &bull; Rochester based
+  </div>
+
+</div>
+
+<script>
+  var params = new URLSearchParams(location.search);
+  var id = params.get('id');
+  if (id) id = id.replace(/\.html$/, '');
+
+  var $ = function(x){ return document.getElementById(x); };
+  var esc = function(s){ return String(s == null ? '' : s); };
+
+  function dashIfEmpty(v){ return (v && String(v).trim()) ? v : '—'; }
+  function postcode(s){
+    var m = String(s || '').toUpperCase().match(/([A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2})/);
+    return m ? m[1].replace(/\s+/, ' ') : (s || '');
+  }
+  function money(n, dp){
+    var v = Number(n);
+    if (!isFinite(v)) v = 0;
+    return '£' + v.toLocaleString('en-GB', { minimumFractionDigits: dp || 0, maximumFractionDigits: dp || 0 });
+  }
+  function fmtLong(d){ return d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }).replace(',', ''); }
+  function fmtMed(d){ return d.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }); }
+
+  async function load(){
+    if (!id){ document.body.innerHTML = '<p style="max-width:820px;margin:40px auto;font-family:sans-serif">No customer id supplied.</p>'; return; }
+    var r;
+    try { r = await fetch('/api/admin/quote/' + id); }
+    catch(e){ document.body.innerHTML = '<p style="max-width:820px;margin:40px auto;font-family:sans-serif">Could not load customer.</p>'; return; }
+    if (r.status === 401){ window.location.href = '/admin'; return; }
+    if (!r.ok){ document.body.innerHTML = '<p style="max-width:820px;margin:40px auto;font-family:sans-serif">Customer not found.</p>'; return; }
+    var q = (await r.json()).quote || {};
+
+    var first = (q.name || 'there').split(' ')[0];
+    $('g-name').textContent = first;
+    $('pf-name').textContent = dashIfEmpty(q.name);
+    $('pf-phone').textContent = dashIfEmpty(q.phone);
+    $('pf-email').textContent = dashIfEmpty(q.email);
+    $('mv-from').textContent = dashIfEmpty(q.from_postcode);
+    $('mv-to').textContent = dashIfEmpty(q.to_postcode);
+    var prop = dashIfEmpty(q.property_size);
+    $('mv-property').textContent = prop;
+
+    // Table headline + description
+    $('tbl-title').textContent = 'Full House Removal' + (q.property_size ? ' — ' + q.property_size : '');
+    var pf = postcode(q.from_postcode), pt = postcode(q.to_postcode);
+    if (pf || pt) $('tbl-desc').textContent = 'Complete door-to-door removal from ' + (pf || 'your current home') + ' to ' + (pt || 'your new home') + ', including careful loading, secure transit, and unloading and placement of all furniture and boxes in your new home.';
+
+    // Amount
+    var val = Number(q.value);
+    if (!isFinite(val)) val = 0;
+    $('sub-amt').textContent = money(val, 2);
+    $('grand-amt').textContent = money(val, 0);
+    $('t-balance').textContent = money(Math.max(0, val - 50), 0);
+    if (!val){
+      $('grand-amt').textContent = '£0';
+      $('grand-amt').insertAdjacentHTML('afterend', '');
+    }
+
+    // Dates + reference
+    var today = new Date();
+    $('q-issued').textContent = fmtMed(today);
+    var valid = new Date(today.getTime() + 14 * 86400000);
+    $('q-valid').textContent = fmtMed(valid);
+    if (q.move_date){
+      var md = new Date(q.move_date + 'T00:00:00');
+      if (!isNaN(md)){
+        $('q-movedate').textContent = fmtLong(md);
+        $('q-ref').textContent = 'MKR-' + md.getFullYear() + '-' + String(md.getMonth()+1).padStart(2,'0') + String(md.getDate()).padStart(2,'0');
+      }
+    } else {
+      $('q-ref').textContent = 'MKR-' + today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
+    }
+
+    document.title = 'Removal Quote — ' + (q.name || 'Customer') + ' — Medway & Kent Removals';
+    $('sheet').style.display = 'block';
+
+    if (!val){
+      var warn = document.createElement('div');
+      warn.className = 'toolbar';
+      warn.style.background = '#b91c1c';
+      warn.innerHTML = '<span class="thint" style="margin:0;color:#fff">No job value is set for this customer. Set the Job value on the lead first, then reopen this quote so the price shows.</span>';
+      document.body.insertBefore(warn, document.querySelector('.sheet'));
+    }
+  }
+  load();
+</script>
+</body>
+</html>

@@ -164,6 +164,8 @@
             <button class="btn" id="save-value">Save</button>
           </div>
 
+          <div class="btn-row"><button class="btn orange" id="gen-quote" style="width:100%">&#128196; Generate quote document</button></div>
+
           <div class="btn-row">
             <button class="btn primary" data-status="contacted">Mark contacted</button>
             <button class="btn" data-status="prospecting" style="border-color:#0f766e;color:#0f766e">Mark prospecting</button>
@@ -322,6 +324,10 @@
         });
         flash('flash-left', r.ok ? 'Value saved.' : 'Could not save value.', r.ok);
       } catch {}
+    });
+
+    $('gen-quote').addEventListener('click', () => {
+      window.open('/admin/quote-doc?id=' + encodeURIComponent(LEAD_ID), '_blank');
     });
 
     document.querySelectorAll('[data-status]').forEach((b) => {
