@@ -444,7 +444,11 @@
       });
       if (r.status === 401){ window.location.href = '/admin'; return; }
       var d = await r.json().catch(function(){ return {}; });
-      if (r.ok && d.success){ mStatus('Quote sent to ' + to, true); }
+      if (r.ok && d.success){
+        mStatus('Quote sent to ' + to + ' — lead marked "Quote Sent".', true);
+        // Best-effort: move the lead to "Quote Sent" so you can follow up.
+        try { await fetch('/api/admin/quote/' + id, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ status:'quote_sent' }) }); } catch {}
+      }
       else { mStatus('Could not send: ' + (d.error || 'error'), false); }
     } catch(e){
       document.body.classList.remove('exporting');

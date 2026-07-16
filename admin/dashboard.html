@@ -38,6 +38,7 @@
   .pill{ display:inline-block; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:700; }
   .pill.new{ background:#e8f0ff; color:#1d4ed8; }
   .pill.contacted{ background:#fff4e0; color:#b45309; }
+  .pill.quote_sent{ background:#e0e7ff; color:#4338ca; }
   .pill.prospecting{ background:#ccfbf1; color:#0f766e; }
   .rem-badge{ display:inline-block; margin-top:4px; font-size:11px; font-weight:700; color:#0f766e; background:#f0fdfa; border:1px solid #99f6e4; border-radius:6px; padding:2px 7px; }
   .rem-badge.due{ color:#b91c1c; background:#fef2f2; border-color:#fecaca; }
@@ -113,6 +114,7 @@
         <option value="all">All statuses</option>
         <option value="new">New</option>
         <option value="contacted">Contacted</option>
+        <option value="quote_sent">Quote Sent</option>
         <option value="prospecting">Prospecting</option>
         <option value="survey_booked">Survey booked</option>
         <option value="move_booked">Move booked</option>
@@ -203,11 +205,11 @@
 
 <script>
   const STATUSES = [
-    ['all','All'], ['new','New'], ['contacted','Contacted'], ['prospecting','Prospecting'],
+    ['all','All'], ['new','New'], ['contacted','Contacted'], ['quote_sent','Quote Sent'], ['prospecting','Prospecting'],
     ['survey_booked','Survey booked'], ['move_booked','Move booked'], ['won','Completed'],
   ];
   const labelFor = (s) => ({
-    new:'New', contacted:'Contacted', prospecting:'Prospecting', survey_booked:'Survey booked',
+    new:'New', contacted:'Contacted', quote_sent:'Quote Sent', prospecting:'Prospecting', survey_booked:'Survey booked',
     move_booked:'Move booked', won:'Completed', lost:'Lost',
   }[s] || s || 'New');
 
