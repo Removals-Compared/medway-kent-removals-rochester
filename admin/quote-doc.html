@@ -110,11 +110,21 @@
   .toolbar .thint{font-size:12.5px;color:#c6cdd9;margin-left:auto;}
   [contenteditable="true"]{outline:1px dashed rgba(224,78,27,.5);outline-offset:2px;border-radius:3px;}
   [contenteditable="true"]:focus{outline:2px solid var(--orange);}
+  .exporting [contenteditable]{outline:none !important;}
+  .mailer{max-width:820px;margin:-6px auto 16px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px;box-shadow:0 8px 30px rgba(13,31,60,.10);}
+  .mailer .m-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .mailer .m-row label{width:60px;font-size:13px;font-weight:700;color:var(--navy);flex:0 0 auto;}
+  .mailer .m-lbl{display:block;font-size:13px;font-weight:700;color:var(--navy);margin:6px 0 5px;}
+  .mailer input,.mailer textarea{flex:1;width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:14px;color:var(--navy);}
+  .mailer textarea{resize:vertical;line-height:1.5;}
+  .mailer .m-actions{display:flex;align-items:center;gap:14px;margin-top:12px;}
+  .mailer .m-status{font-size:13px;font-weight:700;}
+  .mailer .m-note{font-size:12px;color:var(--grey);margin-top:10px;}
 
   @media print{
     body{background:#fff;padding:0;font-size:12.5px;}
     .sheet{box-shadow:none;border-radius:0;max-width:none;}
-    .toolbar{display:none !important;}
+    .toolbar,.mailer{display:none !important;}
     [contenteditable="true"]{outline:none !important;}
     .header,.cta{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     thead th,.totals-row.grand,.includes li::before,.doc-type,.route-badge{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
@@ -129,8 +139,21 @@
 
 <div class="toolbar">
   <button class="tbtn primary" onclick="window.print()">Print / Save as PDF</button>
+  <button class="tbtn" id="toggle-email">&#9993; Email to customer</button>
   <button class="tbtn" onclick="if(history.length>1)history.back();else window.close();">Back</button>
-  <span class="thint">Dashed boxes are editable. Set the van count, crew and any wording, then Print / Save as PDF.</span>
+  <span class="thint">Dashed boxes are editable. Set the van count, crew and wording, then Print or Email.</span>
+</div>
+
+<div class="mailer" id="mailer" style="display:none">
+  <div class="m-row"><label>To</label><input id="m-to" type="email" placeholder="customer@email.com"></div>
+  <div class="m-row"><label>Subject</label><input id="m-subject"></div>
+  <label class="m-lbl">Message</label>
+  <textarea id="m-body" rows="12"></textarea>
+  <div class="m-actions">
+    <button class="tbtn primary" id="m-send">Send quote to customer</button>
+    <span class="m-status" id="m-status"></span>
+  </div>
+  <p class="m-note">The quote is attached as a PDF. Sent from info@medwaykentremovals.co.uk so replies come to you.</p>
 </div>
 
 <div class="sheet" id="sheet" style="display:none">
@@ -267,6 +290,7 @@
 
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
   var params = new URLSearchParams(location.search);
   var id = params.get('id');
@@ -287,6 +311,38 @@
   }
   function fmtLong(d){ return d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }).replace(',', ''); }
   function fmtMed(d){ return d.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }); }
+  function fmtShort(d){ return d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' }).replace(',', ''); }
+  function streetName(s){
+    if (!s) return '';
+    var first = String(s).split(',')[0].trim();
+    return first.replace(/^\d+[a-zA-Z]?\s+/, '').trim() || first;
+  }
+
+  // Pre-fill the customer email (editable). Customer-specific bits (name,
+  // addresses, date, amount) come from the record; vehicles/team default to
+  // the common wording and can be edited to match the quote.
+  function fillMailer(q){
+    var first = (q.name || 'there').split(' ')[0];
+    var fromS = streetName(q.from_postcode), toS = streetName(q.to_postcode);
+    var dShort = q.move_date ? fmtShort(new Date(q.move_date + 'T00:00:00')) : '';
+    var amt = money(Number(q.value) || 0, 0);
+    document.getElementById('m-to').value = q.email || '';
+    document.getElementById('m-subject').value = 'Your removal quote' + (dShort ? ' — ' + dShort : '');
+    document.getElementById('m-body').value = [
+      'Hi ' + first + ',',
+      '',
+      'Thank you for the opportunity to quote for your move' + ((fromS && toS) ? ' from ' + fromS + ' to ' + toS : '') + (dShort ? ' on ' + dShort : '') + '.',
+      '',
+      'Please find your fixed, all-inclusive quote attached. It covers two maxi loader Luton vans and a four-man team, with full protection and insurance, for ' + amt + ' with no hidden charges.',
+      '',
+      'To secure the date we ask for a £50 deposit, with the balance due on completion on the day. Just let me know if you would like to go ahead, or if you have any questions about the move.',
+      '',
+      'You can reach me any time on 01634 971005, or by mobile and WhatsApp on 07359 917380.',
+      '',
+      'Best regards,',
+      'Medway and Kent Removals',
+    ].join('\n');
+  }
 
   async function load(){
     if (!id){ document.body.innerHTML = '<p style="max-width:820px;margin:40px auto;font-family:sans-serif">No customer id supplied.</p>'; return; }
@@ -340,6 +396,7 @@
 
     document.title = 'Removal Quote — ' + (q.name || 'Customer') + ' — Medway & Kent Removals';
     $('sheet').style.display = 'block';
+    fillMailer(q);
 
     if (!val){
       var warn = document.createElement('div');
@@ -349,6 +406,53 @@
       document.body.insertBefore(warn, document.querySelector('.sheet'));
     }
   }
+
+  // ── Email to customer ──
+  function mStatus(msg, ok){ var el = $('m-status'); el.textContent = msg; el.style.color = ok ? '#16a34a' : '#c0392b'; }
+
+  $('toggle-email').addEventListener('click', function(){
+    var m = $('mailer');
+    m.style.display = (m.style.display === 'none') ? 'block' : 'none';
+    if (m.style.display === 'block') $('m-body').scrollIntoView({ block:'nearest' });
+  });
+
+  $('m-send').addEventListener('click', async function(){
+    var to = $('m-to').value.trim();
+    var subject = $('m-subject').value.trim();
+    var body = $('m-body').value;
+    if (!to){ mStatus('Enter the customer email address.', false); return; }
+    if (typeof html2pdf === 'undefined'){ mStatus('PDF library still loading, try again in a moment.', false); return; }
+    var btn = $('m-send'); var orig = btn.textContent; btn.disabled = true; btn.textContent = 'Preparing PDF…'; mStatus('', true);
+    try {
+      if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch {} }
+      document.body.classList.add('exporting');
+      var nm = ($('pf-name').textContent || 'Customer').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
+      var opt = {
+        margin: [8, 8, 8, 8], filename: 'MKR-Quote-' + nm + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] },
+      };
+      var dataUri = await html2pdf().set(opt).from($('sheet')).outputPdf('datauristring');
+      document.body.classList.remove('exporting');
+      var pdf64 = String(dataUri).split(',')[1];
+      btn.textContent = 'Sending…';
+      var r = await fetch('/api/admin/send-quote', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ lead_id:id, to:to, subject:subject, body:body, pdf_base64:pdf64, filename:opt.filename }),
+      });
+      if (r.status === 401){ window.location.href = '/admin'; return; }
+      var d = await r.json().catch(function(){ return {}; });
+      if (r.ok && d.success){ mStatus('Quote sent to ' + to, true); }
+      else { mStatus('Could not send: ' + (d.error || 'error'), false); }
+    } catch(e){
+      document.body.classList.remove('exporting');
+      mStatus('Error: ' + (e.message || e), false);
+    }
+    btn.disabled = false; btn.textContent = orig;
+  });
+
   load();
 </script>
 </body>
