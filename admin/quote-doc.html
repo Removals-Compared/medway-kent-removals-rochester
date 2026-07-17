@@ -168,6 +168,40 @@
     .body,.header,.cta{padding-left:22px;padding-right:22px;}
     .includes ul{grid-template-columns:1fr;}
   }
+
+  /* Export mode for the emailed PDF (html2pdf runs in screen media, so the
+     @media print rules above never apply to it). body.pdfx mirrors the print
+     block exactly — keep the two in sync. .sheet is pinned to the A4 CSS
+     width (794px) so the capture paginates identically to printing. */
+  body.pdfx{background:#fff;padding:0;font-size:12.5px;line-height:1.5;}
+  body.pdfx .sheet{box-shadow:none;border-radius:0;max-width:none;width:794px;margin:0;overflow:visible;}
+  body.pdfx .toolbar,body.pdfx .mailer{display:none !important;}
+  body.pdfx [contenteditable="true"]{outline:none !important;}
+  body.pdfx .pbreak{ break-before:page; page-break-before:always; height:0; margin:0; }
+  body.pdfx .totals{ padding-top:20px; }
+  body.pdfx .header{ padding:22px 44px 16px; }
+  body.pdfx .brand{ font-size:22px; }
+  body.pdfx .meta div{ padding:11px 22px; }
+  body.pdfx .body{ padding:16px 44px 0; }
+  body.pdfx .greeting{ margin-bottom:16px; font-size:13.5px; }
+  body.pdfx .grid2{ margin-bottom:16px; }
+  body.pdfx .card{ padding:14px 22px; }
+  body.pdfx thead th{ padding:10px 16px; }
+  body.pdfx tbody td{ padding:10px 16px; }
+  body.pdfx .item-desc{ font-size:12.5px; margin-top:3px; }
+  body.pdfx .totals-row{ padding:10px 4px; }
+  body.pdfx .totals-row.grand{ padding:18px 20px; margin-top:10px; }
+  body.pdfx .total-amt{ font-size:28px; }
+  body.pdfx .includes{ margin:20px 0 8px; }
+  body.pdfx .includes ul{ gap:16px 28px; }
+  body.pdfx .includes li{ font-size:13.5px; }
+  body.pdfx .terms{ padding:20px 28px; margin:15px 0 10px; }
+  body.pdfx .terms ol{ font-size:12.5px; line-height:1.95; }
+  body.pdfx .terms li{ margin-bottom:6px; }
+  body.pdfx .cta{ padding:30px 44px; margin-top:18px; }
+  body.pdfx .cta h2{ font-size:23px; margin-bottom:9px; }
+  body.pdfx .cta p{ margin-bottom:18px; }
+  body.pdfx .footer{ padding:20px 20px; }
 </style>
 </head>
 <body>
@@ -326,7 +360,8 @@
 
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
   var params = new URLSearchParams(location.search);
   var id = params.get('id');
@@ -452,26 +487,64 @@
     if (m.style.display === 'block') $('m-body').scrollIntoView({ block:'nearest' });
   });
 
+  // Builds the emailed PDF with the same 2-page layout as printing:
+  // capture the sheet once, slice the image at the price-summary boundary
+  // (where the print version breaks), and place each half on its own A4 page.
+  // html2pdf's automatic pagination is unreliable with this layout, so we
+  // paginate ourselves; the bundle's html2canvas + jsPDF globals do the work.
+  async function buildQuotePdf(){
+    if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch {} }
+    document.body.classList.add('exporting', 'pdfx');
+    try {
+      var sheet = $('sheet');
+      var tot = sheet.querySelector('.totals');
+      var canvas = await html2canvas(sheet, { scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: 794 });
+      var sr = sheet.getBoundingClientRect();
+      var cut = Math.round((tot.getBoundingClientRect().top - sr.top) * (canvas.width / sr.width));
+      function slicePage(y0, y1){
+        var c = document.createElement('canvas');
+        c.width = canvas.width; c.height = Math.max(1, y1 - y0);
+        var ctx = c.getContext('2d');
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(canvas, 0, y0, canvas.width, c.height, 0, 0, canvas.width, c.height);
+        return c;
+      }
+      var pages = [slicePage(0, cut), slicePage(cut, canvas.height)];
+      var JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+      var pdf = new JsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+      pages.forEach(function(c, i){
+        if (i) pdf.addPage();
+        // Explicit white page background — some renderers show empty
+        // regions of a PDF page as black.
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, 0, 210, 297, 'F');
+        var hmm = c.height / c.width * 210;
+        if (hmm > 297){
+          // Slightly too tall for one page: shrink to fit, keep centred.
+          var wmm = 210 * 297 / hmm;
+          pdf.addImage(c.toDataURL('image/jpeg', 0.95), 'JPEG', (210 - wmm) / 2, 0, wmm, 297);
+        } else {
+          pdf.addImage(c.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 210, hmm);
+        }
+      });
+      return pdf.output('datauristring');
+    } finally {
+      document.body.classList.remove('exporting', 'pdfx');
+    }
+  }
+  window.buildQuotePdf = buildQuotePdf;
+
   $('m-send').addEventListener('click', async function(){
     var to = $('m-to').value.trim();
     var subject = $('m-subject').value.trim();
     var body = $('m-body').value;
     if (!to){ mStatus('Enter the customer email address.', false); return; }
-    if (typeof html2pdf === 'undefined'){ mStatus('PDF library still loading, try again in a moment.', false); return; }
+    if (typeof html2canvas === 'undefined'){ mStatus('PDF library still loading, try again in a moment.', false); return; }
     var btn = $('m-send'); var orig = btn.textContent; btn.disabled = true; btn.textContent = 'Preparing PDF…'; mStatus('', true);
     try {
-      if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch {} }
-      document.body.classList.add('exporting');
       var nm = ($('pf-name').textContent || 'Customer').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
-      var opt = {
-        margin: [8, 8, 8, 8], filename: 'MKR-Quote-' + nm + '.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] },
-      };
-      var dataUri = await html2pdf().set(opt).from($('sheet')).outputPdf('datauristring');
-      document.body.classList.remove('exporting');
+      var opt = { filename: 'MKR-Quote-' + nm + '.pdf' };
+      var dataUri = await buildQuotePdf();
       var pdf64 = String(dataUri).split(',')[1];
       btn.textContent = 'Sending…';
       var r = await fetch('/api/admin/send-quote', {
@@ -487,7 +560,6 @@
       }
       else { mStatus('Could not send: ' + (d.error || 'error'), false); }
     } catch(e){
-      document.body.classList.remove('exporting');
       mStatus('Error: ' + (e.message || e), false);
     }
     btn.disabled = false; btn.textContent = orig;
