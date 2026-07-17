@@ -213,14 +213,21 @@
     move_booked:'Move booked', won:'Completed', lost:'Lost',
   }[s] || s || 'New');
 
-  // Booked moves float to the top, soonest move date first; everyone else keeps
-  // the fetched order (newest lead first). Array.sort is stable.
+  // Leads are grouped by pipeline stage: new enquiries first, then booked
+  // moves (soonest move date first), then prospecting, quote sent, contacted,
+  // completed, and lost at the bottom. Within each group the fetched order
+  // (newest lead first) is kept — Array.sort is stable.
+  const STATUS_RANK = {
+    new: 0, move_booked: 1, survey_booked: 1,
+    prospecting: 2, quote_sent: 3, contacted: 4, won: 5, lost: 6,
+  };
   function sortLeads(rows){
     const md = (r) => ((r.move_date || '').slice(0,10)) || '9999-99-99';
+    const rank = (r) => STATUS_RANK[r.status] ?? 0; // unknown status treated as new
     return rows.slice().sort((a, b) => {
-      const am = a.status === 'move_booked', bm = b.status === 'move_booked';
-      if (am !== bm) return am ? -1 : 1;
-      if (am && bm) return md(a) < md(b) ? -1 : md(a) > md(b) ? 1 : 0;
+      if (rank(a) !== rank(b)) return rank(a) - rank(b);
+      if (a.status === 'move_booked' && b.status === 'move_booked')
+        return md(a) < md(b) ? -1 : md(a) > md(b) ? 1 : 0;
       return 0;
     });
   }
