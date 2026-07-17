@@ -25,6 +25,7 @@ export default async function handler(req, res) {
     const payload = {
       from: 'Medway & Kent Removals <quotes@medwaykentremovals.co.uk>',
       to: [to],
+      bcc: ['info@medwaykentremovals.co.uk'],
       reply_to: 'info@medwaykentremovals.co.uk',
       subject,
       text: body,
