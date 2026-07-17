@@ -124,47 +124,45 @@
   /* margin:0 removes the browser's URL + date/time print headers/footers */
   @page{ size:A4; margin:0; }
   @media print{
-    body{background:#fff;padding:0;font-size:11px;line-height:1.4;}
-    .sheet{box-shadow:none;border-radius:0;max-width:none;}
+    body{background:#fff;padding:0;font-size:12.5px;line-height:1.5;}
+    .sheet{box-shadow:none;border-radius:0;max-width:none;overflow:visible;}
     .toolbar,.mailer{display:none !important;}
     [contenteditable="true"]{outline:none !important;}
     .header,.cta,.footer{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     thead th,.totals-row.grand,.includes li::before,.doc-type,.route-badge{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    /* Tighten everything so the whole quote fits on 2 pages (no text removed) */
-    .header{ padding:15px 34px 13px; }
-    .brand{ font-size:20px; }
-    .brand-sub{ font-size:11px; margin-top:4px; }
-    .doc-type{ margin-top:10px; padding:6px 14px; font-size:11.5px; }
-    .contact-block{ font-size:11.5px; line-height:1.55; }
-    .meta div{ padding:9px 16px; }
-    .meta .value{ font-size:12.5px; }
-    .body{ padding:14px 34px 4px; }
-    .greeting{ font-size:11.5px; margin-bottom:11px; }
-    .section-title{ margin-bottom:8px; font-size:11px; }
-    .grid2{ margin-bottom:11px; gap:12px; }
-    .card{ padding:11px 14px; }
-    .card h3{ font-size:12.5px; margin-bottom:5px; }
-    .card .row{ font-size:11.5px; }
-    thead th{ padding:8px 14px; font-size:11px; }
-    tbody td{ padding:6px 14px; font-size:11px; }
-    .item-title{ font-size:11.5px; }
-    .item-desc{ font-size:10.5px; margin-top:2px; }
-    .totals-row{ padding:5px 4px; font-size:11.5px; }
-    .totals-row.grand{ padding:11px 16px; margin-top:6px; }
-    .total-amt{ font-size:22px; }
-    .allinc{ margin-top:7px; padding:5px 11px; }
-    .includes{ margin:12px 0 4px; }
-    .includes ul{ gap:6px 22px; }
-    .includes li{ font-size:11.5px; padding-left:22px; }
-    .terms{ padding:12px 18px; margin:4px 0 2px; }
-    .terms h3{ font-size:12px; margin-bottom:6px; }
-    .terms ol{ font-size:10.5px; line-height:1.55; }
-    .terms li{ margin-bottom:3px; }
-    .cta{ padding:14px 34px; margin-top:12px; }
-    .cta h2{ font-size:17px; margin-bottom:5px; }
-    .cta p{ font-size:11.5px; margin-bottom:10px; }
-    .cta .btn{ padding:10px 22px; font-size:13px; }
-    .footer{ padding:11px 16px; font-size:10.5px; }
+    /* PAGE 1: header, intro, address cards and the quotation table.
+       PAGE 2: price summary, what's included, terms, CTA and footer.
+       The table rows cannot be split, so we break cleanly before the
+       price summary — this keeps page 1 tidy and fills page 2 fully. */
+    /* Plain block break — flex containers ignore break-before, so the
+       table stays whole on page 1 and the price summary starts page 2. */
+    .pbreak{ break-before:page; page-break-before:always; height:0; margin:0; }
+    .totals{ padding-top:20px; }
+    /* Top half — spaced so the header, cards and full table fill page 1 */
+    .header{ padding:22px 44px 16px; }
+    .brand{ font-size:22px; }
+    .meta div{ padding:11px 22px; }
+    .body{ padding:16px 44px 0; }
+    .greeting{ margin-bottom:16px; font-size:13.5px; }
+    .grid2{ margin-bottom:16px; }
+    .card{ padding:14px 22px; }
+    thead th{ padding:10px 16px; }
+    tbody td{ padding:10px 16px; }
+    .item-desc{ font-size:12.5px; margin-top:3px; }
+    /* Bottom half — generous so page 2 is well filled */
+    .totals-row{ padding:10px 4px; }
+    .totals-row.grand{ padding:18px 20px; margin-top:10px; }
+    .total-amt{ font-size:28px; }
+    .includes{ margin:20px 0 8px; }
+    .includes ul{ gap:16px 28px; }
+    .includes li{ font-size:13.5px; }
+    .terms{ padding:20px 28px; margin:15px 0 10px; }
+    .terms ol{ font-size:12.5px; line-height:1.95; }
+    .terms li{ margin-bottom:6px; }
+    .cta{ padding:30px 44px; margin-top:18px; }
+    .cta h2{ font-size:23px; margin-bottom:9px; }
+    .cta p{ margin-bottom:18px; }
+    .footer{ padding:20px 20px; }
   }
   @media(max-width:560px){
     .body,.header,.cta{padding-left:22px;padding-right:22px;}
@@ -275,6 +273,7 @@
       </tbody>
     </table>
 
+    <div class="pbreak" aria-hidden="true"></div>
     <div class="totals">
       <div class="totals-inner">
         <div class="totals-row"><span>Subtotal</span><span id="sub-amt">—</span></div>
