@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
 
   try {
-    const { lead_id, to, subject, body, pdf_base64, filename } = req.body || {};
+    const { lead_id, to, subject, body, pdf_base64, filename, kind } = req.body || {};
     if (!to || !subject || !body) {
       return res.status(400).json({ error: 'to, subject and body are required' });
     }
@@ -46,7 +46,7 @@ export default async function handler(req, res) {
     }
 
     // Record it on the lead for your own history (best-effort).
-    if (lead_id) { try { await appendNote(lead_id, `Quote emailed to ${to}`); } catch {} }
+    if (lead_id) { try { await appendNote(lead_id, `${kind || 'Quote'} emailed to ${to}`); } catch {} }
 
     return res.status(200).json({ success: true });
   } catch (e) {

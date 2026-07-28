@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Invoice — Medway &amp; Kent Removals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0D1F3C;
+    --orange:#E04E1B;
+    --orange-hover:#F06535;
+    --green:#15803d;
+    --green-soft:#dcfce7;
+    --cream:#F8F6F1;
+    --white:#FFFFFF;
+    --grey:#6B7280;
+    --line:#E7E4DC;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:#EDEBE5;}
+  body{
+    font-family:'DM Sans',Inter,'Helvetica Neue',Arial,sans-serif;
+    color:var(--navy);
+    line-height:1.5;
+    font-size:14.5px;
+    -webkit-font-smoothing:antialiased;
+    padding:32px 16px;
+  }
+  .sheet{
+    max-width:820px;
+    margin:0 auto;
+    background:var(--white);
+    box-shadow:0 18px 50px rgba(13,31,60,.14);
+    border-radius:14px;
+    overflow:hidden;
+  }
+  h1,h2,h3,.brand,.total-amt,.doc-type{font-family:'Syne',Montserrat,Arial,sans-serif;}
+
+  .header{background:var(--navy);color:var(--white);padding:26px 44px 22px;position:relative;}
+  .header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;background:linear-gradient(90deg,var(--orange),var(--orange-hover));}
+  .header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex-wrap:nowrap;}
+  .header-top>div:first-child{min-width:0;}
+  .brand{font-size:25px;font-weight:800;letter-spacing:.3px;line-height:1.15;}
+  .brand .accent{color:var(--orange);}
+  .brand-sub{font-size:12.5px;color:#B8C0CF;margin-top:6px;letter-spacing:.4px;text-transform:uppercase;font-weight:500;}
+  .contact-block{text-align:right;font-size:13px;color:#D5DAE3;line-height:1.7;flex:0 0 auto;}
+  .contact-block strong{color:var(--white);font-weight:600;}
+  .wa-ico{display:inline-block;width:13px;height:13px;vertical-align:-1px;margin-right:3px;}
+  .doc-type{display:inline-block;margin-top:18px;background:var(--orange);color:var(--white);font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:8px 18px;border-radius:6px;}
+  body.mode-receipt .doc-type{background:var(--green);}
+
+  .meta{display:flex;flex-wrap:wrap;gap:1px;background:var(--line);border-bottom:1px solid var(--line);}
+  .meta div{flex:1 1 25%;background:var(--cream);padding:14px 20px;min-width:150px;}
+  .meta .label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--grey);font-weight:600;}
+  .meta .value{font-size:15px;font-weight:600;color:var(--navy);margin-top:3px;}
+
+  .body{padding:24px 44px 26px;}
+  .section-title{font-size:13px;text-transform:uppercase;letter-spacing:1.4px;color:var(--orange);font-weight:700;margin-bottom:14px;font-family:'DM Sans',Arial,sans-serif;}
+  .greeting{font-size:14.5px;margin-bottom:20px;color:#33405A;}
+  .greeting strong{color:var(--navy);}
+
+  .grid2{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:22px;}
+  .card{flex:1 1 240px;background:var(--cream);border:1px solid var(--line);border-radius:10px;padding:18px 20px;}
+  .card h3{font-size:15px;font-weight:700;margin-bottom:8px;}
+  .card .row{font-size:14px;color:#33405A;margin-bottom:2px;}
+  .card .row span{color:var(--grey);}
+  .route-badge{display:inline-block;background:var(--navy);color:#fff;font-size:11px;font-weight:600;letter-spacing:.5px;padding:3px 10px;border-radius:20px;margin-bottom:10px;}
+
+  table{width:100%;border-collapse:collapse;margin-bottom:6px;}
+  thead th{background:var(--navy);color:var(--white);text-align:left;font-family:'Syne',Arial,sans-serif;font-size:12.5px;font-weight:600;letter-spacing:.5px;padding:12px 16px;}
+  thead th.num{text-align:right;}
+  tbody td{padding:11px 16px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:top;}
+  tbody td.num{text-align:right;white-space:nowrap;font-weight:600;}
+  tbody tr:nth-child(even){background:#FBFAF7;}
+  .item-title{font-weight:600;color:var(--navy);}
+  .item-desc{color:var(--grey);font-size:13px;margin-top:3px;}
+
+  .totals{display:flex;justify-content:flex-end;margin-top:8px;}
+  .totals-inner{width:340px;max-width:100%;}
+  .totals-row{display:flex;justify-content:space-between;padding:8px 4px;font-size:14px;color:#33405A;}
+  .totals-row.grand{margin-top:8px;background:var(--navy);color:#fff;border-radius:10px;padding:16px 20px;align-items:center;}
+  body.mode-receipt .totals-row.grand{background:var(--green);}
+  .totals-row.grand .lbl{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#C6CDD9;}
+  body.mode-receipt .totals-row.grand .lbl{color:#d8f3e2;}
+  .total-amt{font-size:28px;font-weight:800;color:#fff;}
+  .paid-tag{display:inline-block;margin-top:10px;background:var(--green-soft);color:var(--green);border:1px solid rgba(21,128,61,.35);font-size:12px;font-weight:700;letter-spacing:1px;padding:6px 14px;border-radius:6px;text-transform:uppercase;}
+  .due-tag{display:inline-block;margin-top:10px;background:rgba(224,78,27,.1);color:var(--orange);border:1px solid rgba(224,78,27,.35);font-size:12px;font-weight:600;padding:6px 12px;border-radius:6px;}
+
+  .payblock{background:var(--cream);border:1px solid var(--line);border-radius:10px;padding:18px 24px;margin:20px 0 4px;}
+  .payblock h3{font-size:14px;font-weight:700;margin-bottom:10px;}
+  .payblock .pd-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 26px;font-size:13.5px;color:#33405A;}
+  .payblock .pd-grid span{color:var(--grey);}
+  .payblock p{font-size:13px;color:#3a4457;line-height:1.7;}
+  .thanks{background:var(--green-soft);border:1px solid rgba(21,128,61,.25);border-radius:10px;padding:18px 24px;margin:20px 0 4px;}
+  .thanks h3{font-size:14px;font-weight:700;margin-bottom:6px;color:var(--green);}
+  .thanks p{font-size:13px;color:#1f4d33;line-height:1.7;}
+
+  .footer{background:#08152B;color:#8993A5;text-align:center;font-size:12px;padding:18px 20px;line-height:1.7;margin-top:24px;}
+  .footer strong{color:#fff;}
+
+  /* Admin toolbar + editable hints (never printed) */
+  .toolbar{position:sticky;top:0;z-index:50;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+           max-width:820px;margin:0 auto 16px;background:#0d1f3c;color:#fff;border-radius:12px;padding:12px 18px;}
+  .toolbar .tbtn{background:#fff;color:#0d1f3c;border:none;border-radius:8px;padding:9px 16px;font:inherit;font-weight:700;cursor:pointer;}
+  .toolbar .tbtn.primary{background:var(--orange);color:#fff;}
+  .toolbar .thint{font-size:12.5px;color:#c6cdd9;margin-left:auto;}
+  [contenteditable="true"]{outline:1px dashed rgba(224,78,27,.5);outline-offset:2px;border-radius:3px;}
+  [contenteditable="true"]:focus{outline:2px solid var(--orange);}
+  .exporting [contenteditable]{outline:none !important;}
+  .mailer{max-width:820px;margin:-6px auto 16px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px;box-shadow:0 8px 30px rgba(13,31,60,.10);}
+  .mailer .m-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .mailer .m-row label{width:60px;font-size:13px;font-weight:700;color:var(--navy);flex:0 0 auto;}
+  .mailer input,.mailer textarea{flex:1;width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:14px;color:var(--navy);}
+  .mailer textarea{resize:vertical;line-height:1.5;}
+  .mailer .m-actions{display:flex;align-items:center;gap:14px;margin-top:12px;}
+  .mailer .m-status{font-size:13px;font-weight:700;}
+
+  /* Elements that exist in only one mode */
+  body.mode-invoice .receipt-only{display:none !important;}
+  body.mode-receipt .invoice-only{display:none !important;}
+
+  /* margin:0 removes the browser's URL + date/time print headers/footers.
+     The invoice/receipt is a single A4 page, so the print layout is compact. */
+  @page{ size:A4; margin:0; }
+  @media print{
+    html{background:#fff;}
+    body{background:#fff;padding:0;font-size:12.5px;line-height:1.45;}
+    .sheet{box-shadow:none;border-radius:0;max-width:none;overflow:visible;}
+    .toolbar,.mailer{display:none !important;}
+    [contenteditable="true"]{outline:none !important;}
+    .header,.footer,.doc-type,.route-badge,thead th,.totals-row.grand,.paid-tag,.due-tag,.thanks{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .header{ padding:14px 44px 10px; }
+    .brand{ font-size:21px; }
+    .brand-sub{ font-size:11px; margin-top:4px; }
+    .contact-block{ font-size:11.5px; line-height:1.55; }
+    .doc-type{ margin-top:10px; padding:6px 14px; font-size:12px; }
+    .meta div{ padding:8px 16px; min-width:120px; }
+    .meta .label{ font-size:10px; }
+    .meta .value{ font-size:13px; margin-top:2px; }
+    .body{ padding:12px 44px 10px; }
+    .greeting{ margin-bottom:12px; font-size:12.5px; }
+    .grid2{ gap:12px; margin-bottom:12px; }
+    .card{ padding:10px 16px; }
+    .card h3{ font-size:13px; margin-bottom:4px; }
+    .card .row{ font-size:12px; margin-bottom:1px; }
+    .route-badge{ margin-bottom:6px; font-size:10px; }
+    .section-title{ margin-bottom:8px; font-size:11px; }
+    thead th{ padding:8px 14px; font-size:11.5px; }
+    tbody td{ padding:8px 14px; font-size:12px; }
+    .item-desc{ font-size:11.5px; margin-top:2px; }
+    .totals-row{ padding:5px 4px; font-size:12.5px; }
+    .totals-row.grand{ padding:11px 16px; margin-top:5px; }
+    .total-amt{ font-size:22px; }
+    .paid-tag,.due-tag{ margin-top:6px; font-size:11px; padding:4px 10px; }
+    .payblock{ padding:12px 18px; margin:12px 0 4px; }
+    .payblock h3{ font-size:12.5px; margin-bottom:6px; }
+    .payblock .pd-grid{ font-size:12px; gap:4px 20px; }
+    .payblock p{ font-size:11.5px; line-height:1.55; }
+    .thanks{ padding:12px 18px; margin:12px 0 4px; }
+    .thanks h3{ font-size:12.5px; margin-bottom:4px; }
+    .thanks p{ font-size:11.5px; line-height:1.55; }
+    .footer{ padding:10px 20px; margin-top:0; font-size:11px; }
+  }
+  @media(max-width:560px){
+    .body,.header{padding-left:22px;padding-right:22px;}
+    .payblock .pd-grid{grid-template-columns:1fr;}
+  }
+
+  /* Export mode for the emailed PDF (html2canvas runs in screen media, so the
+     @media print rules never apply to it). Keep in sync with @media print. */
+  body.pdfx{background:#fff;padding:0;font-size:12.5px;line-height:1.45;}
+  body.pdfx .sheet{box-shadow:none;border-radius:0;max-width:none;width:794px;margin:0;overflow:visible;}
+  body.pdfx .toolbar,body.pdfx .mailer{display:none !important;}
+  body.pdfx [contenteditable="true"]{outline:none !important;}
+  body.pdfx .header{ padding:14px 44px 10px; }
+  body.pdfx .brand{ font-size:21px; }
+  body.pdfx .brand-sub{ font-size:11px; margin-top:4px; }
+  body.pdfx .contact-block{ font-size:11.5px; line-height:1.55; }
+  body.pdfx .doc-type{ margin-top:10px; padding:6px 14px; font-size:12px; }
+  body.pdfx .meta div{ padding:8px 16px; min-width:120px; }
+  body.pdfx .meta .label{ font-size:10px; }
+  body.pdfx .meta .value{ font-size:13px; margin-top:2px; }
+  body.pdfx .body{ padding:12px 44px 10px; }
+  body.pdfx .greeting{ margin-bottom:12px; font-size:12.5px; }
+  body.pdfx .grid2{ gap:12px; margin-bottom:12px; }
+  body.pdfx .card{ padding:10px 16px; }
+  body.pdfx .card h3{ font-size:13px; margin-bottom:4px; }
+  body.pdfx .card .row{ font-size:12px; margin-bottom:1px; }
+  body.pdfx .route-badge{ margin-bottom:6px; font-size:10px; }
+  body.pdfx .section-title{ margin-bottom:8px; font-size:11px; }
+  body.pdfx thead th{ padding:8px 14px; font-size:11.5px; }
+  body.pdfx tbody td{ padding:8px 14px; font-size:12px; }
+  body.pdfx .item-desc{ font-size:11.5px; margin-top:2px; }
+  body.pdfx .totals-row{ padding:5px 4px; font-size:12.5px; }
+  body.pdfx .totals-row.grand{ padding:11px 16px; margin-top:5px; }
+  body.pdfx .total-amt{ font-size:22px; }
+  body.pdfx .paid-tag,body.pdfx .due-tag{ margin-top:6px; font-size:11px; padding:4px 10px; }
+  body.pdfx .payblock{ padding:12px 18px; margin:12px 0 4px; }
+  body.pdfx .payblock h3{ font-size:12.5px; margin-bottom:6px; }
+  body.pdfx .payblock .pd-grid{ font-size:12px; gap:4px 20px; }
+  body.pdfx .payblock p{ font-size:11.5px; line-height:1.55; }
+  body.pdfx .thanks{ padding:12px 18px; margin:12px 0 4px; }
+  body.pdfx .thanks h3{ font-size:12.5px; margin-bottom:4px; }
+  body.pdfx .thanks p{ font-size:11.5px; line-height:1.55; }
+  body.pdfx .footer{ padding:10px 20px; margin-top:0; font-size:11px; }
+</style>
+</head>
+<body class="mode-invoice">
+
+<div class="toolbar">
+  <button class="tbtn primary" onclick="window.print()">Print / Save as PDF</button>
+  <button class="tbtn" id="toggle-email">&#9993; Email to customer</button>
+  <button class="tbtn" id="mode-switch">Switch to receipt</button>
+  <button class="tbtn" onclick="history.back()">&#8592; Back</button>
+  <span class="thint">Dashed items are editable &mdash; click any line to adjust it before printing or sending.</span>
+</div>
+
+<div class="mailer" id="mailer" style="display:none">
+  <div class="m-row"><label>To</label><input id="m-to" type="email" placeholder="customer@email.com"></div>
+  <div class="m-row"><label>Subject</label><input id="m-subject"></div>
+  <textarea id="m-body" rows="10"></textarea>
+  <div class="m-actions">
+    <button class="tbtn primary" id="m-send" style="background:var(--orange);color:#fff;border:none;border-radius:8px;padding:9px 16px;font:inherit;font-weight:700;cursor:pointer;">Send to customer</button>
+    <span class="m-status" id="m-status"></span>
+  </div>
+</div>
+
+<div class="sheet" id="sheet" style="display:none">
+
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="brand">Medway &amp; Kent <span class="accent">Removals</span></div>
+        <div class="brand-sub">Professional removals across Kent &amp; beyond</div>
+      </div>
+      <div class="contact-block">
+        <strong>01634 971005</strong><br>
+        Mobile: +44 7359 917380<br>
+        <svg class="wa-ico" viewBox="0 0 24 24" fill="#25D366" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.297-.497.1-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>WhatsApp: +44 7359 917380<br>
+        info@medwaykentremovals.co.uk<br>
+        medwaykentremovals.co.uk
+      </div>
+    </div>
+    <div class="doc-type" id="doc-type">Invoice</div>
+  </div>
+
+  <div class="meta">
+    <div><div class="label" id="ref-label">Invoice Number</div><div class="value" id="d-ref" contenteditable="true">—</div></div>
+    <div><div class="label">Date Issued</div><div class="value" id="d-issued">—</div></div>
+    <div><div class="label">Move Date</div><div class="value" id="d-movedate">—</div></div>
+    <div class="invoice-only"><div class="label">Payment Due</div><div class="value" contenteditable="true">On completion of move</div></div>
+    <div class="receipt-only"><div class="label">Payment Method</div><div class="value" contenteditable="true">Bank transfer</div></div>
+  </div>
+
+  <div class="body">
+    <p class="greeting invoice-only">Dear <strong class="g-name">Customer</strong>, please find your invoice below for your move with Medway &amp; Kent Removals. Payment details are shown at the bottom of this invoice. If you have any questions, call us on 01634 971005.</p>
+    <p class="greeting receipt-only">Dear <strong class="g-name">Customer</strong>, thank you for your payment. This receipt confirms your move with Medway &amp; Kent Removals has been paid in full. Please keep it for your records.</p>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Billed To</h3>
+        <div class="row" id="pf-name">—</div>
+        <div class="row"><span>Phone:</span> <span id="pf-phone">—</span></div>
+        <div class="row"><span>Email:</span> <span id="pf-email">—</span></div>
+      </div>
+      <div class="card">
+        <div class="route-badge">Collection &nbsp;&rarr;&nbsp; Delivery</div>
+        <h3>Your Move</h3>
+        <div class="row"><span>From:</span> <span id="mv-from">—</span></div>
+        <div class="row"><span>To:</span> <span id="mv-to">—</span></div>
+        <div class="row"><span>Property:</span> <span id="mv-property">—</span></div>
+      </div>
+    </div>
+
+    <div class="section-title" id="tbl-section">Invoice Details</div>
+    <table>
+      <thead>
+        <tr><th>Description</th><th class="num">Amount</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td contenteditable="true">
+            <div class="item-title" id="tbl-title">Full House Removal</div>
+            <div class="item-desc" id="tbl-desc">Complete door-to-door removal service, including careful loading, secure transit, and unloading at your new home.</div>
+          </td>
+          <td class="num" id="tbl-amt" contenteditable="true">—</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <div class="totals-inner">
+        <div class="totals-row"><span>Subtotal</span><span id="sub-amt">—</span></div>
+        <div class="totals-row"><span>VAT</span><span>Not applicable</span></div>
+        <div class="totals-row invoice-only"><span contenteditable="true">Deposit received</span><span id="dep-amt" contenteditable="true">−£50</span></div>
+        <div class="totals-row grand invoice-only">
+          <span class="lbl">Balance Due</span>
+          <span class="total-amt" id="due-amt">—</span>
+        </div>
+        <div class="totals-row grand receipt-only">
+          <span class="lbl">Amount Paid</span>
+          <span class="total-amt" id="paid-amt">—</span>
+        </div>
+        <div style="text-align:right;" class="invoice-only"><span class="due-tag">Fixed price &bull; No hidden charges</span></div>
+        <div style="text-align:right;" class="receipt-only"><span class="paid-tag">Paid in full &mdash; balance £0</span></div>
+      </div>
+    </div>
+
+    <div class="payblock invoice-only" contenteditable="true">
+      <h3>Payment Details</h3>
+      <div class="pd-grid">
+        <div><span>Account name:</span> Medway &amp; Kent Removals</div>
+        <div><span>Bank:</span> Add bank name</div>
+        <div><span>Sort code:</span> 00-00-00</div>
+        <div><span>Account number:</span> 00000000</div>
+        <div><span>Reference:</span> <strong id="pay-ref">—</strong></div>
+        <div><span>Amount:</span> <strong id="pay-amt">—</strong></div>
+      </div>
+    </div>
+    <div class="payblock invoice-only">
+      <p contenteditable="true">Payment is due on completion on the day of the move unless otherwise agreed. Please use the reference above so we can match your payment. A receipt will be issued once payment is received.</p>
+    </div>
+
+    <div class="thanks receipt-only">
+      <h3>Payment received with thanks</h3>
+      <p contenteditable="true">We confirm payment has been received in full for the removal service described above. No further balance is due. Thank you for choosing Medway &amp; Kent Removals &mdash; we wish you every happiness in your new home.</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <strong>Medway &amp; Kent Removals</strong><br>
+    Professional, fully insured removals &bull; Fixed prices, no hidden charges &bull; Rochester based
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  var params = new URLSearchParams(location.search);
+  var id = params.get('id');
+  if (id) id = id.replace(/\.html$/, '');
+  var mode = (params.get('type') === 'receipt') ? 'receipt' : 'invoice';
+  var LEAD = null;
+
+  var $ = function(x){ return document.getElementById(x); };
+
+  function dashIfEmpty(v){ return (v && String(v).trim()) ? v : '—'; }
+  function money(n, dp){
+    var v = Number(n);
+    if (!isFinite(v)) v = 0;
+    return '£' + v.toLocaleString('en-GB', { minimumFractionDigits: dp || 0, maximumFractionDigits: dp || 0 });
+  }
+  function fmtLong(d){ return d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }).replace(',', ''); }
+  function fmtMed(d){ return d.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }); }
+
+  function refFor(kind){
+    var today = new Date();
+    var base = LEAD && LEAD.move_date ? new Date(LEAD.move_date + 'T00:00:00') : today;
+    if (isNaN(base)) base = today;
+    var tag = kind === 'receipt' ? 'RCT' : 'INV';
+    return 'MKR-' + tag + '-' + base.getFullYear() + '-' + String(base.getMonth()+1).padStart(2,'0') + String(base.getDate()).padStart(2,'0');
+  }
+
+  function applyMode(m){
+    mode = m;
+    document.body.classList.toggle('mode-invoice', m === 'invoice');
+    document.body.classList.toggle('mode-receipt', m === 'receipt');
+    $('doc-type').textContent = m === 'receipt' ? 'Receipt' : 'Invoice';
+    $('ref-label').textContent = m === 'receipt' ? 'Receipt Number' : 'Invoice Number';
+    $('tbl-section').textContent = m === 'receipt' ? 'Receipt Details' : 'Invoice Details';
+    $('mode-switch').textContent = m === 'receipt' ? 'Switch to invoice' : 'Switch to receipt';
+    $('d-ref').textContent = refFor(m);
+    if ($('pay-ref')) $('pay-ref').textContent = refFor('invoice');
+    var name = (LEAD && LEAD.name) || 'Customer';
+    document.title = (m === 'receipt' ? 'Receipt — ' : 'Invoice — ') + name + ' — Medway & Kent Removals';
+    if (LEAD) fillMailer(LEAD);
+  }
+
+  function fillMailer(q){
+    var first = (q.name || 'there').split(' ')[0];
+    var amt = money(Number(q.value) || 0, 0);
+    var ref = refFor(mode);
+    $('m-to').value = q.email || '';
+    if (mode === 'receipt'){
+      $('m-subject').value = 'Your receipt from Medway and Kent Removals — ' + ref;
+      $('m-body').value = [
+        'Hi ' + first + ',',
+        '',
+        'Thank you for your payment. Please find your receipt attached, confirming payment in full of ' + amt + ' for your move with Medway and Kent Removals.',
+        '',
+        'No further balance is due. If you need anything else for your records, just let me know.',
+        '',
+        'It was a pleasure to move you, and we wish you every happiness in your new home.',
+        '',
+        'Best regards,',
+        'Medway and Kent Removals',
+        '01634 971005',
+      ].join('\n');
+    } else {
+      $('m-subject').value = 'Your invoice from Medway and Kent Removals — ' + ref;
+      $('m-body').value = [
+        'Hi ' + first + ',',
+        '',
+        'As requested, please find your invoice attached for your move with Medway and Kent Removals. The balance shown is due on completion on the day of the move unless we have agreed otherwise.',
+        '',
+        'Payment details are included on the invoice. Please use the reference ' + ref + ' when making payment so we can match it to your move.',
+        '',
+        'If you have any questions at all, you can reach me on 01634 971005, or by mobile and WhatsApp on 07359 917380.',
+        '',
+        'Best regards,',
+        'Medway and Kent Removals',
+      ].join('\n');
+    }
+  }
+
+  async function load(){
+    if (!id){ document.body.innerHTML = '<p style="max-width:820px;margin:40px auto;font-family:sans-serif">No customer id supplied.</p>'; return; }
+    var r;
+    try { r = await fetch('/api/admin/quote/' + id); }
+    catch(e){ document.body.innerHTML = '<p style="max-width:820px;margin:40px auto;font-family:sans-serif">Could not load customer.</p>'; return; }
+    if (r.status === 401){ window.location.href = '/admin'; return; }
+    if (!r.ok){ document.body.innerHTML = '<p style="max-width:820px;margin:40px auto;font-family:sans-serif">Customer not found.</p>'; return; }
+    LEAD = (await r.json()).quote || {};
+    var q = LEAD;
+
+    var first = (q.name || 'there').split(' ')[0];
+    document.querySelectorAll('.g-name').forEach(function(el){ el.textContent = first; });
+    $('pf-name').textContent = dashIfEmpty(q.name);
+    $('pf-phone').textContent = dashIfEmpty(q.phone);
+    $('pf-email').textContent = dashIfEmpty(q.email);
+    $('mv-from').textContent = dashIfEmpty(q.from_postcode);
+    $('mv-to').textContent = dashIfEmpty(q.to_postcode);
+    $('mv-property').textContent = dashIfEmpty(q.property_size);
+
+    $('tbl-title').textContent = 'Full House Removal' + (q.property_size ? ' — ' + q.property_size : '');
+    if (q.from_postcode || q.to_postcode){
+      $('tbl-desc').textContent = 'Complete door-to-door removal from ' + (q.from_postcode || 'your current home') + ' to ' + (q.to_postcode || 'your new home') + ', including careful loading, secure transit, and unloading at your new home.';
+    }
+
+    var val = Number(q.value);
+    if (!isFinite(val)) val = 0;
+    $('tbl-amt').textContent = money(val, 2);
+    $('sub-amt').textContent = money(val, 2);
+    $('due-amt').textContent = money(Math.max(0, val - 50), 0);
+    $('paid-amt').textContent = money(val, 0);
+    $('pay-amt').textContent = money(Math.max(0, val - 50), 0);
+
+    var today = new Date();
+    $('d-issued').textContent = fmtMed(today);
+    if (q.move_date){
+      var md = new Date(q.move_date + 'T00:00:00');
+      if (!isNaN(md)) $('d-movedate').textContent = fmtLong(md);
+    }
+
+    $('sheet').style.display = 'block';
+    applyMode(mode);
+
+    if (!val){
+      var warn = document.createElement('div');
+      warn.className = 'toolbar';
+      warn.style.background = '#b91c1c';
+      warn.innerHTML = '<span class="thint" style="margin:0;color:#fff">No job value is set for this customer. Set the Job value on the lead first, then reopen this page so the amounts show.</span>';
+      document.body.insertBefore(warn, document.querySelector('.sheet'));
+    }
+  }
+
+  $('mode-switch').addEventListener('click', function(){
+    applyMode(mode === 'invoice' ? 'receipt' : 'invoice');
+  });
+
+  // ── Email to customer ──
+  function mStatus(msg, ok){ var el = $('m-status'); el.textContent = msg; el.style.color = ok ? '#16a34a' : '#c0392b'; }
+
+  $('toggle-email').addEventListener('click', function(){
+    var m = $('mailer');
+    m.style.display = (m.style.display === 'none') ? 'block' : 'none';
+    if (m.style.display === 'block') $('m-body').scrollIntoView({ block:'nearest' });
+  });
+
+  // Single-page PDF: capture the sheet once and place it on one A4 page,
+  // shrinking to fit if it runs slightly tall. Same approach as the quote
+  // generator, without the two-page slice.
+  async function buildDocPdf(){
+    if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch {} }
+    document.body.classList.add('exporting', 'pdfx');
+    try {
+      var sheet = $('sheet');
+      var canvas = await html2canvas(sheet, { scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: 794 });
+      var JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+      var pdf = new JsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+      // Explicit white page background — some renderers show empty regions
+      // of a PDF page as black.
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(0, 0, 210, 297, 'F');
+      var hmm = canvas.height / canvas.width * 210;
+      if (hmm > 297){
+        var wmm = 210 * 297 / hmm;
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', (210 - wmm) / 2, 0, wmm, 297);
+      } else {
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 210, hmm);
+      }
+      return pdf.output('datauristring');
+    } finally {
+      document.body.classList.remove('exporting', 'pdfx');
+    }
+  }
+  window.buildDocPdf = buildDocPdf;
+
+  $('m-send').addEventListener('click', async function(){
+    var to = $('m-to').value.trim();
+    var subject = $('m-subject').value.trim();
+    var body = $('m-body').value;
+    if (!to){ mStatus('Enter the customer email address.', false); return; }
+    if (typeof html2canvas === 'undefined'){ mStatus('PDF library still loading, try again in a moment.', false); return; }
+    var btn = $('m-send'); var orig = btn.textContent; btn.disabled = true; btn.textContent = 'Preparing PDF…'; mStatus('', true);
+    try {
+      var nm = ($('pf-name').textContent || 'Customer').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
+      var kindLabel = mode === 'receipt' ? 'Receipt' : 'Invoice';
+      var filename = 'MKR-' + kindLabel + '-' + nm + '.pdf';
+      var dataUri = await buildDocPdf();
+      var pdf64 = String(dataUri).split(',')[1];
+      btn.textContent = 'Sending…';
+      var r = await fetch('/api/admin/send-quote', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ lead_id:id, to:to, subject:subject, body:body, pdf_base64:pdf64, filename:filename, kind:kindLabel }),
+      });
+      if (r.status === 401){ window.location.href = '/admin'; return; }
+      var d = await r.json().catch(function(){ return {}; });
+      if (r.ok && d.success){ mStatus(kindLabel + ' sent to ' + to + '.', true); }
+      else { mStatus('Could not send: ' + (d.error || 'error'), false); }
+    } catch(e){
+      mStatus('Error: ' + (e.message || e), false);
+    }
+    btn.disabled = false; btn.textContent = orig;
+  });
+
+  load();
+</script>
+</body>
+</html>

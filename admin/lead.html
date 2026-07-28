@@ -166,6 +166,10 @@
           </div>
 
           <div class="btn-row"><button class="btn orange" id="gen-quote" style="width:100%">&#128196; Generate quote document</button></div>
+          <div class="btn-row">
+            <button class="btn" id="gen-invoice" style="flex:1">&#129534; Generate invoice</button>
+            <button class="btn" id="gen-receipt" style="flex:1;border-color:#15803d;color:#15803d">&#129534; Generate receipt</button>
+          </div>
 
           <div class="btn-row">
             <button class="btn primary" data-status="contacted">Mark contacted</button>
@@ -330,6 +334,12 @@
 
     $('gen-quote').addEventListener('click', () => {
       window.open('/admin/quote-doc?id=' + encodeURIComponent(LEAD_ID), '_blank');
+    });
+    $('gen-invoice').addEventListener('click', () => {
+      window.open('/admin/invoice-doc?id=' + encodeURIComponent(LEAD_ID) + '&type=invoice', '_blank');
+    });
+    $('gen-receipt').addEventListener('click', () => {
+      window.open('/admin/invoice-doc?id=' + encodeURIComponent(LEAD_ID) + '&type=receipt', '_blank');
     });
 
     document.querySelectorAll('[data-status]').forEach((b) => {
