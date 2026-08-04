@@ -105,6 +105,52 @@
 
 <script>
   const $ = (id) => document.getElementById(id);
+  // ── Staff identity chip: name + tappable profile photo ──
+  // The photo lives in this browser's localStorage; tap the avatar to change it.
+  function showStaffChip(name){
+    if (document.getElementById('staff-chip')) return;
+    var bar = document.querySelector('.topbar');
+    if (!bar) return;
+    var initials = String(name || '').split(/\s+/).map(function(w){ return w[0] || ''; }).join('').slice(0,2).toUpperCase() || 'S';
+    var KEY = 'mkr_staff_avatar';
+    var stored = null;
+    try { stored = localStorage.getItem(KEY); } catch(e){}
+    var st = document.createElement('style');
+    st.textContent = '#staff-chip{display:flex;align-items:center;gap:8px;color:#fff;font-weight:600;font-size:13.5px;}'
+      + '#staff-chip .ava{width:30px;height:30px;border-radius:50%;overflow:hidden;background:#e04e1b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;cursor:pointer;border:2px solid rgba(255,255,255,.35);flex:0 0 auto;}'
+      + '#staff-chip .ava img{width:100%;height:100%;object-fit:cover;display:block;}'
+      + '@media(max-width:520px){#staff-chip .staff-name{display:none;}}';
+    document.head.appendChild(st);
+    var chip = document.createElement('span');
+    chip.id = 'staff-chip';
+    chip.innerHTML = '<span class="ava" title="Tap to add or change your photo">'
+      + (stored ? '<img src="' + stored + '" alt="">' : initials)
+      + '</span><span class="staff-name"></span>';
+    chip.querySelector('.staff-name').textContent = name;
+    var links = bar.querySelectorAll('a');
+    bar.insertBefore(chip, links.length ? links[links.length - 1] : null);
+    var input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*'; input.style.display = 'none';
+    document.body.appendChild(input);
+    chip.querySelector('.ava').addEventListener('click', function(){ input.click(); });
+    input.addEventListener('change', function(){
+      var f = input.files && input.files[0];
+      if (!f) return;
+      var img = new Image();
+      img.onload = function(){
+        var S = 128, c = document.createElement('canvas');
+        c.width = S; c.height = S;
+        var ctx = c.getContext('2d');
+        var side = Math.min(img.width, img.height);
+        ctx.drawImage(img, (img.width - side)/2, (img.height - side)/2, side, side, 0, 0, S, S);
+        var data = c.toDataURL('image/jpeg', 0.85);
+        try { localStorage.setItem(KEY, data); } catch(e){}
+        chip.querySelector('.ava').innerHTML = '<img src="' + data + '" alt="">';
+      };
+      img.src = URL.createObjectURL(f);
+    });
+  }
+
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const money = (n) => '£' + Math.round(Number(n) || 0).toLocaleString('en-GB');
   const labelFor = (s) => ({ new:'New', contacted:'Contacted', quote_sent:'Quote Sent', prospecting:'Prospecting', survey_booked:'Survey booked', move_booked:'Move booked', won:'Completed', lost:'Lost' }[s] || s || 'New');
@@ -123,6 +169,7 @@
     if (r.status === 401){ window.location.href = '/admin'; return; }
     if (!r.ok){ $('content').innerHTML = '<p class="muted">Could not load data.</p>'; return; }
     const data = await r.json();
+    if (data.role === 'staff') showStaffChip(data.staff_name || 'Jackie Osho');
     render(data.quotes || [], data.role);
   }
 
