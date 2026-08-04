@@ -84,14 +84,15 @@ export default async function handler(req, res) {
         fields.value = b.value === '' || b.value === null ? null : Number(b.value);
       }
 
-      // Review request fires only on the transition into "won".
+      // Review request is sent only when the admin explicitly confirmed it
+      // (send_review flag from the lead page prompt) — never automatically.
       let prev = null;
-      if (b.status === 'won') { try { prev = await getQuote(id); } catch {} }
+      if (b.status === 'won' && b.send_review === true) { try { prev = await getQuote(id); } catch {} }
 
       const quote = await updateQuote(id, fields);
 
       let review_request = null;
-      if (b.status === 'won' && prev && prev.status !== 'won') {
+      if (b.status === 'won' && b.send_review === true && prev && prev.status !== 'won') {
         const alreadyAsked = Array.isArray(prev.admin_notes)
           && prev.admin_notes.some((n) => String(n && n.text).includes('Review request emailed'));
         if (!alreadyAsked && prev.email) {

@@ -279,9 +279,10 @@
   function flash(id, msg, ok){ const el = $(id); el.textContent = msg; el.className = 'flash ' + (ok?'ok':'err'); }
 
   let lastReviewRequest = null;
-  async function patchStatus(status){
+  async function patchStatus(status, extra){
     const r = await api('/api/admin/quote/' + LEAD_ID, {
-      method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ status }),
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(Object.assign({ status }, extra || {})),
     });
     if (r.ok){ const d = await r.json(); QUOTE = d.quote; lastReviewRequest = d.review_request || null; }
     return r.ok;
@@ -351,7 +352,16 @@
 
     document.querySelectorAll('[data-status]').forEach((b) => {
       b.addEventListener('click', async () => {
-        const ok = await patchStatus(b.dataset.status);
+        // Marking completed offers (but never auto-sends) the review request.
+        let extra = null;
+        if (b.dataset.status === 'won' && QUOTE && QUOTE.email){
+          const alreadyAsked = Array.isArray(QUOTE.admin_notes)
+            && QUOTE.admin_notes.some((n) => String(n && n.text).includes('Review request emailed'));
+          if (!alreadyAsked){
+            extra = { send_review: confirm('Also email ' + QUOTE.email + ' a thank-you with your Google review link?') };
+          }
+        }
+        const ok = await patchStatus(b.dataset.status, extra);
         if (ok){
           let msg = 'Status updated to “'+labelFor(b.dataset.status)+'”.';
           if (lastReviewRequest === 'sent') msg += ' Google review request emailed to the customer.';
