@@ -150,7 +150,8 @@
       if (r.status === 404){ $('content').innerHTML = '<p class="muted">Lead not found.</p>'; return; }
       const data = await r.json();
       QUOTE = data.quote; APPTS = data.appointments || []; REMINDERS = data.reminders || [];
-      if (data.role === 'staff'){ document.body.classList.add('staff'); showStaffChip(data.staff_name || 'Jackie Osho'); }
+      if (data.role === 'staff') document.body.classList.add('staff');
+      showStaffChip(data.display_name || data.staff_name || 'Admin');
       render();
     } catch (e) {
       if (String(e.message) !== 'unauth') $('content').innerHTML = '<p class="muted">Could not load this lead.</p>';

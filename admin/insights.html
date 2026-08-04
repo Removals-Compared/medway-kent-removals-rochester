@@ -169,7 +169,7 @@
     if (r.status === 401){ window.location.href = '/admin'; return; }
     if (!r.ok){ $('content').innerHTML = '<p class="muted">Could not load data.</p>'; return; }
     const data = await r.json();
-    if (data.role === 'staff') showStaffChip(data.staff_name || 'Jackie Osho');
+    showStaffChip(data.display_name || data.staff_name || 'Admin');
     render(data.quotes || [], data.role);
   }
 

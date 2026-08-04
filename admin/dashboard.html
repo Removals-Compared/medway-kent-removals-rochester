@@ -313,7 +313,8 @@
     try {
       const r = await api('/api/admin/quotes?' + params);
       const data = await r.json();
-      if (data.role === 'staff'){ document.body.classList.add('staff'); showStaffChip(data.staff_name || 'Jackie Osho'); }
+      if (data.role === 'staff') document.body.classList.add('staff');
+      showStaffChip(data.display_name || data.staff_name || 'Admin');
       allRows = sortLeads(data.quotes || []);
       renderRows(allRows);
       renderStats();
