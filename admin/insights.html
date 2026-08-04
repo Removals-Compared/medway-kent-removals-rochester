@@ -180,6 +180,24 @@
       .sort((a,b) => (a.created_at || '').localeCompare(b.created_at || ''))
       .slice(0, 6);
 
+    // ── Review request tracking ──
+    // "Review request emailed" and "Review received" notes on the lead are
+    // the source of truth; a resend after a received review re-opens it.
+    function reviewState(r){
+      const notes = Array.isArray(r.admin_notes) ? r.admin_notes : [];
+      let lastSent = null, count = 0, receivedAt = null;
+      notes.forEach(n => {
+        const t = String((n && n.text) || '');
+        if (t.includes('Review request emailed')){ count++; if (!lastSent || (n.at || '') > lastSent) lastSent = n.at || ''; }
+        if (t.includes('Review received')){ if (!receivedAt || (n.at || '') > receivedAt) receivedAt = n.at || ''; }
+      });
+      return { lastSent, count, received: !!(receivedAt && (!lastSent || receivedAt > lastSent)) };
+    }
+    const reviewRows = rows.map(r => ({ r, s: reviewState(r) })).filter(x => x.s.lastSent);
+    const reviewWaiting = reviewRows.filter(x => !x.s.received)
+      .sort((a,b) => a.s.lastSent.localeCompare(b.s.lastSent));
+    const reviewsReceived = reviewRows.filter(x => x.s.received).length;
+
     $('content').innerHTML = `
       <div class="kpis">
         <div class="kpi"><div class="l">Pipeline value</div><div class="n">${money(pipelineVal)}</div><div class="s">${pipelineN} open lead${pipelineN===1?'':'s'} (not yet booked)</div></div>
@@ -237,6 +255,19 @@
                   <span class="who"><a href="/admin/quote/${esc(r.id)}">${esc(r.name || 'Unnamed')}</a><span class="sub">${val(r) ? money(val(r)) + ' quoted' : 'no value set'}</span></span>
                   <span class="days ${days !== null && days > 7 ? 'overdue' : ''}">${days === null ? '' : days + ' day' + (days===1?'':'s') + ' ago'}</span>
                 </li>`; }).join('') || '<li class="empty">Nothing waiting — all quotes actioned.</li>'}
+            </ul>
+          </div>
+          <div class="card">
+            <h2>Google review requests</h2>
+            <p class="sub">${reviewWaiting.length} waiting &bull; ${reviewsReceived} received. After 7 days, open the lead and hit resend; when the review appears on Google, mark it received.</p>
+            <ul class="list">
+              ${reviewWaiting.slice(0, 8).map(x => {
+                const days = Math.floor((now - new Date(x.s.lastSent)) / 86400000);
+                return `
+                <li>
+                  <span class="who"><a href="/admin/quote/${esc(x.r.id)}">${esc(x.r.name || 'Unnamed')}</a><span class="sub">asked ${days} day${days===1?'':'s'} ago${x.s.count > 1 ? ' (' + x.s.count + ' times)' : ''}</span></span>
+                  <span class="days ${days >= 7 ? 'overdue' : ''}">${days >= 7 ? 'send reminder' : 'waiting'}</span>
+                </li>`; }).join('') || '<li class="empty">No review requests waiting.</li>'}
             </ul>
           </div>
         </div>

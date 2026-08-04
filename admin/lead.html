@@ -186,6 +186,7 @@
           </div>
           <div class="btn-row">
             <button class="btn" id="send-review" style="border-color:#f0b429;color:#92400e">&#11088; Send / resend review request</button>
+            <button class="btn" id="review-received" style="border-color:#16a34a;color:#15803d">&#10003; Mark review received</button>
           </div>
           <p class="flash" id="flash-left"></p>
 
@@ -361,6 +362,18 @@
         if (r.ok && d.review_request === 'sent'){ flash('flash-left', 'Review request emailed to ' + QUOTE.email + '.', true); load(); }
         else flash('flash-left', 'Could not send: ' + (d.error || 'error'), false);
       } catch(e){ if (String(e.message) !== 'unauth') flash('flash-left', 'Could not send.', false); }
+      b.disabled = false;
+    });
+    $('review-received').addEventListener('click', async () => {
+      const b = $('review-received'); b.disabled = true;
+      try {
+        const r = await api('/api/admin/quote/' + LEAD_ID + '/note', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ text: 'Review received on Google' }),
+        });
+        if (r.ok){ QUOTE = (await r.json()).quote; flash('flash-left', 'Marked as review received — it will drop off the Insights reminder list.', true); render(); }
+        else flash('flash-left', 'Could not save.', false);
+      } catch(e){ if (String(e.message) !== 'unauth') flash('flash-left', 'Could not save.', false); }
       b.disabled = false;
     });
     $('gen-receipt').addEventListener('click', () => {
