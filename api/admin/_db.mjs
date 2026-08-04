@@ -238,3 +238,36 @@ export async function markReminderSent(id) {
   if (!r.ok) throw new Error(`markReminderSent ${r.status}: ${await r.text()}`);
   return true;
 }
+
+// ── Activity log ───────────────────────────────────────────
+// Who added / updated / deleted what. Best-effort by design: if the
+// activity_log table does not exist yet, logging fails silently and
+// nothing else is affected.
+const ACT = 'activity_log';
+
+export async function logActivity({ actor, action, lead_id, lead_name, detail }) {
+  try {
+    await fetch(`${base()}/${ACT}`, {
+      method: 'POST',
+      headers: headers({ Prefer: 'return=minimal' }),
+      body: JSON.stringify({
+        actor: actor || 'unknown',
+        action: action || '',
+        lead_id: lead_id == null ? null : String(lead_id),
+        lead_name: lead_name || '',
+        detail: detail || '',
+      }),
+    });
+  } catch {}
+}
+
+export async function fetchActivity(limit = 30) {
+  try {
+    const r = await fetch(
+      `${base()}/${ACT}?select=*&order=at.desc&limit=${Number(limit) || 30}`,
+      { headers: headers() },
+    );
+    if (!r.ok) return [];
+    return await r.json();
+  } catch { return []; }
+}

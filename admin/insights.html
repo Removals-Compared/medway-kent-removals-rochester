@@ -170,10 +170,15 @@
     if (!r.ok){ $('content').innerHTML = '<p class="muted">Could not load data.</p>'; return; }
     const data = await r.json();
     showStaffChip(data.display_name || data.staff_name || 'Admin');
-    render(data.quotes || [], data.role);
+    let activity = [];
+    try {
+      const ar = await fetch('/api/admin/activity?limit=25');
+      if (ar.ok) activity = (await ar.json()).activity || [];
+    } catch(e){}
+    render(data.quotes || [], data.role, activity);
   }
 
-  function render(rows, role){
+  function render(rows, role, activity){
     const staff = role === 'staff';
     const now = new Date();
     const todayKey = now.toISOString().slice(0,10);
@@ -317,6 +322,21 @@
                   <span class="who"><a href="/admin/quote/${esc(r.id)}">${esc(r.name || 'Unnamed')}</a><span class="sub">${staff ? 'quote sent' : (val(r) ? money(val(r)) + ' quoted' : 'no value set')}</span></span>
                   <span class="days ${days !== null && days > 7 ? 'overdue' : ''}">${days === null ? '' : days + ' day' + (days===1?'':'s') + ' ago'}</span>
                 </li>`; }).join('') || '<li class="empty">Nothing waiting — all quotes actioned.</li>'}
+            </ul>
+          </div>
+          <div class="card">
+            <h2>Team activity</h2>
+            <p class="sub">Who added, updated or deleted leads, newest first</p>
+            <ul class="list">
+              ${(activity || []).slice(0, 10).map(a => {
+                const when = a.at ? new Date(a.at).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
+                const act = String(a.action || '');
+                const color = act === 'deleted' ? '#b91c1c' : act === 'added' ? '#15803d' : '#556';
+                return `
+                <li>
+                  <span class="who"><strong>${esc(a.actor || '')}</strong> <span style="color:${color};font-weight:600">${esc(act)}</span> ${a.lead_id && act !== 'deleted' ? '<a href="/admin/quote/' + esc(a.lead_id) + '">' + esc(a.lead_name || 'a lead') + '</a>' : esc(a.lead_name || 'a lead')}${a.detail ? ' <span class="sub" style="display:inline">&rarr; ' + esc(a.detail) + '</span>' : ''}</span>
+                  <span class="days">${when}</span>
+                </li>`; }).join('') || '<li class="empty">No activity recorded yet. Run the activity_log SQL in Supabase to switch this on.</li>'}
             </ul>
           </div>
           <div class="card">

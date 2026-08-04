@@ -79,3 +79,16 @@ ALTER TABLE reminders
 
 CREATE INDEX IF NOT EXISTS reminders_due_idx  ON reminders (remind_on, sent);
 CREATE INDEX IF NOT EXISTS reminders_lead_idx ON reminders (lead_id);
+
+-- ── Activity log: who added / updated / deleted what ──
+-- Server-only access (anon key never ships to the browser), so RLS stays off.
+create table if not exists activity_log (
+  id uuid primary key default gen_random_uuid(),
+  at timestamptz not null default now(),
+  actor text not null default 'unknown',
+  action text not null default '',
+  lead_id text,
+  lead_name text default '',
+  detail text default ''
+);
+alter table activity_log disable row level security;

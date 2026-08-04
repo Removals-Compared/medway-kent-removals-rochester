@@ -1,5 +1,5 @@
 import { requireAuth } from './_session.mjs';
-import { listQuotes, createQuote, fetchPendingReminders, appendNote } from './_db.mjs';
+import { listQuotes, createQuote, fetchPendingReminders, appendNote, logActivity } from './_db.mjs';
 
 export default async function handler(req, res) {
   const role = requireAuth(req, res);
@@ -30,6 +30,8 @@ export default async function handler(req, res) {
       if (role === 'staff' && quote && quote.id) {
         try { await appendNote(quote.id, `Added by ${req._staffName || 'staff'}`); } catch {}
       }
+      const actor = role === 'staff' ? (req._staffName || 'staff') : (process.env.ADMIN_NAME || 'Amos Osho');
+      if (quote && quote.id) await logActivity({ actor, action: 'added', lead_id: quote.id, lead_name: quote.name });
       if (role === 'staff') delete quote.value;
       return res.status(201).json({ quote });
     }

@@ -1,7 +1,7 @@
 import { requireAuth } from '../_session.mjs';
 import {
   getQuote, updateQuote, deleteQuote, fetchAppointmentsByLeadIds,
-  fetchRemindersByLeadIds, appendNote,
+  fetchRemindersByLeadIds, appendNote, logActivity,
 } from '../_db.mjs';
 
 const REVIEW_LINK = 'https://g.page/r/CULm9CaG1nsvEAI/review';
@@ -110,15 +110,23 @@ export default async function handler(req, res) {
 
       // Audit trail: staff edits to customer details are attributed by name.
       // Written before the update so the response already carries the note.
-      const touchedDetails = editable.some((k) => b[k] !== undefined);
-      if (role === 'staff' && touchedDetails) {
-        try { await appendNote(id, `Details updated by ${req._staffName || 'staff'}`); } catch {}
-      }
-
       // Review request is sent only when the admin explicitly confirmed it
       // (send_review flag from the lead page prompt) — never automatically.
       let prev = null;
       if (b.status === 'won' && b.send_review === true) { try { prev = await getQuote(id); } catch {} }
+
+      const touchedDetails = editable.some((k) => b[k] !== undefined);
+      if (role === 'staff' && touchedDetails) {
+        try { await appendNote(id, `Details updated by ${req._staffName || 'staff'}`); } catch {}
+      }
+      const actor = role === 'staff' ? (req._staffName || 'staff') : (process.env.ADMIN_NAME || 'Amos Osho');
+      if (touchedDetails || b.status !== undefined) {
+        let current = prev;
+        if (!current) { try { current = await getQuote(id); } catch {} }
+        if (touchedDetails) await logActivity({ actor, action: 'updated details', lead_id: id, lead_name: current && current.name });
+        if (b.status !== undefined) await logActivity({ actor, action: 'changed status', lead_id: id, lead_name: current && current.name, detail: String(b.status) });
+      }
+
 
       const quote = await updateQuote(id, fields);
 
@@ -142,7 +150,12 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'DELETE') {
+      // Capture the name before the row disappears, then log who deleted it.
+      let gone = null;
+      try { gone = await getQuote(id); } catch {}
       await deleteQuote(id);
+      const actor = role === 'staff' ? (req._staffName || 'staff') : (process.env.ADMIN_NAME || 'Amos Osho');
+      await logActivity({ actor, action: 'deleted', lead_id: id, lead_name: gone && gone.name });
       return res.status(200).json({ success: true });
     }
 
