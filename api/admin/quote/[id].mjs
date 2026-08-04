@@ -20,6 +20,8 @@ async function sendReviewRequest(quote) {
     '',
     REVIEW_LINK,
     '',
+    'Just tap the stars and write a line or two, then press Post. Google may ask a few extra questions about price, and you can skip those completely.',
+    '',
     'If anything was not perfect, please reply to this email instead and we will put it right.',
     '',
     'Thanks again,',
@@ -32,6 +34,7 @@ async function sendReviewRequest(quote) {
     <p>Thank you for choosing Medway and Kent Removals for your move. It was a pleasure to help you, and we hope you are settling in well in your new home.</p>
     <p>If you have two minutes, a quick Google review would mean a great deal to our small team. It is the best way to help other families in Kent find us:</p>
     <p style="margin:22px 0"><a href="${REVIEW_LINK}" style="background:#E04E1B;color:#fff;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:8px;display:inline-block">Leave us a Google review</a></p>
+    <p style="color:#555;font-size:13.5px">Just tap the stars and write a line or two, then press Post. Google may ask a few extra questions about price, and you can skip those completely.</p>
     <p>If anything was not perfect, please reply to this email instead and we will put it right.</p>
     <p>Thanks again,<br>Medway and Kent Removals<br>01634 971005</p>
   </div>`;
