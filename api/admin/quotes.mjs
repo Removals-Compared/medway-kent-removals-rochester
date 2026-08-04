@@ -7,6 +7,7 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const { status, search, limit } = req.query || {};
+      if (status === 'deleted' && role === 'staff') return res.status(200).json({ quotes: [], role });
       const quotes = await listQuotes({
         status,
         search,

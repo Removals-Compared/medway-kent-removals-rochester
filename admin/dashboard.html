@@ -80,7 +80,7 @@
   body.staff th:nth-child(9), body.staff td:nth-child(9){ display:none !important; }
   body.staff .staff-hide{ display:none !important; }
   /* staff can add and amend, never delete */
-  body.staff .trash, body.staff .bulkbar, body.staff .cb-col{ display:none !important; }
+  body.staff .trash, body.staff .bulkbar, body.staff .cb-col, body.staff #bin-link{ display:none !important; }
 
   /* ── Mobile ── */
   @media(max-width:640px){
@@ -115,6 +115,7 @@
     <span class="crumb">Admin / Quotes</span>
     <span class="spacer"></span>
     <a href="/admin/insights" style="font-weight:700;color:#ff9a75">&#128200; Insights</a>
+    <a href="/admin/deleted" class="staff-hide-el" id="bin-link">&#128465; Deleted</a>
     <a href="#" id="signout">Sign out</a>
   </div>
 

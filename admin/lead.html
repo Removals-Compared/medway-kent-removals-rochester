@@ -33,6 +33,7 @@
   .pill.prospecting{ background:#ccfbf1; color:#0f766e; }
   .pill.survey_booked{ background:#ede9fe; color:#6d28d9; } .pill.move_booked{ background:#dcfce7; color:#15803d; }
   .pill.won{ background:#16a34a; color:#fff; } .pill.lost{ background:#fee2e2; color:#b91c1c; }
+  .pill.deleted{ background:#f3f4f6; color:#6b7280; }
   label{ display:block; font-size:13px; font-weight:600; margin:14px 0 5px; color:#445; }
   input,select,textarea{ width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px; font-family:inherit; }
   textarea{ min-height:70px; resize:vertical; }
@@ -131,7 +132,7 @@
   }
 
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const labelFor = (s) => ({ new:'New', contacted:'Contacted', quote_sent:'Quote Sent', prospecting:'Prospecting', survey_booked:'Survey booked', move_booked:'Move booked', won:'Completed', lost:'Lost' }[s] || s || 'New');
+  const labelFor = (s) => ({ new:'New', contacted:'Contacted', quote_sent:'Quote Sent', prospecting:'Prospecting', survey_booked:'Survey booked', move_booked:'Move booked', won:'Completed', lost:'Lost', deleted:'In recycle bin' }[s] || s || 'New');
   function fmtDate(v){ if(!v) return '—'; try{ return new Date(v).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch{ return v; } }
   function fmtDT(v){ if(!v) return '—'; try{ return new Date(v).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); }catch{ return v; } }
 

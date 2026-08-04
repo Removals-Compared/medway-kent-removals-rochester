@@ -4,7 +4,7 @@
 //  Secured by CRON_SECRET: Vercel adds "Authorization: Bearer <CRON_SECRET>"
 //  to cron requests when that env var is set. Set CRON_SECRET in Vercel.
 // ════════════════════════════════════════════════════════════
-import { fetchDueReminders, markReminderSent, getQuote } from './_db.mjs';
+import { fetchDueReminders, markReminderSent, getQuote, fetchExpiredDeleted, deleteQuote, logActivity } from './_db.mjs';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const TO = 'info@medwaykentremovals.co.uk';
@@ -80,6 +80,17 @@ export default async function handler(req, res) {
         results.errors.push({ id: rem.id, message: String(e.message || e) });
       }
     }
+
+    // Recycle bin housekeeping: leads deleted more than 30 days ago are
+    // purged for good. Best-effort — never fails the reminder run.
+    try {
+      const expired = await fetchExpiredDeleted(30);
+      for (const q of expired) {
+        await deleteQuote(q.id);
+        await logActivity({ actor: 'System', action: 'purged', lead_id: q.id, lead_name: q.name, detail: 'recycle bin, 30 days' });
+      }
+      results.purged = expired.length;
+    } catch (e) { results.purge_error = String(e.message || e); }
 
     return res.status(200).json({ ok: true, ...results });
   } catch (e) {

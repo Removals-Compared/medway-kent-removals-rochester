@@ -75,6 +75,23 @@ export default async function handler(req, res) {
     if (req.method === 'PATCH') {
       const b = req.body || {};
 
+      // Restore from the recycle bin — back to the stage it was deleted from.
+      if (b.restore === true) {
+        if (role === 'staff') return res.status(403).json({ error: 'restoring is not available on the staff login' });
+        const q = await getQuote(id);
+        if (!q) return res.status(404).json({ error: 'not found' });
+        const actor = process.env.ADMIN_NAME || 'Amos Osho';
+        let was = 'new';
+        for (const n of (Array.isArray(q.admin_notes) ? q.admin_notes : []).slice().reverse()) {
+          const m = String(n && n.text).match(/^Deleted by .* \(was ([a-z_]+)\)$/);
+          if (m) { was = m[1]; break; }
+        }
+        const quote = await updateQuote(id, { status: was, updated_at: new Date().toISOString() });
+        try { await appendNote(id, `Restored by ${actor}`); } catch {}
+        await logActivity({ actor, action: 'restored', lead_id: id, lead_name: q.name, detail: `back to ${was}` });
+        return res.status(200).json({ quote, restored: true, role });
+      }
+
       // Manual (re)send of the review request from the lead page button —
       // no dedupe here, the admin explicitly asked for it.
       if (b.resend_review === true) {
@@ -103,6 +120,8 @@ export default async function handler(req, res) {
         if (b[k] !== undefined) fields[k] = b[k] === '' ? null : b[k];
       });
 
+      // Staff cannot recycle a lead through the status field either.
+      if (b.status === 'deleted' && role === 'staff') return res.status(403).json({ error: 'deleting is not available on the staff login' });
       if (b.status !== undefined) fields.status = b.status;
       if (b.value !== undefined && role !== 'staff') {
         fields.value = b.value === '' || b.value === null ? null : Number(b.value);
@@ -152,13 +171,24 @@ export default async function handler(req, res) {
     if (req.method === 'DELETE') {
       // Staff can add and amend leads but never delete them.
       if (role === 'staff') return res.status(403).json({ error: 'deleting is not available on the staff login' });
-      // Capture the name before the row disappears, then log who deleted it.
+      const actor = process.env.ADMIN_NAME || 'Amos Osho';
       let gone = null;
       try { gone = await getQuote(id); } catch {}
-      await deleteQuote(id);
-      const actor = role === 'staff' ? (req._staffName || 'staff') : (process.env.ADMIN_NAME || 'Amos Osho');
-      await logActivity({ actor, action: 'deleted', lead_id: id, lead_name: gone && gone.name });
-      return res.status(200).json({ success: true });
+
+      // ?permanent=1 (from the recycle bin) removes the row for good.
+      if (req.query.permanent === '1') {
+        await deleteQuote(id);
+        await logActivity({ actor, action: 'deleted forever', lead_id: id, lead_name: gone && gone.name });
+        return res.status(200).json({ success: true });
+      }
+
+      // Normal delete = recycle bin. The prior status is kept in the note so
+      // a restore can put the lead back exactly where it was.
+      const was = (gone && gone.status) || 'new';
+      await updateQuote(id, { status: 'deleted', updated_at: new Date().toISOString() });
+      try { await appendNote(id, `Deleted by ${actor} (was ${was})`); } catch {}
+      await logActivity({ actor, action: 'deleted', lead_id: id, lead_name: gone && gone.name, detail: 'moved to recycle bin' });
+      return res.status(200).json({ success: true, recycled: true });
     }
 
     return res.status(405).json({ error: 'method not allowed' });

@@ -27,6 +27,7 @@ export async function listQuotes({ status, search, limit = 200 } = {}) {
   p.set('order', 'created_at.desc');
   p.set('limit', String(limit || 200));
   if (status && status !== 'all') p.set('status', `eq.${status}`);
+  else p.set('status', 'neq.deleted'); // recycled leads never show in normal views
   if (search && search.trim()) {
     // strip PostgREST-significant chars so the filter can't be broken
     const t = search.replace(/[(),*]/g, ' ').trim();
@@ -265,6 +266,20 @@ export async function fetchActivity(limit = 30) {
   try {
     const r = await fetch(
       `${base()}/${ACT}?select=*&order=at.desc&limit=${Number(limit) || 30}`,
+      { headers: headers() },
+    );
+    if (!r.ok) return [];
+    return await r.json();
+  } catch { return []; }
+}
+
+
+// Recycle bin: recycled leads older than this are purged by the daily cron.
+export async function fetchExpiredDeleted(days = 30) {
+  const cutoff = new Date(Date.now() - days * 86400000).toISOString();
+  try {
+    const r = await fetch(
+      `${base()}/${TABLE}?status=eq.deleted&updated_at=lt.${encodeURIComponent(cutoff)}&select=id,name`,
       { headers: headers() },
     );
     if (!r.ok) return [];
