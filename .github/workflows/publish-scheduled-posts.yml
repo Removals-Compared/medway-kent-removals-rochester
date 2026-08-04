@@ -14,28 +14,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Publish scheduled posts
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Publishes due posts, keeps the writing clean (no em dashes),
+      # and keeps blog.html + sitemap.xml in sync with blog/posts/.
+      - name: Publish due posts and sync index + sitemap
+        run: node scripts/publish-due.mjs
+
+      - name: Commit and push if anything changed
         run: |
-          TODAY=$(date +%Y-%m-%d)
-          echo "Checking for posts scheduled for: $TODAY"
-          PUBLISHED=0
-          for file in blog/scheduled/${TODAY}-*.html; do
-            if [ -f "$file" ]; then
-              filename=$(basename "$file")
-              slug="${filename#${TODAY}-}"
-              dest="blog/posts/${slug}"
-              echo "Publishing: $file -> $dest"
-              cp "$file" "$dest"
-              git add "$dest"
-              PUBLISHED=$((PUBLISHED + 1))
-            fi
-          done
-          if [ $PUBLISHED -gt 0 ]; then
+          if [ -n "$(git status --porcelain)" ]; then
             git config user.name "MKR Blog Bot"
             git config user.email "info@medwaykentremovals.co.uk"
-            git commit -m "Auto-publish $PUBLISHED blog post(s) for $TODAY"
+            git add blog/posts blog/scheduled blog.html sitemap.xml
+            git commit -m "Auto-publish blog post(s) for $(date +%Y-%m-%d) and sync index/sitemap"
             git push
-            echo "Published $PUBLISHED post(s)"
           else
-            echo "No posts scheduled for today"
+            echo "Nothing to publish today"
           fi
