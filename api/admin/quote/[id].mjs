@@ -69,7 +69,7 @@ export default async function handler(req, res) {
       const reminders = await fetchRemindersByLeadIds([id]);
       // Staff sessions never receive money fields — stripped server-side.
       if (role === 'staff') delete quote.value;
-      return res.status(200).json({ quote, appointments, reminders, role, staff_name: role === 'staff' ? (process.env.STAFF_NAME || 'Jackie Osho') : undefined });
+      return res.status(200).json({ quote, appointments, reminders, role, staff_name: role === 'staff' ? (req._staffName || process.env.STAFF_NAME || 'Staff') : undefined });
     }
 
     if (req.method === 'PATCH') {

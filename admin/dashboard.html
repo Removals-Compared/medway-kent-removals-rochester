@@ -254,7 +254,7 @@
     var bar = document.querySelector('.topbar');
     if (!bar) return;
     var initials = String(name || '').split(/\s+/).map(function(w){ return w[0] || ''; }).join('').slice(0,2).toUpperCase() || 'S';
-    var KEY = 'mkr_staff_avatar';
+    var KEY = 'mkr_staff_avatar_' + String(name || '').replace(/\W+/g, '_').toLowerCase();
     var stored = null;
     try { stored = localStorage.getItem(KEY); } catch(e){}
     var st = document.createElement('style');

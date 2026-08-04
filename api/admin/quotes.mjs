@@ -19,7 +19,7 @@ export default async function handler(req, res) {
       quotes.forEach((q) => { if (map[q.id]) q.reminder = map[q.id]; });
       // Staff sessions never receive money fields — stripped server-side.
       if (role === 'staff') quotes.forEach((q) => { delete q.value; });
-      return res.status(200).json({ quotes, role, staff_name: role === 'staff' ? (process.env.STAFF_NAME || 'Jackie Osho') : undefined });
+      return res.status(200).json({ quotes, role, staff_name: role === 'staff' ? (req._staffName || process.env.STAFF_NAME || 'Staff') : undefined });
     }
     if (req.method === 'POST') {
       const body = req.body || {};

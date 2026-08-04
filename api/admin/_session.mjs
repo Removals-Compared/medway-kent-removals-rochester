@@ -19,10 +19,16 @@ function safeEqual(a, b) {
   return crypto.timingSafeEqual(ab, bb);
 }
 
+const b64u = (s) => Buffer.from(String(s), 'utf8').toString('base64url');
+const unb64u = (s) => { try { return Buffer.from(String(s), 'base64url').toString('utf8'); } catch { return ''; } };
+
 // Sessions carry a role: "admin" (full access) or "staff" (no money).
-export function makeSessionCookie(role = 'admin') {
+// Staff cookies also carry the staff member's name so each login is personal.
+export function makeSessionCookie(role = 'admin', name = '') {
   const ts = Date.now();
-  const value = `${ts}.${role}.${sign(ts + '.' + role)}`;
+  const value = role === 'staff' && name
+    ? `${ts}.staff.${b64u(name)}.${sign(ts + '.staff.' + b64u(name))}`
+    : `${ts}.${role}.${sign(ts + '.' + role)}`;
   const expires = new Date(ts + TTL_MS).toUTCString();
   return `${COOKIE}=${value}; HttpOnly; Secure; SameSite=Lax; Path=/; Expires=${expires}`;
 }
@@ -40,13 +46,22 @@ function parseCookies(req) {
   return out;
 }
 
-// Returns the session role ("admin" | "staff") or false.
+// Returns the session role ("admin" | "staff") or false, and stashes the
+// staff member's name on req._staffName for personalised responses.
 // Legacy two-part cookies (issued before roles existed) count as admin.
 export function verifySession(req) {
   if (!SECRET) return false;
   const raw = parseCookies(req)[COOKIE];
   if (!raw) return false;
   const parts = raw.split('.');
+  if (parts.length === 4) {
+    const [ts, role, nameB64, mac] = parts;
+    if (role !== 'staff') return false;
+    if (!safeEqual(mac, sign(ts + '.staff.' + nameB64))) return false;
+    if (Date.now() - Number(ts) > TTL_MS) return false;
+    req._staffName = unb64u(nameB64);
+    return 'staff';
+  }
   if (parts.length === 3) {
     const [ts, role, mac] = parts;
     if (!['admin', 'staff'].includes(role)) return false;
@@ -74,11 +89,27 @@ export function requireAuth(req, res) {
   return role;
 }
 
-// Which role does this password belong to? false = wrong password.
+// Staff accounts come from STAFF_ACCOUNTS: "Name:password;Name:password".
+// The older single STAFF_PASS (+ STAFF_NAME) still works as a fallback.
+function staffAccounts() {
+  const out = [];
+  (process.env.STAFF_ACCOUNTS || '').split(';').forEach((pair) => {
+    const i = pair.indexOf(':');
+    if (i > 0) out.push({ name: pair.slice(0, i).trim(), pass: pair.slice(i + 1) });
+  });
+  if (process.env.STAFF_PASS) {
+    out.push({ name: process.env.STAFF_NAME || 'Staff', pass: process.env.STAFF_PASS });
+  }
+  return out;
+}
+
+// Which account does this password belong to?
+// Returns { role, name } or false for a wrong password.
 export function checkPassword(input) {
   const admin = process.env.ADMIN_PASS || '';
-  const staff = process.env.STAFF_PASS || '';
-  if (admin && safeEqual(input || '', admin)) return 'admin';
-  if (staff && safeEqual(input || '', staff)) return 'staff';
+  if (admin && safeEqual(input || '', admin)) return { role: 'admin', name: '' };
+  for (const a of staffAccounts()) {
+    if (a.pass && safeEqual(input || '', a.pass)) return { role: 'staff', name: a.name };
+  }
   return false;
 }
