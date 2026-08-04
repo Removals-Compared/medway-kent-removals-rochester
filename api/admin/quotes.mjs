@@ -1,5 +1,5 @@
 import { requireAuth } from './_session.mjs';
-import { listQuotes, createQuote, fetchPendingReminders } from './_db.mjs';
+import { listQuotes, createQuote, fetchPendingReminders, appendNote } from './_db.mjs';
 
 export default async function handler(req, res) {
   const role = requireAuth(req, res);
@@ -25,6 +25,11 @@ export default async function handler(req, res) {
       const body = req.body || {};
       if (role === 'staff') delete body.value;
       const quote = await createQuote(body);
+      // Audit trail: staff-created leads are attributed by name (server-side,
+      // from the verified session — the client cannot forge or omit it).
+      if (role === 'staff' && quote && quote.id) {
+        try { await appendNote(quote.id, `Added by ${req._staffName || 'staff'}`); } catch {}
+      }
       if (role === 'staff') delete quote.value;
       return res.status(201).json({ quote });
     }

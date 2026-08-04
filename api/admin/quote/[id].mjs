@@ -108,6 +108,13 @@ export default async function handler(req, res) {
         fields.value = b.value === '' || b.value === null ? null : Number(b.value);
       }
 
+      // Audit trail: staff edits to customer details are attributed by name.
+      // Written before the update so the response already carries the note.
+      const touchedDetails = editable.some((k) => b[k] !== undefined);
+      if (role === 'staff' && touchedDetails) {
+        try { await appendNote(id, `Details updated by ${req._staffName || 'staff'}`); } catch {}
+      }
+
       // Review request is sent only when the admin explicitly confirmed it
       // (send_review flag from the lead page prompt) — never automatically.
       let prev = null;
