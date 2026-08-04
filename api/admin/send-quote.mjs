@@ -10,7 +10,10 @@ const esc = (s) => String(s || '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 export default async function handler(req, res) {
-  if (!requireAuth(req, res)) return;
+  const role = requireAuth(req, res);
+  if (!role) return;
+  // Quote and invoice documents carry prices; staff sessions cannot send them.
+  if (role === 'staff') return res.status(403).json({ error: 'not available on the staff login' });
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
 
   try {

@@ -19,9 +19,10 @@ function safeEqual(a, b) {
   return crypto.timingSafeEqual(ab, bb);
 }
 
-export function makeSessionCookie() {
+// Sessions carry a role: "admin" (full access) or "staff" (no money).
+export function makeSessionCookie(role = 'admin') {
   const ts = Date.now();
-  const value = `${ts}.${sign(ts)}`;
+  const value = `${ts}.${role}.${sign(ts + '.' + role)}`;
   const expires = new Date(ts + TTL_MS).toUTCString();
   return `${COOKIE}=${value}; HttpOnly; Secure; SameSite=Lax; Path=/; Expires=${expires}`;
 }
@@ -39,29 +40,45 @@ function parseCookies(req) {
   return out;
 }
 
+// Returns the session role ("admin" | "staff") or false.
+// Legacy two-part cookies (issued before roles existed) count as admin.
 export function verifySession(req) {
   if (!SECRET) return false;
   const raw = parseCookies(req)[COOKIE];
   if (!raw) return false;
-  const dot = raw.indexOf('.');
-  if (dot < 0) return false;
-  const ts = raw.slice(0, dot);
-  const mac = raw.slice(dot + 1);
-  if (!safeEqual(mac, sign(ts))) return false;
-  if (Date.now() - Number(ts) > TTL_MS) return false;
-  return true;
+  const parts = raw.split('.');
+  if (parts.length === 3) {
+    const [ts, role, mac] = parts;
+    if (!['admin', 'staff'].includes(role)) return false;
+    if (!safeEqual(mac, sign(ts + '.' + role))) return false;
+    if (Date.now() - Number(ts) > TTL_MS) return false;
+    return role;
+  }
+  if (parts.length === 2) {
+    const [ts, mac] = parts;
+    if (!safeEqual(mac, sign(ts))) return false;
+    if (Date.now() - Number(ts) > TTL_MS) return false;
+    return 'admin';
+  }
+  return false;
 }
 
+// Truthy return is the role string, so existing
+// `if (!requireAuth(req, res)) return;` call sites keep working.
 export function requireAuth(req, res) {
-  if (!verifySession(req)) {
+  const role = verifySession(req);
+  if (!role) {
     res.status(401).json({ error: 'unauthorized' });
     return false;
   }
-  return true;
+  return role;
 }
 
+// Which role does this password belong to? false = wrong password.
 export function checkPassword(input) {
-  const pass = process.env.ADMIN_PASS || '';
-  if (!pass) return false;
-  return safeEqual(input || '', pass);
+  const admin = process.env.ADMIN_PASS || '';
+  const staff = process.env.STAFF_PASS || '';
+  if (admin && safeEqual(input || '', admin)) return 'admin';
+  if (staff && safeEqual(input || '', staff)) return 'staff';
+  return false;
 }

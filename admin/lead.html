@@ -54,6 +54,7 @@
   hr{ border:none; border-top:1px solid var(--line); margin:18px 0; }
   .muted{ color:#99a; font-size:13px; }
   .divider-btn{ display:block; width:100%; margin-top:8px; }
+  body.staff .staff-hide{ display:none !important; }
 </style>
 </head>
 <body>
@@ -103,6 +104,7 @@
       if (r.status === 404){ $('content').innerHTML = '<p class="muted">Lead not found.</p>'; return; }
       const data = await r.json();
       QUOTE = data.quote; APPTS = data.appointments || []; REMINDERS = data.reminders || [];
+      if (data.role === 'staff') document.body.classList.add('staff');
       render();
     } catch (e) {
       if (String(e.message) !== 'unauth') $('content').innerHTML = '<p class="muted">Could not load this lead.</p>';
@@ -164,7 +166,8 @@
             </div>
           </form>
 
-          <hr>
+          <hr class="staff-hide">
+          <div class="staff-hide">
           <label>Job value (£)</label>
           <div class="inline">
             <div><input type="number" id="value" step="0.01" value="${q.value ?? ''}" placeholder="0.00"></div>
@@ -175,6 +178,7 @@
           <div class="btn-row">
             <button class="btn" id="gen-invoice" style="flex:1">&#129534; Generate invoice</button>
             <button class="btn" id="gen-receipt" style="flex:1;border-color:#15803d;color:#15803d">&#129534; Generate receipt</button>
+          </div>
           </div>
 
           <div class="btn-row">

@@ -54,7 +54,8 @@ async function sendReviewRequest(quote) {
 }
 
 export default async function handler(req, res) {
-  if (!requireAuth(req, res)) return;
+  const role = requireAuth(req, res);
+  if (!role) return;
 
   // Defensive: strip any ".html" the rewrite/cleanUrls layer might leave on.
   let id = req.query.id;
@@ -66,7 +67,9 @@ export default async function handler(req, res) {
       if (!quote) return res.status(404).json({ error: 'not found' });
       const appointments = await fetchAppointmentsByLeadIds([id]);
       const reminders = await fetchRemindersByLeadIds([id]);
-      return res.status(200).json({ quote, appointments, reminders });
+      // Staff sessions never receive money fields — stripped server-side.
+      if (role === 'staff') delete quote.value;
+      return res.status(200).json({ quote, appointments, reminders, role });
     }
 
     if (req.method === 'PATCH') {
@@ -81,7 +84,8 @@ export default async function handler(req, res) {
         try {
           await sendReviewRequest(q);
           await appendNote(id, `Review request emailed to ${q.email}`);
-          return res.status(200).json({ quote: q, review_request: 'sent' });
+          if (role === 'staff') delete q.value;
+          return res.status(200).json({ quote: q, review_request: 'sent', role });
         } catch (e) {
           console.error('review resend', e);
           return res.status(502).json({ error: String(e.message || e) });
@@ -100,7 +104,7 @@ export default async function handler(req, res) {
       });
 
       if (b.status !== undefined) fields.status = b.status;
-      if (b.value !== undefined) {
+      if (b.value !== undefined && role !== 'staff') {
         fields.value = b.value === '' || b.value === null ? null : Number(b.value);
       }
 
@@ -126,7 +130,8 @@ export default async function handler(req, res) {
           }
         }
       }
-      return res.status(200).json({ quote, review_request });
+      if (role === 'staff') delete quote.value;
+      return res.status(200).json({ quote, review_request, role });
     }
 
     if (req.method === 'DELETE') {

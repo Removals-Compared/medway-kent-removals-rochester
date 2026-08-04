@@ -76,6 +76,10 @@
   #rows input[type=checkbox]{ width:16px; height:16px; cursor:pointer; }
   tr.selected{ background:#fff6f2 !important; }
 
+  /* ── Staff view: no money anywhere ── */
+  body.staff th:nth-child(9), body.staff td:nth-child(9){ display:none !important; }
+  body.staff .staff-hide{ display:none !important; }
+
   /* ── Mobile ── */
   @media(max-width:640px){
     .wrap{ padding:14px 12px; }
@@ -196,8 +200,8 @@
         </div>
       </div>
 
-      <label>Quoted value (£)</label>
-      <input name="value" type="number" step="0.01" min="0" placeholder="e.g. 850">
+      <label class="staff-hide">Quoted value (£)</label>
+      <input class="staff-hide" name="value" type="number" step="0.01" min="0" placeholder="e.g. 850">
 
       <label>Notes / message</label>
       <textarea name="notes" placeholder="What did they ask for? Special items, access notes…"></textarea>
@@ -263,6 +267,7 @@
     try {
       const r = await api('/api/admin/quotes?' + params);
       const data = await r.json();
+      if (data.role === 'staff') document.body.classList.add('staff');
       allRows = sortLeads(data.quotes || []);
       renderRows(allRows);
       renderStats();

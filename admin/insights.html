@@ -122,11 +122,12 @@
     catch(e){ $('content').innerHTML = '<p class="muted">Could not load data.</p>'; return; }
     if (r.status === 401){ window.location.href = '/admin'; return; }
     if (!r.ok){ $('content').innerHTML = '<p class="muted">Could not load data.</p>'; return; }
-    const rows = (await r.json()).quotes || [];
-    render(rows);
+    const data = await r.json();
+    render(data.quotes || [], data.role);
   }
 
-  function render(rows){
+  function render(rows, role){
+    const staff = role === 'staff';
     const now = new Date();
     const todayKey = now.toISOString().slice(0,10);
     const thisMonth = monthKey(now);
@@ -157,12 +158,14 @@
     }
     const leadsBy = Object.fromEntries(months.map(m => [m.key, 0]));
     const revBy   = Object.fromEntries(months.map(m => [m.key, 0]));
+    const wonCountBy = Object.fromEntries(months.map(m => [m.key, 0]));
     rows.forEach(r => {
       const ck = (r.created_at || '').slice(0,7);
       if (ck in leadsBy) leadsBy[ck]++;
       if (st(r) === 'won'){
         const wk = (r.move_date || r.created_at || '').slice(0,7);
         if (wk in revBy) revBy[wk] += val(r);
+        if (wk in wonCountBy) wonCountBy[wk]++;
       }
     });
 
@@ -200,10 +203,16 @@
 
     $('content').innerHTML = `
       <div class="kpis">
+        ${staff ? `
+        <div class="kpi"><div class="l">Open leads</div><div class="n">${pipelineN}</div><div class="s">not yet booked</div></div>
+        <div class="kpi"><div class="l">Booked moves</div><div class="n">${booked.length}</div><div class="s">in the diary</div></div>
+        <div class="kpi"><div class="l">Completed</div><div class="n">${wonRows.length}</div><div class="s">moves finished</div></div>
+        ` : `
         <div class="kpi"><div class="l">Pipeline value</div><div class="n">${money(pipelineVal)}</div><div class="s">${pipelineN} open lead${pipelineN===1?'':'s'} (not yet booked)</div></div>
         <div class="kpi"><div class="l">Booked moves</div><div class="n">${money(bookedVal)}</div><div class="s">${booked.length} move${booked.length===1?'':'s'} in the diary</div></div>
         <div class="kpi"><div class="l">Completed revenue</div><div class="n">${money(wonVal)}</div><div class="s">${money(wonThisMonth)} this month</div></div>
-        <div class="kpi"><div class="l">Win rate</div><div class="n">${winRate === null ? '—' : winRate + '%'}</div><div class="s">${wonRows.length} won &bull; ${lostN} lost &bull; avg job ${money(avgJob)}</div></div>
+        `}
+        <div class="kpi"><div class="l">Win rate</div><div class="n">${winRate === null ? '—' : winRate + '%'}</div><div class="s">${wonRows.length} won &bull; ${lostN} lost${staff ? '' : ' &bull; avg job ' + money(avgJob)}</div></div>
         <div class="kpi"><div class="l">New leads this month</div><div class="n">${leadsThis}</div><div class="s">${delta === null ? (leadsLast === 0 && leadsThis > 0 ? 'first month with leads' : 'vs ' + leadsLast + ' last month') : (delta >= 0 ? '<span class="up">&#9650; ' + delta + '%</span>' : '<span class="down">&#9660; ' + Math.abs(delta) + '%</span>') + ' vs ' + leadsLast + ' last month'}</div></div>
       </div>
 
@@ -213,11 +222,17 @@
           <p class="sub">Enquiries received, last 6 months</p>
           ${barChart(months.map(m => ({ lab: m.lab, v: leadsBy[m.key] })), false)}
         </div>
+        ${staff ? `
+        <div class="card">
+          <h2>Completed moves per month</h2>
+          <p class="sub">Moves finished, last 6 months</p>
+          ${barChart(months.map(m => ({ lab: m.lab, v: wonCountBy[m.key] })), false)}
+        </div>` : `
         <div class="card">
           <h2>Completed revenue per month</h2>
           <p class="sub">Value of completed moves, last 6 months</p>
           ${barChart(months.map(m => ({ lab: m.lab, v: revBy[m.key] })), true)}
-        </div>
+        </div>`}
       </div>
 
       <div class="grid">
@@ -240,7 +255,7 @@
                 <li>
                   <span class="when">${fmtDay(new Date(r.move_date + 'T00:00:00'))}</span>
                   <span class="who"><a href="/admin/quote/${esc(r.id)}">${esc(r.name || 'Unnamed')}</a><span class="sub">${esc(r.from_postcode || '')} &rarr; ${esc(r.to_postcode || '')}</span></span>
-                  <span class="amt">${val(r) ? money(val(r)) : ''}</span>
+                  <span class="amt">${staff || !val(r) ? '' : money(val(r))}</span>
                 </li>`).join('') || '<li class="empty">No moves booked ahead.</li>'}
             </ul>
           </div>
@@ -252,7 +267,7 @@
                 const days = r.created_at ? Math.floor((now - new Date(r.created_at)) / 86400000) : null;
                 return `
                 <li>
-                  <span class="who"><a href="/admin/quote/${esc(r.id)}">${esc(r.name || 'Unnamed')}</a><span class="sub">${val(r) ? money(val(r)) + ' quoted' : 'no value set'}</span></span>
+                  <span class="who"><a href="/admin/quote/${esc(r.id)}">${esc(r.name || 'Unnamed')}</a><span class="sub">${staff ? 'quote sent' : (val(r) ? money(val(r)) + ' quoted' : 'no value set')}</span></span>
                   <span class="days ${days !== null && days > 7 ? 'overdue' : ''}">${days === null ? '' : days + ' day' + (days===1?'':'s') + ' ago'}</span>
                 </li>`; }).join('') || '<li class="empty">Nothing waiting — all quotes actioned.</li>'}
             </ul>
