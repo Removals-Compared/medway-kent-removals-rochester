@@ -79,6 +79,8 @@
   /* ── Staff view: no money anywhere ── */
   body.staff th:nth-child(9), body.staff td:nth-child(9){ display:none !important; }
   body.staff .staff-hide{ display:none !important; }
+  /* staff can add and amend, never delete */
+  body.staff .trash, body.staff .bulkbar, body.staff .cb-col{ display:none !important; }
 
   /* ── Mobile ── */
   @media(max-width:640px){

@@ -150,6 +150,8 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'DELETE') {
+      // Staff can add and amend leads but never delete them.
+      if (role === 'staff') return res.status(403).json({ error: 'deleting is not available on the staff login' });
       // Capture the name before the row disappears, then log who deleted it.
       let gone = null;
       try { gone = await getQuote(id); } catch {}
