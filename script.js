@@ -312,6 +312,8 @@ document.addEventListener('DOMContentLoaded', function () {
     '.mkr-sticky-bar{display:none;}' +
     '@media screen and (max-width:719px){' +
       'body{padding-bottom:52px;}' +
+      /* the bar replaces the floating WhatsApp pill on phones */
+      '#wa-float{display:none !important;}' +
       '.mkr-sticky-bar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:9999;' +
         'box-shadow:0 -4px 18px rgba(13,31,60,.25);}' +
       '.mkr-sticky-bar a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;' +
