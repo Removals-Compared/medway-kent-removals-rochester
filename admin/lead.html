@@ -184,6 +184,9 @@
             <button class="btn green" data-status="won">Mark completed</button>
             <button class="btn red" data-status="lost">Mark lost</button>
           </div>
+          <div class="btn-row">
+            <button class="btn" id="send-review" style="border-color:#f0b429;color:#92400e">&#11088; Send / resend review request</button>
+          </div>
           <p class="flash" id="flash-left"></p>
 
           <hr>
@@ -345,6 +348,20 @@
     });
     $('gen-invoice').addEventListener('click', () => {
       window.open('/admin/invoice-doc?id=' + encodeURIComponent(LEAD_ID) + '&type=invoice', '_blank');
+    });
+    $('send-review').addEventListener('click', async () => {
+      if (!QUOTE || !QUOTE.email){ flash('flash-left', 'No email address on this lead.', false); return; }
+      if (!confirm('Email ' + QUOTE.email + ' the Google review link?')) return;
+      const b = $('send-review'); b.disabled = true;
+      try {
+        const r = await api('/api/admin/quote/' + LEAD_ID, {
+          method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ resend_review: true }),
+        });
+        const d = await r.json().catch(() => ({}));
+        if (r.ok && d.review_request === 'sent'){ flash('flash-left', 'Review request emailed to ' + QUOTE.email + '.', true); load(); }
+        else flash('flash-left', 'Could not send: ' + (d.error || 'error'), false);
+      } catch(e){ if (String(e.message) !== 'unauth') flash('flash-left', 'Could not send.', false); }
+      b.disabled = false;
     });
     $('gen-receipt').addEventListener('click', () => {
       window.open('/admin/invoice-doc?id=' + encodeURIComponent(LEAD_ID) + '&type=receipt', '_blank');

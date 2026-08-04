@@ -71,6 +71,23 @@ export default async function handler(req, res) {
 
     if (req.method === 'PATCH') {
       const b = req.body || {};
+
+      // Manual (re)send of the review request from the lead page button —
+      // no dedupe here, the admin explicitly asked for it.
+      if (b.resend_review === true) {
+        const q = await getQuote(id);
+        if (!q) return res.status(404).json({ error: 'not found' });
+        if (!q.email) return res.status(400).json({ error: 'no email on this lead' });
+        try {
+          await sendReviewRequest(q);
+          await appendNote(id, `Review request emailed to ${q.email}`);
+          return res.status(200).json({ quote: q, review_request: 'sent' });
+        } catch (e) {
+          console.error('review resend', e);
+          return res.status(502).json({ error: String(e.message || e) });
+        }
+      }
+
       const fields = { updated_at: new Date().toISOString() };
 
       // Editable lead details — empty string clears the column to null.
