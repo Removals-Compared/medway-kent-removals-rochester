@@ -39,6 +39,11 @@ export default async function handler(req, res) {
     } else {
       html = wrap(body);
     }
+    // Every customer email ends with both ways to reach us.
+    html += '<div style="text-align:center;margin:24px 0 4px">'
+      + '<a href="tel:01634971005" style="background:#e04e1b;color:#fff;text-decoration:none;font-weight:700;font-family:Arial,sans-serif;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128222; Call 01634 971005</a>'
+      + '<a href="https://wa.me/447359917380" style="background:#1EBE57;color:#fff;text-decoration:none;font-weight:700;font-family:Arial,sans-serif;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128172; WhatsApp us</a>'
+      + '</div>';
 
     const payload = {
       from: 'Medway & Kent Removals <quotes@medwaykentremovals.co.uk>',

@@ -53,17 +53,20 @@ function shell(heading, introLine, rows) {
       <p style="font-size:15px;color:#222;margin:0 0 18px">${introLine}</p>
       <table style="width:100%;border-collapse:collapse;font-size:15px">${rowsHtml}</table>
       <p style="margin-top:22px;font-size:14px;color:#444;line-height:1.6">
-        If anything needs to change, just reply to this email or call us on
-        <a href="tel:${PHONE.replace(/\s/g, '')}" style="color:${ORANGE};font-weight:700">${PHONE}</a>.
+        If anything needs to change, just reply to this email, or reach us whichever way suits you:
       </p>
-      <p style="margin-top:18px;font-size:12px;color:#999">${BRAND} · ${PHONE}</p>
+      <div style="text-align:center;margin:18px 0 4px">
+        <a href="tel:${PHONE.replace(/\s/g, '')}" style="background:${ORANGE};color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128222; Call ${PHONE}</a>
+        <a href="https://wa.me/447359917380" style="background:#1EBE57;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128172; WhatsApp us</a>
+      </div>
+      <p style="margin-top:18px;font-size:12px;color:#999">${BRAND} · ${PHONE} · WhatsApp 07359 917380</p>
     </div>
   </div>`;
 }
 
 function textVersion(title, rows) {
   const lines = rows.filter((r) => r[1]).map(([k, v]) => `${k}: ${v}`);
-  return [title, '', ...lines, '', `Questions? Call us on ${PHONE}.`, BRAND].join('\n');
+  return [title, '', ...lines, '', `Questions? Call us on ${PHONE} or WhatsApp us on 07359 917380 (https://wa.me/447359917380).`, BRAND].join('\n');
 }
 
 export async function sendSurveyConfirmation(quote, appt) {

@@ -43,7 +43,11 @@ async function sendReviewRequest(quote) {
     <p style="margin:22px 0"><a href="${REVIEW_LINK}" style="background:#E04E1B;color:#fff;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:8px;display:inline-block">Leave us a Google review</a></p>
     <p style="color:#555;font-size:13.5px">Just tap the stars and write a line or two, then press Post. Google may ask a few extra questions about price, and you can skip those completely.</p>
     <p>If anything was not perfect, please reply to this email instead and we will put it right.</p>
-    <p>Thanks again,<br>Medway and Kent Removals<br>01634 971005</p>
+    <p>Thanks again,<br>Medway and Kent Removals</p>
+    <div style="text-align:center;margin:22px 0 4px">
+      <a href="tel:01634971005" style="background:#E04E1B;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128222; Call 01634 971005</a>
+      <a href="https://wa.me/447359917380" style="background:#1EBE57;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128172; WhatsApp us</a>
+    </div>
   </div>`;
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -120,6 +124,12 @@ export default async function handler(req, res) {
           'Medway and Kent Removals',
           '01634 971005 | WhatsApp 07359 917380',
         ].join('\n');
+        const fuEsc = (x) => String(x || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const fuHtml = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#222;line-height:1.6;white-space:pre-wrap">' + fuEsc(text) + '</div>'
+          + '<div style="text-align:center;margin:22px 0 4px">'
+          + '<a href="tel:01634971005" style="background:#E04E1B;color:#fff;text-decoration:none;font-weight:700;font-family:Arial,sans-serif;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128222; Call 01634 971005</a>'
+          + '<a href="https://wa.me/447359917380" style="background:#1EBE57;color:#fff;text-decoration:none;font-weight:700;font-family:Arial,sans-serif;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128172; WhatsApp us</a>'
+          + '</div>';
         try {
           const r2 = await fetch('https://api.resend.com/emails', {
             method: 'POST',
@@ -129,7 +139,7 @@ export default async function handler(req, res) {
               to: [q.email], bcc: ['info@medwaykentremovals.co.uk'],
               reply_to: 'info@medwaykentremovals.co.uk',
               subject: 'Your removal quote from Medway and Kent Removals',
-              text,
+              text, html: fuHtml,
             }),
           });
           if (!r2.ok) throw new Error(`resend ${r2.status}`);
