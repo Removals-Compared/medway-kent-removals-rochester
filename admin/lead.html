@@ -37,12 +37,26 @@
   label{ display:block; font-size:13px; font-weight:600; margin:14px 0 5px; color:#445; }
   input,select,textarea{ width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px; font-family:inherit; }
   textarea{ min-height:70px; resize:vertical; }
-  .btn{ padding:10px 16px; border-radius:8px; border:1px solid var(--line); background:#fff; cursor:pointer; font-size:14px; font-weight:600; }
-  .btn.primary{ background:var(--navy); color:#fff; border-color:var(--navy); }
-  .btn.orange{ background:var(--orange); color:#fff; border-color:var(--orange); }
-  .btn.green{ background:#16a34a; color:#fff; border-color:#16a34a; }
-  .btn.red{ background:#fff; color:#b91c1c; border-color:#f3c0c0; }
-  .btn-row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:16px; }
+  /* 3D key-cap buttons: raised face, darker base edge, press to sink */
+  .btn{ padding:11px 16px; border-radius:10px; border:1px solid #d5dae3; cursor:pointer; font-size:14px; font-weight:700; color:#33405a;
+        background:linear-gradient(180deg,#ffffff,#eef1f5);
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.9), 0 2px 0 #cfd5df, 0 5px 12px rgba(13,31,60,.10);
+        transition:transform .06s ease, box-shadow .06s ease, filter .15s ease; }
+  .btn:hover{ filter:brightness(1.04); }
+  .btn:active{ transform:translateY(2px); box-shadow:inset 0 1px 0 rgba(255,255,255,.6), 0 0 0 #cfd5df, 0 2px 5px rgba(13,31,60,.14); }
+  .btn:disabled{ opacity:.55; transform:none; cursor:default; }
+  .btn.primary{ background:linear-gradient(180deg,#1c3560,#0d1f3c); color:#fff; border-color:#0a1830;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 2px 0 #060f1f, 0 5px 14px rgba(13,31,60,.35); }
+  .btn.orange{ background:linear-gradient(180deg,#f06535,#df4d1a); color:#fff; border-color:#c44417;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 2px 0 #a53a12, 0 5px 14px rgba(224,78,27,.35); }
+  .btn.green{ background:linear-gradient(180deg,#20b355,#159a46); color:#fff; border-color:#118a3e;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.28), 0 2px 0 #0d7a35, 0 5px 14px rgba(22,163,74,.32); }
+  .btn.red{ background:linear-gradient(180deg,#ffffff,#fdf1f1); color:#b91c1c; border-color:#f0c4c4;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.9), 0 2px 0 #ecc9c9, 0 5px 12px rgba(185,28,28,.10); }
+  .btn-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .btn-row .btn{ flex:1 1 45%; min-width:130px; }
+  .btn-row .btn.full{ flex:1 1 100%; }
+  .group-label{ font-size:11px; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; color:#8894ab; margin:22px 0 2px; }
   .inline{ display:flex; gap:8px; align-items:flex-end; }
   .inline > div{ flex:1; }
   .flash{ font-size:13px; font-weight:600; margin:10px 0 0; min-height:18px; }
@@ -222,23 +236,26 @@
             <button class="btn" id="save-value">Save</button>
           </div>
 
-          <div class="btn-row"><button class="btn orange" id="gen-quote" style="width:100%">&#128196; Generate quote document</button></div>
+          <div class="group-label">Documents</div>
           <div class="btn-row">
-            <button class="btn" id="gen-invoice" style="flex:1">&#129534; Generate invoice</button>
-            <button class="btn" id="gen-receipt" style="flex:1;border-color:#15803d;color:#15803d">&#129534; Generate receipt</button>
+            <button class="btn orange full" id="gen-quote">&#128196; Generate quote document</button>
+            <button class="btn" id="gen-invoice">&#129534; Invoice</button>
+            <button class="btn" id="gen-receipt" style="color:#15803d">&#129534; Receipt</button>
           </div>
           </div>
 
+          <div class="group-label">Status</div>
           <div class="btn-row">
-            <button class="btn primary" data-status="contacted">Mark contacted</button>
-            <button class="btn" data-status="quote_sent" style="border-color:#4338ca;color:#4338ca">Mark quote sent</button>
-            <button class="btn" data-status="prospecting" style="border-color:#0f766e;color:#0f766e">Mark prospecting</button>
-            <button class="btn green" data-status="won">Mark completed</button>
-            <button class="btn red" data-status="lost">Mark lost</button>
+            <button class="btn primary" data-status="contacted">Contacted</button>
+            <button class="btn" data-status="quote_sent" style="color:#4338ca">Quote sent</button>
+            <button class="btn" data-status="prospecting" style="color:#0f766e">Prospecting</button>
+            <button class="btn green" data-status="won">Completed</button>
+            <button class="btn red full" data-status="lost">Mark lost</button>
           </div>
+          <div class="group-label">Google review</div>
           <div class="btn-row">
-            <button class="btn" id="send-review" style="border-color:#f0b429;color:#92400e">&#11088; Send / resend review request</button>
-            <button class="btn" id="review-received" style="border-color:#16a34a;color:#15803d">&#10003; Mark review received</button>
+            <button class="btn" id="send-review" style="color:#92400e">&#11088; Send / resend</button>
+            <button class="btn" id="review-received" style="color:#15803d">&#10003; Review received</button>
           </div>
           <p class="flash" id="flash-left"></p>
 
