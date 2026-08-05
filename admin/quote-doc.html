@@ -412,7 +412,11 @@
       '',
       'Please find your fixed, all-inclusive quote attached. It covers 1 maxi loader Luton van and 2 movers, with full protection and insurance, for ' + amt + ' with no hidden charges.',
       '',
-      'To secure the date we ask for a £50 deposit, with the balance due on completion on the day. Just let me know if you would like to go ahead, or if you have any questions about the move.',
+      'To secure the date we ask for a £50 deposit, with the balance due on completion on the day. If you are happy with everything, you can accept your quote with one tap here:',
+      '',
+      (window.ACCEPT_LINK || ''),
+      '',
+      'Or just reply to this email, and I will take care of the rest.',
       '',
       'You can reach me any time on 01634 971005, or by mobile and WhatsApp on 07359 917380.',
       '',
@@ -428,7 +432,11 @@
     catch(e){ document.body.innerHTML = '<p style="max-width:820px;margin:40px auto;font-family:sans-serif">Could not load customer.</p>'; return; }
     if (r.status === 401){ window.location.href = '/admin'; return; }
     if (!r.ok){ document.body.innerHTML = '<p style="max-width:820px;margin:40px auto;font-family:sans-serif">Customer not found.</p>'; return; }
-    var q = (await r.json()).quote || {};
+    var data = await r.json();
+    var q = data.quote || {};
+    window.ACCEPT_LINK = data.accept_token
+      ? 'https://www.medwaykentremovals.co.uk/api/accept-quote?id=' + encodeURIComponent(id) + '&t=' + data.accept_token
+      : '';
 
     var first = (q.name || 'there').split(' ')[0];
     $('g-name').textContent = first;

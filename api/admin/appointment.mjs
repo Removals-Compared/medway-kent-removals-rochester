@@ -1,5 +1,5 @@
 import { requireAuth } from './_session.mjs';
-import { getQuote, createAppointment, updateAppointment } from './_db.mjs';
+import { getQuote, createAppointment, updateAppointment, fetchMovesOnDate } from './_db.mjs';
 import { createEvent } from './_gcal.mjs';
 import { sendSurveyConfirmation, sendMoveConfirmation } from './_email.mjs';
 
@@ -22,6 +22,18 @@ export default async function handler(req, res) {
     const duration = Number(duration_minutes) || 60;
 
     const quote = await getQuote(lead_id);
+
+    // Double-booking check: other moves already in the diary that day.
+    let conflicts = [];
+    if (type === 'move') {
+      try {
+        const clash = await fetchMovesOnDate(iso.slice(0, 10), lead_id);
+        for (const c of clash) {
+          const other = await getQuote(c.lead_id).catch(() => null);
+          conflicts.push((other && other.name) || 'another customer');
+        }
+      } catch {}
+    }
 
     // 1. Save the appointment first — this must never be blocked by GCal/email.
     let appt = await createAppointment({
@@ -54,7 +66,7 @@ export default async function handler(req, res) {
       errors.push({ step: 'email', message: String(e.message || e) });
     }
 
-    return res.status(200).json({ ok: true, appointment: appt, errors });
+    return res.status(200).json({ ok: true, appointment: appt, errors, conflicts });
   } catch (e) {
     console.error('appointment.js', e);
     return res.status(500).json({ ok: false, error: String(e.message || e), errors });

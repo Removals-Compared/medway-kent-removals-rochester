@@ -1,8 +1,15 @@
 import { requireAuth } from '../_session.mjs';
+import crypto from 'crypto';
 import {
   getQuote, updateQuote, deleteQuote, fetchAppointmentsByLeadIds,
-  fetchRemindersByLeadIds, appendNote, logActivity,
+  fetchRemindersByLeadIds, appendNote, logActivity, fetchDuplicates,
 } from '../_db.mjs';
+
+// Token the customer-facing accept link carries; forging it needs the secret.
+export function acceptToken(id) {
+  return crypto.createHmac('sha256', process.env.ADMIN_SESSION_SECRET || '')
+    .update('accept.' + String(id)).digest('hex').slice(0, 32);
+}
 
 const REVIEW_LINK = 'https://g.page/r/CULm9CaG1nsvEAI/review';
 
@@ -69,7 +76,11 @@ export default async function handler(req, res) {
       const reminders = await fetchRemindersByLeadIds([id]);
       // Staff sessions never receive money fields — stripped server-side.
       if (role === 'staff') delete quote.value;
-      return res.status(200).json({ quote, appointments, reminders, role, staff_name: role === 'staff' ? (req._staffName || process.env.STAFF_NAME || 'Staff') : undefined, display_name: role === 'staff' ? (req._staffName || process.env.STAFF_NAME || 'Staff') : (process.env.ADMIN_NAME || 'Amos Osho') });
+      const duplicates = await fetchDuplicates(id, quote.phone, quote.email);
+      return res.status(200).json({ quote, appointments, reminders, duplicates, role,
+        accept_token: role === 'staff' ? undefined : acceptToken(id),
+        staff_name: role === 'staff' ? (req._staffName || process.env.STAFF_NAME || 'Staff') : undefined,
+        display_name: role === 'staff' ? (req._staffName || process.env.STAFF_NAME || 'Staff') : (process.env.ADMIN_NAME || 'Amos Osho') });
     }
 
     if (req.method === 'PATCH') {
@@ -90,6 +101,47 @@ export default async function handler(req, res) {
         try { await appendNote(id, `Restored by ${actor}`); } catch {}
         await logActivity({ actor, action: 'restored', lead_id: id, lead_name: q.name, detail: `back to ${was}` });
         return res.status(200).json({ quote, restored: true, role });
+      }
+
+      // Gentle quote-chase email — no prices in it, so staff can send it too.
+      if (b.send_followup === true) {
+        const q = await getQuote(id);
+        if (!q) return res.status(404).json({ error: 'not found' });
+        if (!q.email) return res.status(400).json({ error: 'no email on this lead' });
+        const first = (q.name || 'there').split(' ')[0];
+        const text = [
+          `Hi ${first},`,
+          '',
+          'Just checking you received the removal quote we sent over. If you have any questions at all, or if anything about the move has changed, give me a shout and I will happily update it.',
+          '',
+          'If you are ready to go ahead, a quick reply or a call on 01634 971005 is all it takes to secure your date.',
+          '',
+          'Best regards,',
+          'Medway and Kent Removals',
+          '01634 971005 | WhatsApp 07359 917380',
+        ].join('\n');
+        try {
+          const r2 = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+            body: JSON.stringify({
+              from: 'Medway & Kent Removals <quotes@medwaykentremovals.co.uk>',
+              to: [q.email], bcc: ['info@medwaykentremovals.co.uk'],
+              reply_to: 'info@medwaykentremovals.co.uk',
+              subject: 'Your removal quote from Medway and Kent Removals',
+              text,
+            }),
+          });
+          if (!r2.ok) throw new Error(`resend ${r2.status}`);
+          const actor2 = role === 'staff' ? (req._staffName || 'staff') : (process.env.ADMIN_NAME || 'Amos Osho');
+          await appendNote(id, `Follow-up emailed to ${q.email} by ${actor2}`);
+          await logActivity({ actor: actor2, action: 'sent follow-up', lead_id: id, lead_name: q.name });
+          if (role === 'staff') delete q.value;
+          return res.status(200).json({ quote: q, followup: 'sent', role });
+        } catch (e) {
+          console.error('follow-up', e);
+          return res.status(502).json({ error: String(e.message || e) });
+        }
       }
 
       // Manual (re)send of the review request from the lead page button —

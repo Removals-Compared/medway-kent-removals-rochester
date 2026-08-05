@@ -31,7 +31,7 @@ export async function listQuotes({ status, search, limit = 200 } = {}) {
   if (search && search.trim()) {
     // strip PostgREST-significant chars so the filter can't be broken
     const t = search.replace(/[(),*]/g, ' ').trim();
-    if (t) p.set('or', `(name.ilike.*${t}*,email.ilike.*${t}*,phone.ilike.*${t}*)`);
+    if (t) p.set('or', `(name.ilike.*${t}*,email.ilike.*${t}*,phone.ilike.*${t}*,from_postcode.ilike.*${t}*,to_postcode.ilike.*${t}*,address.ilike.*${t}*)`);
   }
   const r = await fetch(`${base()}/${TABLE}?${p}`, { headers: headers() });
   if (!r.ok) throw new Error(`listQuotes ${r.status}: ${await r.text()}`);
@@ -284,5 +284,37 @@ export async function fetchExpiredDeleted(days = 30) {
     );
     if (!r.ok) return [];
     return await r.json();
+  } catch { return []; }
+}
+
+
+// Possible duplicates of a lead: another live lead sharing its phone or email.
+export async function fetchDuplicates(id, phone, email) {
+  const parts = [];
+  if (phone && String(phone).trim()) parts.push(`phone.eq.${encodeURIComponent(String(phone).trim())}`);
+  if (email && String(email).trim()) parts.push(`email.eq.${encodeURIComponent(String(email).trim().toLowerCase())}`);
+  if (!parts.length) return [];
+  try {
+    const r = await fetch(
+      `${base()}/${TABLE}?or=(${parts.join(',')})&id=neq.${encodeURIComponent(id)}&status=neq.deleted&select=id,name,status,created_at&limit=5`,
+      { headers: headers() },
+    );
+    if (!r.ok) return [];
+    return await r.json();
+  } catch { return []; }
+}
+
+// Other move bookings on the same calendar day — for double-booking warnings.
+export async function fetchMovesOnDate(dayISO, excludeLeadId) {
+  const from = `${dayISO}T00:00:00Z`;
+  const next = new Date(new Date(from).getTime() + 86400000).toISOString();
+  try {
+    const r = await fetch(
+      `${base()}/${APPT}?type=eq.move&scheduled_for=gte.${encodeURIComponent(from)}&scheduled_for=lt.${encodeURIComponent(next)}&select=lead_id,scheduled_for`,
+      { headers: headers() },
+    );
+    if (!r.ok) return [];
+    const rows = await r.json();
+    return rows.filter((a) => String(a.lead_id) !== String(excludeLeadId));
   } catch { return []; }
 }
