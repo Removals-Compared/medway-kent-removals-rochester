@@ -22,8 +22,23 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'to, subject and body are required' });
     }
 
-    const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#222;line-height:1.6;white-space:pre-wrap">'
-      + esc(body) + '</div>';
+    // The plain-text body keeps the raw accept URL; in the HTML version that
+    // line is rendered as a proper 3D button instead.
+    const wrap = (t) => '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#222;line-height:1.6;white-space:pre-wrap">' + esc(t) + '</div>';
+    const acceptMatch = String(body).match(/https:\/\/www\.medwaykentremovals\.co\.uk\/api\/accept-quote\?\S+/);
+    let html;
+    if (acceptMatch) {
+      const [before, after] = String(body).split(acceptMatch[0]);
+      html = wrap(before.trimEnd())
+        + '<div style="text-align:center;margin:22px 0"><a href="' + acceptMatch[0] + '" '
+        + 'style="background:linear-gradient(180deg,#22b558,#0f803a);color:#ffffff;text-decoration:none;font-weight:700;'
+        + 'font-family:Arial,Helvetica,sans-serif;font-size:16px;padding:15px 36px;border-radius:10px;display:inline-block;'
+        + 'box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 3px 0 #0c6b30, 0 7px 16px rgba(22,163,74,.35)">'
+        + '&#10003; Click here to accept this quote</a></div>'
+        + wrap((after || '').trimStart());
+    } else {
+      html = wrap(body);
+    }
 
     const payload = {
       from: 'Medway & Kent Removals <quotes@medwaykentremovals.co.uk>',
