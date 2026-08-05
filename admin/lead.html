@@ -71,6 +71,37 @@
   .muted{ color:#99a; font-size:13px; }
   .divider-btn{ display:block; width:100%; margin-top:8px; }
   body.staff .staff-hide{ display:none !important; }
+  .skel{ height:44px; border-radius:10px; background:linear-gradient(90deg,#eef0f4 25%,#f7f8fa 50%,#eef0f4 75%); background-size:200% 100%; animation:shimmer 1.1s infinite; margin:10px 0; }
+  @keyframes shimmer{ 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+  .dupe-banner{ background:#fef3c7; border:1px solid #f5d879; border-radius:12px; padding:13px 18px; margin-bottom:16px; font-size:13.5px; color:#92400e; box-shadow:0 2px 0 #ecd98a, 0 5px 12px rgba(180,120,0,.12); }
+  .dupe-banner a{ color:#92400e; font-weight:700; }
+
+  /* ── Dark mode: follows the phone/computer setting ── */
+  @media (prefers-color-scheme: dark){
+    body{ background:#0e1422; color:#dfe5f0; }
+    .topbar{ background:#0a1020; }
+    .card{ background:#18213a; border-color:#293651; box-shadow:0 2px 0 #0a101e, 0 8px 22px rgba(0,0,0,.35); }
+    input, select, textarea{ background:#121a2e; border-color:#2c3a58; color:#dfe5f0; }
+    input::placeholder, textarea::placeholder{ color:#7c89a5; }
+    .skel{ background:linear-gradient(90deg,#1a2337 25%,#232e48 50%,#1a2337 75%); background-size:200% 100%; }
+    .muted, .empty{ color:#8a97b2; }
+  }
+
+  @media (prefers-color-scheme: dark){
+    .card h2{ color:#fff; }
+    dt{ color:#8a97b2; } dd{ color:#dfe5f0; }
+    dd a{ color:#9db4e8; }
+    label{ color:#aab6cf; }
+    .back, .muted{ color:#8a97b2; }
+    .note{ background:#131b30; border-color:#293651; }
+    .note .when{ color:#7c89a5; }
+    .appt{ border-color:#293651; }
+    .appt .meta{ color:#8a97b2; }
+    hr{ border-top-color:#293651; }
+    .btn{ background:linear-gradient(180deg,#243050,#1a2440); border-color:#2c3a58; color:#dfe5f0;
+          box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 #0c1322, 0 5px 12px rgba(0,0,0,.35); }
+    .group-label{ color:#7c89a5; }
+  }
 </style>
 </head>
 <body>
@@ -82,7 +113,7 @@
 
   <div class="wrap">
     <a class="back" href="/admin/dashboard">← Back to dashboard</a>
-    <div id="content"><p class="muted">Loading…</p></div>
+    <div id="content"><div class="skel"></div><div class="skel" style="width:70%"></div><div class="skel" style="width:85%"></div></div>
   </div>
 
 <script>
@@ -157,7 +188,7 @@
     return r;
   }
 
-  let QUOTE = null, APPTS = [], REMINDERS = [], pendingFlash = null;
+  let QUOTE = null, APPTS = [], REMINDERS = [], DUPES = [], pendingFlash = null;
 
   async function load(){
     if (!LEAD_ID){ $('content').innerHTML = '<p class="muted">No lead id supplied.</p>'; return; }
@@ -165,7 +196,7 @@
       const r = await api('/api/admin/quote/' + LEAD_ID);
       if (r.status === 404){ $('content').innerHTML = '<p class="muted">Lead not found.</p>'; return; }
       const data = await r.json();
-      QUOTE = data.quote; APPTS = data.appointments || []; REMINDERS = data.reminders || [];
+      QUOTE = data.quote; APPTS = data.appointments || []; REMINDERS = data.reminders || []; DUPES = data.duplicates || [];
       if (data.role === 'staff') document.body.classList.add('staff');
       showStaffChip(data.display_name || data.staff_name || 'Admin');
       render();
@@ -178,7 +209,10 @@
     const q = QUOTE, st = q.status || 'new';
     const notes = Array.isArray(q.admin_notes) ? q.admin_notes : [];
 
+    const dupes = DUPES.filter((d) => d.status !== 'deleted');
+    const waPhone = String(q.phone || '').replace(/[^\d]/g, '').replace(/^0/, '44');
     $('content').innerHTML = `
+    ${dupes.length ? `<div class="dupe-banner">&#9888;&#65039; Possible duplicate — this customer also exists as ${dupes.map((d) => `<a href="/admin/quote/${esc(d.id)}">${esc(d.name || 'Unnamed')} (${labelFor(d.status)})</a>`).join(', ')}. Check before calling twice.</div>` : ''}
     <div class="cols">
       <!-- LEFT -->
       <div>
@@ -192,7 +226,7 @@
           <div id="details-view">
             <dl>
               <dt>Name</dt><dd>${esc(q.name||'—')}</dd>
-              <dt>Phone</dt><dd>${q.phone?`<a href="tel:${esc(q.phone)}">${esc(q.phone)}</a>`:'—'}</dd>
+              <dt>Phone</dt><dd>${q.phone?`<a href="tel:${esc(q.phone)}">${esc(q.phone)}</a> &nbsp;<a href="https://wa.me/${waPhone}?text=${encodeURIComponent('Hi ' + (q.name||'').split(' ')[0] + ', it\'s Medway & Kent Removals about your removals quote.')}" target="_blank" rel="noopener" style="background:#1EBE57;color:#fff;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:12px;text-decoration:none">WhatsApp</a>`:'—'}</dd>
               <dt>Email</dt><dd>${q.email?`<a href="mailto:${esc(q.email)}">${esc(q.email)}</a>`:'—'}</dd>
               <dt>Service</dt><dd>${esc(q.service||'—')}</dd>
               <dt>Moving from</dt><dd>${esc(q.from_postcode||'—')}</dd>
@@ -254,10 +288,11 @@
             <button class="btn green" data-status="won">Completed</button>
             <button class="btn red full" data-status="lost">Mark lost</button>
           </div>
-          <div class="group-label">Google review</div>
+          <div class="group-label">Customer emails</div>
           <div class="btn-row">
-            <button class="btn" id="send-review" style="color:#92400e">&#11088; Send / resend</button>
-            <button class="btn" id="review-received" style="color:#15803d">&#10003; Review received</button>
+            <button class="btn" id="send-followup" style="color:#4338ca">&#9203; Quote follow-up</button>
+            <button class="btn" id="send-review" style="color:#92400e">&#11088; Review request</button>
+            <button class="btn full" id="review-received" style="color:#15803d">&#10003; Mark review received</button>
           </div>
           <p class="flash" id="flash-left"></p>
 
@@ -421,6 +456,20 @@
     $('gen-invoice').addEventListener('click', () => {
       window.open('/admin/invoice-doc?id=' + encodeURIComponent(LEAD_ID) + '&type=invoice', '_blank');
     });
+    $('send-followup').addEventListener('click', async () => {
+      if (!QUOTE || !QUOTE.email){ flash('flash-left', 'No email address on this lead.', false); return; }
+      if (!confirm('Email ' + QUOTE.email + ' a gentle follow-up about their quote?')) return;
+      const b = $('send-followup'); b.disabled = true;
+      try {
+        const r = await api('/api/admin/quote/' + LEAD_ID, {
+          method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ send_followup: true }),
+        });
+        const d = await r.json().catch(() => ({}));
+        if (r.ok && d.followup === 'sent'){ flash('flash-left', 'Follow-up emailed to ' + QUOTE.email + '.', true); load(); }
+        else flash('flash-left', 'Could not send: ' + (d.error || 'error'), false);
+      } catch(e){ if (String(e.message) !== 'unauth') flash('flash-left', 'Could not send.', false); }
+      b.disabled = false;
+    });
     $('send-review').addEventListener('click', async () => {
       if (!QUOTE || !QUOTE.email){ flash('flash-left', 'No email address on this lead.', false); return; }
       if (!confirm('Email ' + QUOTE.email + ' the Google review link?')) return;
@@ -549,6 +598,9 @@
       const data = await r.json();
       if (r.ok && data.ok){
         await patchStatus(newStatus);
+        if (Array.isArray(data.conflicts) && data.conflicts.length){
+          alert('Heads up: you already have ' + data.conflicts.join(', ') + ' booked on that day. The booking is saved, just check your crews.');
+        }
         const errs = data.errors || [];
         if (errs.length){
           // Surface the real reason (e.g. the exact Google Calendar / email error).

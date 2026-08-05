@@ -36,6 +36,27 @@
   .flash{ font-size:13px; font-weight:600; margin:12px 0 0; min-height:18px; }
   .flash.ok{ color:#15803d; } .flash.err{ color:var(--orange); }
   .muted{ color:#99a; font-size:13px; }
+
+  /* ── Dark mode: follows the phone/computer setting ── */
+  @media (prefers-color-scheme: dark){
+    body{ background:#0e1422; color:#dfe5f0; }
+    .topbar{ background:#0a1020; }
+    .card{ background:#18213a; border-color:#293651; box-shadow:0 2px 0 #0a101e, 0 8px 22px rgba(0,0,0,.35); }
+    input, select, textarea{ background:#121a2e; border-color:#2c3a58; color:#dfe5f0; }
+    input::placeholder, textarea::placeholder{ color:#7c89a5; }
+    .skel{ background:linear-gradient(90deg,#1a2337 25%,#232e48 50%,#1a2337 75%); background-size:200% 100%; }
+    .muted, .empty{ color:#8a97b2; }
+  }
+
+  @media (prefers-color-scheme: dark){
+    .intro{ color:#8a97b2; }
+    .row{ border-color:#242f4a; }
+    .row .who strong{ color:#fff; }
+    .row .who span, .row .when{ color:#7c89a5; }
+    .btn{ background:#1d2842; border-color:#2c3a58; color:#dfe5f0; }
+    .btn.green{ background:#16a34a; border-color:#16a34a; color:#fff; }
+    .btn.red{ background:#1d2842; color:#f0a5a5; border-color:#5c3038; }
+  }
 </style>
 </head>
 <body>

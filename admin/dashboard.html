@@ -44,6 +44,11 @@
   .pill{ display:inline-block; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:700; }
   .pill.new{ background:#e8f0ff; color:#1d4ed8; }
   .pill.accepted{ background:#d1fae5; color:#047857; }
+  select.pill-select{ border:none; -webkit-appearance:none; appearance:none; cursor:pointer; font-family:inherit;
+    padding:4px 20px 4px 10px; border-radius:20px; font-size:12px; font-weight:700;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='6'><path d='M0 0l4 6 4-6z' fill='%23667'/></svg>");
+    background-repeat:no-repeat; background-position:right 7px center;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset, 0 1px 3px rgba(13,31,60,.15); }
   .pill.contacted{ background:#fff4e0; color:#b45309; }
   .pill.quote_sent{ background:#e0e7ff; color:#4338ca; }
   .pill.prospecting{ background:#ccfbf1; color:#0f766e; }
@@ -56,6 +61,19 @@
   .trash{ background:none; border:none; cursor:pointer; font-size:16px; opacity:.6; padding:4px; }
   .trash:hover{ opacity:1; }
   .empty{ text-align:center; padding:40px; color:#889; }
+  /* Today panel — the day at a glance */
+  .today{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+  .td-card{ flex:1 1 240px; border-radius:12px; padding:13px 16px; color:#fff;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 3px 0 rgba(0,0,0,.16), 0 6px 16px rgba(13,31,60,.15); }
+  .td-card.moves{ background:linear-gradient(160deg,#22b558,#0f803a); }
+  .td-card.remind{ background:linear-gradient(160deg,#f06535,#cf4514); }
+  .td-card.chase{ background:linear-gradient(160deg,#6d5ae6,#4338ca); }
+  .td-card .t{ font-size:11px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; color:rgba(255,255,255,.8); margin-bottom:4px; }
+  .td-card a{ color:#fff; text-decoration:none; font-weight:700; font-size:13.5px; display:block; padding:2px 0; }
+  .td-card a:hover{ text-decoration:underline; }
+  .td-card .more{ font-size:12px; color:rgba(255,255,255,.75); font-weight:400; }
+  .skel{ height:38px; border-radius:8px; background:linear-gradient(90deg,#eef0f4 25%,#f7f8fa 50%,#eef0f4 75%); background-size:200% 100%; animation:shimmer 1.1s infinite; margin:4px 0; }
+  @keyframes shimmer{ 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
   /* modal */
   .modal-bg{ display:none; position:fixed; inset:0; background:rgba(13,31,60,.5); align-items:flex-start; justify-content:center; padding:40px 16px; overflow:auto; }
   .modal-bg.open{ display:flex; }
@@ -108,6 +126,36 @@
     th:nth-child(8), td:nth-child(8),
     th:nth-child(9), td:nth-child(9){ display:none; }
   }
+
+  /* ── Dark mode: follows the phone/computer setting ── */
+  @media (prefers-color-scheme: dark){
+    body{ background:#0e1422; color:#dfe5f0; }
+    .topbar{ background:#0a1020; }
+    .card{ background:#18213a; border-color:#293651; box-shadow:0 2px 0 #0a101e, 0 8px 22px rgba(0,0,0,.35); }
+    input, select, textarea{ background:#121a2e; border-color:#2c3a58; color:#dfe5f0; }
+    input::placeholder, textarea::placeholder{ color:#7c89a5; }
+    .skel{ background:linear-gradient(90deg,#1a2337 25%,#232e48 50%,#1a2337 75%); background-size:200% 100%; }
+    .muted, .empty{ color:#8a97b2; }
+  }
+
+  @media (prefers-color-scheme: dark){
+    .stat{ background:#18213a; border-color:#293651; color:#dfe5f0; }
+    .stat .n{ color:#fff; } .stat .l{ color:#8a97b2; }
+    .stat:hover{ border-color:#4b5f8c; }
+    table{ background:#18213a; border-color:#293651; }
+    th{ background:#131b30; color:#8a97b2; border-color:#293651; }
+    td{ border-color:#242f4a; }
+    tbody tr:hover{ background:#1d2842; }
+    .sub{ color:#7c89a5; }
+    .modal{ background:#18213a; }
+    .modal h2, .modal label{ color:#dfe5f0; }
+    .bulkbar{ background:#18213a; border-color:#293651; }
+    .bulkbar #bulk-count{ color:#fff; }
+    .btn{ background:#1d2842; border-color:#2c3a58; color:#dfe5f0; }
+    .btn.primary{ background:var(--orange); border-color:var(--orange); color:#fff; }
+    .hint, .modal-sub{ color:#7c89a5; }
+    tr.selected{ background:#2a2330 !important; }
+  }
 </style>
 </head>
 <body>
@@ -121,10 +169,11 @@
   </div>
 
   <div class="wrap">
+    <div id="today"></div>
     <div class="stats" id="stats"></div>
 
     <div class="controls">
-      <input type="search" id="search" placeholder="Search name, email or phone…">
+      <input type="search" id="search" placeholder="Search name, phone, email, postcode or town…">
       <select id="status-filter">
         <option value="all">All statuses</option>
         <option value="new">New</option>
@@ -314,7 +363,8 @@
     const params = new URLSearchParams();
     if (activeStatus !== 'all') params.set('status', activeStatus);
     if (search) params.set('search', search);
-    $('rows').innerHTML = '<tr><td colspan="10" class="empty">Loading…</td></tr>';
+    $('rows').innerHTML = Array.from({length:6}, () =>
+      '<tr class="skel-row"><td colspan="10"><div class="skel"></div></td></tr>').join('');
     try {
       const r = await api('/api/admin/quotes?' + params);
       const data = await r.json();
@@ -335,6 +385,7 @@
     if (activeStatus !== 'all' || $('search').value.trim()) {
       try { rows = (await (await api('/api/admin/quotes')).json()).quotes || []; } catch { rows = allRows; }
     }
+    renderToday(rows);
     const counts = { all: rows.length };
     rows.forEach((r) => { const s = r.status || 'new'; counts[s] = (counts[s]||0)+1; });
     $('stats').innerHTML = STATUSES.map(([key,label]) => `
@@ -350,10 +401,29 @@
     });
   }
 
+  // The day at a glance: today's moves, calls due, quotes going stale.
+  function renderToday(rows){
+    const today = new Date().toISOString().slice(0,10);
+    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    const link = (r, extra) => `<a href="/admin/quote/${esc(r.id)}">${esc(r.name || 'Unnamed')}${extra || ''}</a>`;
+    const cap = (list, f) => list.slice(0,3).map(f).join('') +
+      (list.length > 3 ? `<span class="more">+ ${list.length - 3} more</span>` : '');
+
+    const moves = rows.filter((r) => r.status === 'move_booked' && (r.move_date || '').slice(0,10) === today);
+    const calls = rows.filter((r) => r.reminder && r.reminder.remind_on <= today);
+    const stale = rows.filter((r) => r.status === 'quote_sent' && (r.created_at || '') < weekAgo);
+
+    const cards = [];
+    if (moves.length) cards.push(`<div class="td-card moves"><div class="t">&#128666; Moving today</div>${cap(moves, (r) => link(r))}</div>`);
+    if (calls.length) cards.push(`<div class="td-card remind"><div class="t">&#128222; Calls due</div>${cap(calls, (r) => link(r, r.reminder.remind_time ? ' &bull; ' + esc(r.reminder.remind_time) : ''))}</div>`);
+    if (stale.length) cards.push(`<div class="td-card chase"><div class="t">&#9203; Quotes to chase</div>${cap(stale, (r) => link(r))}</div>`);
+    $('today').innerHTML = cards.length ? '<div class="today">' + cards.join('') + '</div>' : '';
+  }
+
   function renderRows(rows){
     selected.clear(); updateBulkBar();
     if ($('select-all')) $('select-all').checked = false;
-    if (!rows.length){ $('rows').innerHTML = '<tr><td colspan="10" class="empty">No leads found.</td></tr>'; return; }
+    if (!rows.length){ $('rows').innerHTML = '<tr><td colspan="10" class="empty">No leads match. New website enquiries land here automatically.</td></tr>'; return; }
     const today = new Date().toISOString().slice(0,10);
     $('rows').innerHTML = rows.map((r) => {
       const st = r.status || 'new';
@@ -364,7 +434,7 @@
       return `<tr data-id="${esc(r.id)}">
         <td class="cb-col"><input type="checkbox" class="row-cb" data-id="${esc(r.id)}"></td>
         <td><strong>${esc(r.name||'—')}</strong><div class="sub">${esc(r.email||'')}</div>${remHtml}</td>
-        <td><span class="pill ${st}">${labelFor(st)}</span></td>
+        <td><select class="pill-select pill ${st}" data-id="${esc(r.id)}">${STATUSES.filter(([k]) => k !== 'all').map(([k,l]) => `<option value="${k}" ${k===st?'selected':''}>${l}</option>`).join('')}<option value="lost" ${st==='lost'?'selected':''}>Lost</option></select></td>
         <td>${fmtDate(r.move_date)}</td>
         <td>${fmtDate(r.created_at)}</td>
         <td>${r.phone ? `<a class="tel-link" href="tel:${esc(String(r.phone).replace(/[^\d+]/g,''))}" aria-label="Call ${esc(r.phone)}"><span class="tel-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.4 0 .8-.3 1l-2.2 2.2z"/></svg></span><span class="tel-num">${esc(r.phone)}</span></a>` : '—'}</td>
@@ -379,6 +449,22 @@
       tr.addEventListener('click', (e) => {
         if (e.target.closest('[data-action="delete"]') || e.target.closest('.row-cb') || e.target.closest('.tel-link')) return;
         window.location.href = '/admin/quote/' + tr.dataset.id;
+      });
+    });
+    document.querySelectorAll('.pill-select').forEach((sel) => {
+      sel.addEventListener('click', (e) => e.stopPropagation());
+      sel.addEventListener('change', async (e) => {
+        e.stopPropagation();
+        const id = sel.dataset.id;
+        sel.disabled = true;
+        try {
+          const r = await api('/api/admin/quote/' + id, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ status: sel.value }) });
+          if (!r.ok) throw new Error('failed');
+          const row = allRows.find((x) => String(x.id) === String(id));
+          if (row) row.status = sel.value;
+          allRows = sortLeads(allRows);
+          renderRows(allRows); renderStats();
+        } catch { sel.disabled = false; alert('Could not update status.'); }
       });
     });
     document.querySelectorAll('.row-cb').forEach((cb) => {
