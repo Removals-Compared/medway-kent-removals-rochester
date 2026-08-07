@@ -141,6 +141,9 @@
 
   const $ = (id) => document.getElementById(id);
 
+  // Reusable Monzo deposit link — the same link works for every customer.
+  const DEPOSIT_LINK = 'https://monzo.com/pay/r/medway-and-kent-removals_mGjPKnMLgxT2qk';
+
   // ── Crew roster: name + WhatsApp number (intl format, no spaces) ──
   const CREW = [
     { name: 'Moses',    wa: '447366390504' },
@@ -325,8 +328,9 @@
             <button class="btn green" data-status="won">Completed</button>
             <button class="btn red full" data-status="lost">Mark lost</button>
           </div>
-          <div class="group-label">Customer emails</div>
+          <div class="group-label">Customer messages</div>
           <div class="btn-row">
+            <button class="btn green full" id="send-deposit">&#128183; WhatsApp the &pound;50 deposit link</button>
             <button class="btn" id="send-followup" style="color:#4338ca">&#9203; Quote follow-up</button>
             <button class="btn" id="send-review" style="color:#92400e">&#11088; Review request</button>
             <button class="btn full" id="review-received" style="color:#15803d">&#10003; Mark review received</button>
@@ -518,6 +522,25 @@
         else flash('flash-crew', 'Could not save crew.', false);
       } catch(e){ if (String(e.message) !== 'unauth') flash('flash-crew', 'Could not save crew.', false); }
       b.disabled = false;
+    });
+    $('send-deposit').addEventListener('click', async () => {
+      if (!QUOTE || !QUOTE.phone){ flash('flash-left', 'No phone number on this lead.', false); return; }
+      const waNum = String(QUOTE.phone).replace(/[^\d]/g, '').replace(/^0/, '44');
+      const first = (QUOTE.name || 'there').split(' ')[0];
+      const msg = 'Hi ' + first + ', thank you for confirming your move with Medway and Kent Removals. '
+        + 'To secure your date, please pay your \u00a350 deposit using this secure link: '
+        + DEPOSIT_LINK
+        + ' \u2014 once it is paid, your date is locked in. Any questions, just reply here. Thanks!';
+      window.open('https://wa.me/' + waNum + '?text=' + encodeURIComponent(msg), '_blank');
+      // Best-effort history entry; opening WhatsApp is not proof of sending,
+      // so the note says opened, not sent.
+      try {
+        const r = await api('/api/admin/quote/' + LEAD_ID + '/note', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ text: 'Deposit link opened in WhatsApp for ' + QUOTE.phone }),
+        });
+        if (r.ok){ QUOTE = (await r.json()).quote; render(); }
+      } catch {}
     });
     $('send-followup').addEventListener('click', async () => {
       if (!QUOTE || !QUOTE.email){ flash('flash-left', 'No email address on this lead.', false); return; }
