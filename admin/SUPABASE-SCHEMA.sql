@@ -44,7 +44,7 @@ CREATE INDEX IF NOT EXISTS quote_requests_status_idx ON quote_requests (status);
 CREATE TABLE IF NOT EXISTS appointments (
   id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   lead_id          bigint NOT NULL,
-  type             text NOT NULL CHECK (type IN ('survey','move')),
+  type             text NOT NULL CHECK (type IN ('survey','move','packing')),
   scheduled_for    timestamptz NOT NULL,
   duration_minutes int NOT NULL DEFAULT 60,
   address          text,
@@ -92,3 +92,10 @@ create table if not exists activity_log (
   detail text default ''
 );
 alter table activity_log disable row level security;
+
+
+-- ── Migration (2026-08-13): allow packing day bookings ──
+-- Run this if the appointments table was created before packing existed:
+--   alter table appointments drop constraint appointments_type_check;
+--   alter table appointments add constraint appointments_type_check
+--     check (type in ('survey', 'move', 'packing'));
