@@ -1,7 +1,7 @@
 import { requireAuth } from './_session.mjs';
 import { getQuote, createAppointment, updateAppointment, fetchMovesOnDate } from './_db.mjs';
 import { createEvent } from './_gcal.mjs';
-import { sendSurveyConfirmation, sendMoveConfirmation } from './_email.mjs';
+import { sendSurveyConfirmation, sendMoveConfirmation, sendPackingConfirmation } from './_email.mjs';
 
 export default async function handler(req, res) {
   if (!requireAuth(req, res)) return;
@@ -13,8 +13,8 @@ export default async function handler(req, res) {
     if (!lead_id || !type || !scheduled_for) {
       return res.status(400).json({ error: 'lead_id, type and scheduled_for are required' });
     }
-    if (type !== 'survey' && type !== 'move') {
-      return res.status(400).json({ error: 'type must be survey or move' });
+    if (!['survey', 'move', 'packing'].includes(type)) {
+      return res.status(400).json({ error: 'type must be survey, move or packing' });
     }
 
     // Always store UTC ISO 8601 so Supabase is consistent.
@@ -57,6 +57,7 @@ export default async function handler(req, res) {
     try {
       if (quote && quote.email) {
         if (type === 'survey') await sendSurveyConfirmation(quote, appt);
+        else if (type === 'packing') await sendPackingConfirmation(quote, appt);
         else await sendMoveConfirmation(quote, appt);
         appt = await updateAppointment(appt.id, { email_sent: true });
       } else {

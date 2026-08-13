@@ -389,6 +389,20 @@
         </div>
 
         <div class="card">
+          <h2>Book the packing day</h2>
+          <p class="muted" style="margin:-8px 0 6px">For 2 day jobs: crew packs on day one, move happens on the moving date below.</p>
+          <div class="inline">
+            <div><label>Date</label><input type="date" id="pk-date"></div>
+            <div><label>Time</label><input type="time" id="pk-time" value="09:00"></div>
+          </div>
+          <label>Duration (mins)</label><input type="number" id="pk-dur" value="240">
+          <label>Address</label><input id="pk-addr" value="${esc(q.from_postcode||'')}">
+          <label>Notes</label><textarea id="pk-notes" placeholder="Rooms to pack, materials needed, anything fragile…"></textarea>
+          <div class="btn-row"><button class="btn orange" id="book-packing">Book packing day</button></div>
+          <p class="flash" id="flash-packing"></p>
+        </div>
+
+        <div class="card">
           <h2>Book the moving date</h2>
           <div class="inline">
             <div><label>Date</label><input type="date" id="mv-date" value="${q.move_date||''}"></div>
@@ -425,7 +439,7 @@
     if (!APPTS.length) return '<p class="muted">No appointments booked yet.</p>';
     return APPTS.map((a) => `
       <div class="appt" data-appt="${esc(a.id)}">
-        <div class="tag">${a.type==='survey'?'Survey':'Moving day'}</div>
+        <div class="tag">${a.type==='survey'?'Survey':a.type==='packing'?'Packing day':'Moving day'}</div>
         <div class="when">${fmtDT(a.scheduled_for)}</div>
         <div class="meta">${a.duration_minutes||60} mins${a.address?' · '+esc(a.address):''}
           · Calendar: ${a.gcal_event_id?'✓':'—'} · Email: ${a.email_sent?'✓ sent':'not sent'}</div>
@@ -632,6 +646,7 @@
 
     $('book-survey').addEventListener('click', () => book('survey', 'sv', 'survey_booked', 'flash-survey'));
     $('book-move').addEventListener('click',   () => book('move',   'mv', 'move_booked',   'flash-move'));
+    $('book-packing').addEventListener('click', () => book('packing', 'pk', null,            'flash-packing'));
 
     $('set-reminder').addEventListener('click', async () => {
       const remind_on = $('rem-date').value;
@@ -685,7 +700,7 @@
       });
       const data = await r.json();
       if (r.ok && data.ok){
-        await patchStatus(newStatus);
+        if (newStatus) await patchStatus(newStatus);
         if (Array.isArray(data.conflicts) && data.conflicts.length){
           alert('Heads up: you already have ' + data.conflicts.join(', ') + ' booked on that day. The booking is saved, just check your crews.');
         }

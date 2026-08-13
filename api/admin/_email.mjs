@@ -87,6 +87,24 @@ export async function sendSurveyConfirmation(quote, appt) {
   });
 }
 
+export async function sendPackingConfirmation(quote, appt) {
+  const rows = [
+    ['Packing date', fmtDate(appt.scheduled_for)],
+    ['Start time', fmtTime(appt.scheduled_for)],
+    ['Address', appt.address || quote.from_postcode],
+    ['Moving date', quote.move_date ? fmtDate(quote.move_date) : ''],
+  ];
+  const heading = 'Your packing day is booked';
+  const intro = `Hi ${quote.name || 'there'}, your packing day with ${BRAND} is confirmed. Our crew will pack everything safely so it is all ready for moving day:`;
+  await transport().sendMail({
+    from: `${BRAND} <${process.env.GMAIL_USER}>`,
+    to: quote.email,
+    subject: `Packing day confirmed — ${fmtDate(appt.scheduled_for)}`,
+    text: textVersion(heading, rows),
+    html: shell(heading, intro, rows),
+  });
+}
+
 export async function sendMoveConfirmation(quote, appt) {
   const rows = [
     ['Moving date', fmtDate(appt.scheduled_for)],

@@ -32,7 +32,7 @@ export async function createEvent({ quote, type, startISO, duration = 60, addres
   const start = new Date(startISO);
   const end = new Date(start.getTime() + Number(duration) * 60000);
   const name = (quote && quote.name) || 'Customer';
-  const summary = type === 'survey' ? `Survey — ${name}` : `Move — ${name}`;
+  const summary = type === 'survey' ? `Survey — ${name}` : type === 'packing' ? `Packing — ${name}` : `Move — ${name}`;
 
   const desc = [];
   if (quote) {
