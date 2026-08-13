@@ -2,61 +2,150 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "crons": [
-    { "path": "/api/admin/reminders-run", "schedule": "30 8 * * *" }
+    {
+      "path": "/api/admin/reminders-run",
+      "schedule": "30 8 * * *"
+    }
   ],
   "redirects": [
     {
       "source": "/:path*",
-      "has": [{ "type": "host", "value": "medwaykentremovals.co.uk" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "medwaykentremovals.co.uk"
+        }
+      ],
       "destination": "https://www.medwaykentremovals.co.uk/:path*",
       "permanent": true
     }
   ],
   "rewrites": [
-    { "source": "/admin", "destination": "/admin/index.html" },
-    { "source": "/admin/dashboard", "destination": "/admin/dashboard.html" },
-    { "source": "/admin/quote/:id", "destination": "/admin/lead?id=:id" },
-    { "source": "/blog", "destination": "/blog.html" },
-    { "source": "/blog/posts/:slug", "destination": "/blog/posts/:slug.html" },
-    { "source": "/removals-chatham", "destination": "/removals-chatham.html" },
-    { "source": "/removals-gillingham", "destination": "/removals-gillingham.html" },
-    { "source": "/removals-maidstone", "destination": "/removals-maidstone.html" },
-    { "source": "/removals-strood", "destination": "/removals-strood.html" },
-    { "source": "/removals-gravesend", "destination": "/removals-gravesend.html" },
-    { "source": "/removals-canterbury", "destination": "/removals-canterbury.html" },
-    { "source": "/removals-dartford", "destination": "/removals-dartford.html" },
-    { "source": "/removals-sittingbourne", "destination": "/removals-sittingbourne.html" },
-    { "source": "/removals-faversham", "destination": "/removals-faversham.html" },
-    { "source": "/removals-tonbridge", "destination": "/removals-tonbridge.html" }
+    {
+      "source": "/admin",
+      "destination": "/admin/index.html"
+    },
+    {
+      "source": "/admin/dashboard",
+      "destination": "/admin/dashboard.html"
+    },
+    {
+      "source": "/admin/quote/:id",
+      "destination": "/admin/lead?id=:id"
+    },
+    {
+      "source": "/blog",
+      "destination": "/blog.html"
+    },
+    {
+      "source": "/blog/posts/:slug",
+      "destination": "/blog/posts/:slug.html"
+    },
+    {
+      "source": "/removals-chatham",
+      "destination": "/removals-chatham.html"
+    },
+    {
+      "source": "/removals-gillingham",
+      "destination": "/removals-gillingham.html"
+    },
+    {
+      "source": "/removals-maidstone",
+      "destination": "/removals-maidstone.html"
+    },
+    {
+      "source": "/removals-strood",
+      "destination": "/removals-strood.html"
+    },
+    {
+      "source": "/removals-gravesend",
+      "destination": "/removals-gravesend.html"
+    },
+    {
+      "source": "/removals-canterbury",
+      "destination": "/removals-canterbury.html"
+    },
+    {
+      "source": "/removals-dartford",
+      "destination": "/removals-dartford.html"
+    },
+    {
+      "source": "/removals-sittingbourne",
+      "destination": "/removals-sittingbourne.html"
+    },
+    {
+      "source": "/removals-faversham",
+      "destination": "/removals-faversham.html"
+    },
+    {
+      "source": "/removals-tonbridge",
+      "destination": "/removals-tonbridge.html"
+    }
   ],
   "headers": [
     {
       "source": "/images/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/style.css",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=604800" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800"
+        }
+      ]
+    },
+    {
+      "source": "/sticky-bar.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800"
+        }
       ]
     },
     {
       "source": "/script.js",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=604800" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800"
+        }
       ]
     },
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        }
       ]
     }
   ]
