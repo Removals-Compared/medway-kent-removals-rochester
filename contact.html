@@ -43,6 +43,27 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .cs-next:active{transform:translateY(1px)}
   .cs-err{color:#c0392b;font-size:13px;font-weight:600;min-height:18px;margin:8px 0 0}
 </style>
+<!-- OpenAI Ads Measurement Pixel (init only; the lead_created conversion
+     fires solely on the thank-you page after a verified form submission) -->
+<script>
+  (function (w, d, s, u) {
+    if (w.oaiq) return;
+    var q = function () {
+      q.q.push(arguments);
+    };
+    q.q = [];
+    w.oaiq = q;
+    var js = d.createElement(s);
+    js.async = true;
+    js.src = u;
+    var f = d.getElementsByTagName(s)[0];
+    f.parentNode.insertBefore(js, f);
+  })(window, document, "script", "https://bzrcdn.openai.com/sdk/oaiq.min.js");
+
+  oaiq("init", {
+    pixelId: "H3hZ3ZuHq1f1q5Cwo2Aqz",
+  });
+</script>
 </head><body>
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WQHT5D2L"

@@ -111,6 +111,9 @@ document.addEventListener('DOMContentLoaded', function(){
       var data = await response.json();
 
       if(response.ok && data.success){
+        // A verified lead: the thank-you page uses this one-shot marker to
+        // fire the OpenAI Ads lead_created conversion exactly once.
+        try { sessionStorage.setItem('mkr_lead_ok', '1'); } catch (e) {}
         window.location.href = '/thank-you';
       } else {
         throw new Error('Server error');
@@ -237,6 +240,9 @@ async function submitForm(e){
     var data = await response.json();
 
     if(response.ok && data.success){
+        // A verified lead: the thank-you page uses this one-shot marker to
+        // fire the OpenAI Ads lead_created conversion exactly once.
+        try { sessionStorage.setItem('mkr_lead_ok', '1'); } catch (e) {}
       window.location.href = '/thank-you';
     } else {
       throw new Error('Server returned an error');

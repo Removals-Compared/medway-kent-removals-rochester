@@ -1186,6 +1186,27 @@ section.s-block.alt{background:var(--cream)}
   .footer-brand,.footer-contact{grid-column:1 / -1}
 }
 </style>
+<!-- OpenAI Ads Measurement Pixel (init only; the lead_created conversion
+     fires solely on the thank-you page after a verified form submission) -->
+<script>
+  (function (w, d, s, u) {
+    if (w.oaiq) return;
+    var q = function () {
+      q.q.push(arguments);
+    };
+    q.q = [];
+    w.oaiq = q;
+    var js = d.createElement(s);
+    js.async = true;
+    js.src = u;
+    var f = d.getElementsByTagName(s)[0];
+    f.parentNode.insertBefore(js, f);
+  })(window, document, "script", "https://bzrcdn.openai.com/sdk/oaiq.min.js");
+
+  oaiq("init", {
+    pixelId: "H3hZ3ZuHq1f1q5Cwo2Aqz",
+  });
+</script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
@@ -1897,8 +1918,15 @@ document.addEventListener('DOMContentLoaded', function () {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(data),
     })
-    .then(function (r) { return r.json(); })
-    .then(function () {
+    .then(function (r) {
+      return r.json().then(function (data) { return { ok: r.ok, data: data }; });
+    })
+    .then(function (res) {
+      // Only a confirmed success counts as a lead.
+      if (!(res.ok && res.data && res.data.success)) { throw new Error('server'); }
+      // A verified lead: the thank-you page uses this one-shot marker to
+      // fire the OpenAI Ads lead_created conversion exactly once.
+      try { sessionStorage.setItem('mkr_lead_ok', '1'); } catch (e) {}
       window.location.href = '/thank-you';
     })
     .catch(function () {

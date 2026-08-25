@@ -112,6 +112,27 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 .areas-cta .btn{display:inline-block;background:var(--accent);color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px}
 .areas-cta .btn:hover{background:#c4400e}
 </style>
+<!-- OpenAI Ads Measurement Pixel (init only; the lead_created conversion
+     fires solely on the thank-you page after a verified form submission) -->
+<script>
+  (function (w, d, s, u) {
+    if (w.oaiq) return;
+    var q = function () {
+      q.q.push(arguments);
+    };
+    q.q = [];
+    w.oaiq = q;
+    var js = d.createElement(s);
+    js.async = true;
+    js.src = u;
+    var f = d.getElementsByTagName(s)[0];
+    f.parentNode.insertBefore(js, f);
+  })(window, document, "script", "https://bzrcdn.openai.com/sdk/oaiq.min.js");
+
+  oaiq("init", {
+    pixelId: "H3hZ3ZuHq1f1q5Cwo2Aqz",
+  });
+</script>
 </head>
 <nav id="site-nav" role="navigation" aria-label="Main navigation">
   <div class="nav-inner">
