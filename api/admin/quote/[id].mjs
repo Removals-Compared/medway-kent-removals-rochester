@@ -79,7 +79,7 @@ export default async function handler(req, res) {
       const appointments = await fetchAppointmentsByLeadIds([id]);
       const reminders = await fetchRemindersByLeadIds([id]);
       // Staff sessions never receive money fields — stripped server-side.
-      if (role === 'staff') delete quote.value;
+      if (role === 'staff') { delete quote.value; delete quote.costs; }
       const duplicates = await fetchDuplicates(id, quote.phone, quote.email);
       return res.status(200).json({ quote, appointments, reminders, duplicates, role,
         accept_token: role === 'staff' ? undefined : acceptToken(id),
@@ -189,6 +189,15 @@ export default async function handler(req, res) {
         fields.value = b.value === '' || b.value === null ? null : Number(b.value);
       }
 
+      // Job cost allocation — money, so admin only; validated line items.
+      if (b.costs !== undefined && role !== 'staff') {
+        if (Array.isArray(b.costs)) {
+          fields.costs = b.costs
+            .filter((c) => c && typeof c.label === 'string' && c.label.trim() && isFinite(Number(c.amount)))
+            .map((c) => ({ label: String(c.label).trim().slice(0, 60), amount: Math.max(0, Number(c.amount)) }));
+        }
+      }
+
       // Audit trail: staff edits to customer details are attributed by name.
       // Written before the update so the response already carries the note.
       // Review request is sent only when the admin explicitly confirmed it
@@ -201,6 +210,11 @@ export default async function handler(req, res) {
         try { await appendNote(id, `Details updated by ${req._staffName || 'staff'}`); } catch {}
       }
       const actor = role === 'staff' ? (req._staffName || 'staff') : (process.env.ADMIN_NAME || 'Amos Osho');
+      if (fields.costs !== undefined) {
+        const total = fields.costs.reduce((a, c) => a + c.amount, 0);
+        let nm = null; try { nm = (prev || await getQuote(id)).name; } catch {}
+        await logActivity({ actor, action: 'updated job costs', lead_id: id, lead_name: nm, detail: '\u00a3' + total.toFixed(0) + ' total' });
+      }
       if (touchedDetails || b.status !== undefined) {
         let current = prev;
         if (!current) { try { current = await getQuote(id); } catch {} }
@@ -226,7 +240,7 @@ export default async function handler(req, res) {
           }
         }
       }
-      if (role === 'staff') delete quote.value;
+      if (role === 'staff') { delete quote.value; delete quote.costs; }
       return res.status(200).json({ quote, review_request, role });
     }
 

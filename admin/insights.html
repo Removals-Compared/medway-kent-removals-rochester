@@ -360,6 +360,33 @@
                 </li>`; }).join('') || '<li class="empty">Nothing waiting — all quotes actioned.</li>'}
             </ul>
           </div>
+          ${staff ? '' : `
+          <div class="card">
+            <h2>Job profitability</h2>
+            <p class="sub">${(() => {
+              const done = rows.filter((r) => ['move_booked','won'].includes(st(r)) && val(r) > 0 && Array.isArray(r.costs) && r.costs.length);
+              if (!done.length) return 'Add job costs on a lead to see margins here';
+              const tv = done.reduce((a,r) => a + val(r), 0);
+              const tc = done.reduce((a,r) => a + r.costs.reduce((x,c) => x + (Number(c.amount)||0), 0), 0);
+              return done.length + ' costed job' + (done.length===1?'':'s') + ' \u2022 average spend ' + Math.round(tc/tv*100) + '% of job value \u2022 total margin ' + money(tv - tc);
+            })()}</p>
+            <ul class="list">
+              ${rows.filter((r) => ['move_booked','won'].includes(st(r)) && val(r) > 0 && Array.isArray(r.costs) && r.costs.length)
+                .map((r) => ({ r, c: r.costs.reduce((a,x) => a + (Number(x.amount)||0), 0) }))
+                .sort((a,b) => (b.c/val(b.r)) - (a.c/val(a.r)))
+                .slice(0, 8)
+                .map(({r, c}) => {
+                  const pct = Math.round(c / val(r) * 100);
+                  const col = pct <= 60 ? '#16a34a' : pct <= 85 ? '#d97706' : '#dc2626';
+                  return `
+                <li>
+                  <span class="who"><a href="/admin/quote/${esc(r.id)}">${esc(r.name || 'Unnamed')}</a>
+                    <span class="sub">job ${money(val(r))} \u2022 costs ${money(c)} \u2022 margin ${money(val(r) - c)}</span>
+                    <span class="sub" style="display:block"><span style="display:inline-block;width:120px;height:8px;border-radius:4px;background:#eceef2;box-shadow:inset 0 1px 3px rgba(13,31,60,.15);vertical-align:middle"><span style="display:block;width:${Math.min(100,pct)}%;height:100%;border-radius:4px;background:${col}"></span></span> ${pct}% spent</span>
+                  </span>
+                </li>`; }).join('') || '<li class="empty">No costed jobs yet.</li>'}
+            </ul>
+          </div>`}
           <div class="card">
             <h2>Team activity</h2>
             <p class="sub">Who added, updated or deleted leads, newest first</p>

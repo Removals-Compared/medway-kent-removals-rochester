@@ -19,7 +19,7 @@ export default async function handler(req, res) {
       for (const p of pending) { if (!map[p.lead_id]) map[p.lead_id] = p; }
       quotes.forEach((q) => { if (map[q.id]) q.reminder = map[q.id]; });
       // Staff sessions never receive money fields — stripped server-side.
-      if (role === 'staff') quotes.forEach((q) => { delete q.value; });
+      if (role === 'staff') quotes.forEach((q) => { delete q.value; delete q.costs; });
       return res.status(200).json({ quotes, role, staff_name: role === 'staff' ? (req._staffName || process.env.STAFF_NAME || 'Staff') : undefined, display_name: role === 'staff' ? (req._staffName || process.env.STAFF_NAME || 'Staff') : (process.env.ADMIN_NAME || 'Amos Osho') });
     }
     if (req.method === 'POST') {

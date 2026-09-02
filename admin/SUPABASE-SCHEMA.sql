@@ -99,3 +99,7 @@ alter table activity_log disable row level security;
 --   alter table appointments drop constraint appointments_type_check;
 --   alter table appointments add constraint appointments_type_check
 --     check (type in ('survey', 'move', 'packing'));
+
+-- ── Migration (2026-08-19): job cost allocation ──
+-- Line-item costs per job: [{"label":"Crew wages","amount":180}, ...]
+-- Run once: alter table quote_requests add column if not exists costs jsonb default '[]';

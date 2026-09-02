@@ -75,6 +75,16 @@
   @keyframes shimmer{ 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
   .dupe-banner{ background:#fef3c7; border:1px solid #f5d879; border-radius:12px; padding:13px 18px; margin-bottom:16px; font-size:13.5px; color:#92400e; box-shadow:0 2px 0 #ecd98a, 0 5px 12px rgba(180,120,0,.12); }
   .dupe-banner a{ color:#92400e; font-weight:700; }
+  .cost-row{ display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+  .cost-row .cost-label{ flex:2; }
+  .cost-row .cost-amt{ flex:1; }
+  .cost-del{ background:none; border:none; color:#b91c1c; font-size:20px; cursor:pointer; padding:0 6px; line-height:1; }
+  .cost-summary{ margin-top:12px; border-radius:10px; padding:13px 16px; font-size:13.5px; font-weight:600; }
+  .cost-summary .bar{ height:10px; border-radius:6px; background:#eceef2; margin-top:8px; overflow:hidden; box-shadow:inset 0 2px 4px rgba(13,31,60,.12); }
+  .cost-summary .fill{ height:100%; border-radius:6px; box-shadow:inset 0 1px 0 rgba(255,255,255,.35); }
+  .cost-summary.good{ background:#ecfdf5; color:#166534; }
+  .cost-summary.warn{ background:#fef9c3; color:#854d0e; }
+  .cost-summary.bad{ background:#fee2e2; color:#991b1b; }
   .crew-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 12px; border:1px solid var(--line); border-radius:10px; margin-bottom:8px; transition:background .15s, border-color .15s; }
   .crew-row.on{ background:#ecfdf5; border-color:#86efac; }
   .crew-row label{ display:flex; align-items:center; gap:9px; margin:0; font-size:14.5px; cursor:pointer; color:#1a2233; }
@@ -319,6 +329,21 @@
             <button class="btn" id="gen-invoice">&#129534; Invoice</button>
             <button class="btn" id="gen-receipt" style="color:#15803d">&#129534; Receipt</button>
           </div>
+
+          <div class="group-label">Job costs (crew, fuel, van, materials)</div>
+          <div id="cost-rows">${(Array.isArray(q.costs) ? q.costs : []).map((c) => `
+            <div class="cost-row">
+              <input class="cost-label" placeholder="e.g. Crew wages" value="${esc(c.label)}">
+              <input class="cost-amt" type="number" step="0.01" min="0" placeholder="0.00" value="${c.amount}">
+              <button type="button" class="cost-del" title="Remove">&times;</button>
+            </div>`).join('')}
+          </div>
+          <div class="btn-row">
+            <button class="btn" id="add-cost" style="flex:0 1 auto">+ Add cost line</button>
+            <button class="btn primary" id="save-costs" style="flex:1">Save costs</button>
+          </div>
+          <div id="cost-summary"></div>
+          <p class="flash" id="flash-costs"></p>
           </div>
 
           <div class="group-label">Status</div>
@@ -526,6 +551,57 @@
     $('gen-invoice').addEventListener('click', () => {
       window.open('/admin/invoice-doc?id=' + encodeURIComponent(LEAD_ID) + '&type=invoice', '_blank');
     });
+    function costRowsData(){
+      return Array.from(document.querySelectorAll('.cost-row')).map((r) => ({
+        label: r.querySelector('.cost-label').value.trim(),
+        amount: Number(r.querySelector('.cost-amt').value),
+      })).filter((c) => c.label && isFinite(c.amount) && c.amount > 0);
+    }
+    function costSummary(){
+      const box = $('cost-summary');
+      const total = costRowsData().reduce((a, c) => a + c.amount, 0);
+      const val = Number(QUOTE && QUOTE.value) || 0;
+      if (!total){ box.innerHTML = ''; return; }
+      const pct = val ? Math.round(total / val * 100) : null;
+      const margin = val - total;
+      const band = pct === null ? 'warn' : pct <= 60 ? 'good' : pct <= 85 ? 'warn' : 'bad';
+      const fill = { good:'#16a34a', warn:'#d97706', bad:'#dc2626' }[band];
+      box.innerHTML = '<div class="cost-summary ' + band + '">'
+        + 'Costs \u00a3' + total.toLocaleString('en-GB')
+        + (val ? ' \u2022 Job \u00a3' + val.toLocaleString('en-GB')
+          + ' \u2022 Margin \u00a3' + margin.toLocaleString('en-GB')
+          + ' \u2022 ' + pct + '% of job value spent' : ' \u2022 set the job value to see the margin')
+        + (val ? '<div class="bar"><div class="fill" style="width:' + Math.min(100, pct) + '%;background:' + fill + '"></div></div>' : '')
+        + '</div>';
+    }
+    function addCostRow(label, amount){
+      const div = document.createElement('div');
+      div.className = 'cost-row';
+      div.innerHTML = '<input class="cost-label" placeholder="e.g. Crew wages" value="' + (label || '') + '">'
+        + '<input class="cost-amt" type="number" step="0.01" min="0" placeholder="0.00" value="' + (amount || '') + '">'
+        + '<button type="button" class="cost-del" title="Remove">&times;</button>';
+      $('cost-rows').appendChild(div);
+      div.querySelector('.cost-label').focus();
+    }
+    $('add-cost').addEventListener('click', () => addCostRow());
+    $('cost-rows').addEventListener('click', (e) => {
+      if (e.target.classList.contains('cost-del')){ e.target.closest('.cost-row').remove(); costSummary(); }
+    });
+    $('cost-rows').addEventListener('input', costSummary);
+    $('save-costs').addEventListener('click', async () => {
+      const costs = costRowsData();
+      const b = $('save-costs'); b.disabled = true;
+      try {
+        const r = await api('/api/admin/quote/' + LEAD_ID, {
+          method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ costs }),
+        });
+        if (r.ok){ QUOTE = (await r.json()).quote; flash('flash-costs', 'Costs saved.', true); costSummary(); }
+        else flash('flash-costs', 'Could not save costs.', false);
+      } catch(e){ if (String(e.message) !== 'unauth') flash('flash-costs', 'Could not save costs.', false); }
+      b.disabled = false;
+    });
+    costSummary();
+
     $('save-crew').addEventListener('click', async () => {
       const picked = Array.from(document.querySelectorAll('.crew-cb:checked')).map((c) => c.dataset.name);
       const text = picked.length ? 'Crew assigned: ' + picked.join(', ') : 'Crew cleared';
