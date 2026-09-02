@@ -38,6 +38,11 @@
   .kpi:nth-child(3){ background:linear-gradient(160deg,#f06535,#cf4514); }
   .kpi:nth-child(4){ background:linear-gradient(160deg,#6d5ae6,#4338ca); }
   .kpi:nth-child(5){ background:linear-gradient(160deg,#14b8a6,#0d7a6d); }
+  .kpi:nth-child(6){ background:linear-gradient(160deg,#f0a12b,#c07207); }
+  .kpi.click{ cursor:pointer; }
+  .kpi.click .s u{ text-decoration:underline; }
+  @keyframes cardPulse{ 0%{ box-shadow:0 0 0 0 rgba(240,161,43,.55); } 100%{ box-shadow:0 0 0 18px rgba(240,161,43,0); } }
+  .card.pulse{ animation:cardPulse .9s ease-out 2; }
   .kpi .l{ font-size:12px; color:rgba(255,255,255,.8); text-transform:uppercase; letter-spacing:.6px; font-weight:700; }
   .kpi .n{ font-size:28px; font-weight:800; color:#fff; margin-top:4px; font-variant-numeric:tabular-nums;
            text-shadow:0 2px 3px rgba(0,0,0,.25); }
@@ -271,6 +276,12 @@
       .sort((a,b) => (a.created_at || '').localeCompare(b.created_at || ''))
       .slice(0, 6);
 
+    // ── Job profitability numbers (shared by the KPI tile and the card) ──
+    const costed = rows.filter((r) => ['move_booked','won'].includes(st(r)) && val(r) > 0 && Array.isArray(r.costs) && r.costs.length);
+    const costTotal = costed.reduce((a,r) => a + r.costs.reduce((x,c) => x + (Number(c.amount)||0), 0), 0);
+    const costValue = costed.reduce((a,r) => a + val(r), 0);
+    const costPct = costValue ? Math.round(costTotal / costValue * 100) : null;
+
     // ── Review request tracking ──
     // "Review request emailed" and "Review received" notes on the lead are
     // the source of truth; a resend after a received review re-opens it.
@@ -302,6 +313,12 @@
         `}
         <div class="kpi"><div class="l">Win rate</div><div class="n">${winRate === null ? '—' : winRate + '%'}</div><div class="s">${wonRows.length} won &bull; ${lostN} lost${staff ? '' : ' &bull; avg job ' + money(avgJob)}</div></div>
         <div class="kpi"><div class="l">New leads this month</div><div class="n">${leadsThis}</div><div class="s">${delta === null ? (leadsLast === 0 && leadsThis > 0 ? 'first month with leads' : 'vs ' + leadsLast + ' last month') : (delta >= 0 ? '<span class="up">&#9650; ' + delta + '%</span>' : '<span class="down">&#9660; ' + Math.abs(delta) + '%</span>') + ' vs ' + leadsLast + ' last month'}</div></div>
+        ${staff ? '' : `
+        <div class="kpi click" id="kpi-profit" title="See the per-job breakdown">
+          <div class="l">&#128176; Job profitability</div>
+          <div class="n">${costPct === null ? '—' : costPct + '% spent'}</div>
+          <div class="s">${costPct === null ? 'add costs to a booked job to track margins' : money(costValue - costTotal) + ' margin • ' + costed.length + ' costed job' + (costed.length===1?'':'s') + ' • <u>tap for details</u>'}</div>
+        </div>`}
       </div>
 
       <div class="grid">
@@ -361,15 +378,10 @@
             </ul>
           </div>
           ${staff ? '' : `
-          <div class="card">
+          <div class="card" id="profit-card">
             <h2>Job profitability</h2>
-            <p class="sub">${(() => {
-              const done = rows.filter((r) => ['move_booked','won'].includes(st(r)) && val(r) > 0 && Array.isArray(r.costs) && r.costs.length);
-              if (!done.length) return 'Add job costs on a lead to see margins here';
-              const tv = done.reduce((a,r) => a + val(r), 0);
-              const tc = done.reduce((a,r) => a + r.costs.reduce((x,c) => x + (Number(c.amount)||0), 0), 0);
-              return done.length + ' costed job' + (done.length===1?'':'s') + ' \u2022 average spend ' + Math.round(tc/tv*100) + '% of job value \u2022 total margin ' + money(tv - tc);
-            })()}</p>
+            <p class="sub">${!costed.length ? 'Add job costs on a lead to see margins here'
+              : costed.length + ' costed job' + (costed.length===1?'':'s') + ' • average spend ' + costPct + '% of job value • total margin ' + money(costValue - costTotal)}</p>
             <ul class="list">
               ${rows.filter((r) => ['move_booked','won'].includes(st(r)) && val(r) > 0 && Array.isArray(r.costs) && r.costs.length)
                 .map((r) => ({ r, c: r.costs.reduce((a,x) => a + (Number(x.amount)||0), 0) }))
@@ -417,6 +429,14 @@
           </div>
         </div>
       </div>`;
+
+    const tile = document.getElementById('kpi-profit');
+    if (tile) tile.addEventListener('click', () => {
+      const card = document.getElementById('profit-card');
+      if (!card) return;
+      card.scrollIntoView({ behavior:'smooth', block:'center' });
+      card.classList.remove('pulse'); void card.offsetWidth; card.classList.add('pulse');
+    });
   }
 
   // Single-series column chart. Values show on hover; the peak and the latest
