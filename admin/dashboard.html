@@ -68,6 +68,10 @@
   .td-card.moves{ background:linear-gradient(160deg,#22b558,#0f803a); }
   .td-card.remind{ background:linear-gradient(160deg,#f06535,#cf4514); }
   .td-card.chase{ background:linear-gradient(160deg,#6d5ae6,#4338ca); }
+  .td-card.profit{ background:linear-gradient(160deg,#14b8a6,#0d7a6d); }
+  .td-card.profit a{ display:inline; padding:0; }
+  .td-card .big{ font-size:19px; font-weight:800; padding:2px 0; }
+  .td-card .sub2{ font-size:12px; color:rgba(255,255,255,.78); font-weight:600; }
   .td-card .t{ font-size:11px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; color:rgba(255,255,255,.8); margin-bottom:4px; }
   .td-card a{ color:#fff; text-decoration:none; font-weight:700; font-size:13.5px; display:block; padding:2px 0; }
   .td-card a:hover{ text-decoration:underline; }
@@ -417,6 +421,20 @@
     if (moves.length) cards.push(`<div class="td-card moves"><div class="t">&#128666; Moving today</div>${cap(moves, (r) => link(r))}</div>`);
     if (calls.length) cards.push(`<div class="td-card remind"><div class="t">&#128222; Calls due</div>${cap(calls, (r) => link(r, r.reminder.remind_time ? ' &bull; ' + esc(r.reminder.remind_time) : ''))}</div>`);
     if (stale.length) cards.push(`<div class="td-card chase"><div class="t">&#9203; Quotes to chase</div>${cap(stale, (r) => link(r))}</div>`);
+
+    // Job profitability banner — money, so never on staff sessions.
+    if (!document.body.classList.contains('staff')){
+      const costed = rows.filter((r) => ['move_booked','won'].includes(r.status)
+        && Number(r.value) > 0 && Array.isArray(r.costs) && r.costs.length);
+      if (costed.length){
+        const tv = costed.reduce((a,r) => a + Number(r.value), 0);
+        const tc = costed.reduce((a,r) => a + r.costs.reduce((x,c) => x + (Number(c.amount)||0), 0), 0);
+        const pct = Math.round(tc / tv * 100);
+        cards.push(`<div class="td-card profit"><div class="t">&#128176; Job profitability</div>
+          <div class="big">${pct}% spent &bull; ${fmtMoney(tv - tc)} margin</div>
+          <div class="sub2">${costed.length} costed job${costed.length===1?'':'s'} &bull; <a href="/admin/insights" style="color:#fff;text-decoration:underline">full breakdown</a></div></div>`);
+      }
+    }
     $('today').innerHTML = cards.length ? '<div class="today">' + cards.join('') + '</div>' : '';
   }
 
