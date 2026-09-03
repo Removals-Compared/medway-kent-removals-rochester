@@ -68,6 +68,13 @@
   .chart .val{ font-size:11.5px; font-weight:700; color:var(--ink2); margin-bottom:4px; font-variant-numeric:tabular-nums; visibility:hidden; }
   .chart .col:hover .val, .chart .col .val.show{ visibility:visible; }
   .chart .lab{ font-size:11.5px; color:var(--ink3); margin-top:6px; white-space:nowrap; }
+  .chart .stack{ width:100%; max-width:52px; display:flex; flex-direction:column; border-radius:6px 6px 0 0; overflow:hidden;
+        box-shadow:inset 0 2px 0 rgba(255,255,255,.25), 0 2px 6px rgba(13,31,60,.2); }
+  .chart .seg-margin{ background:linear-gradient(180deg,#22b558,#159a46); }
+  .chart .seg-cost{ background:linear-gradient(180deg,#f0a12b,#c07207); }
+  .legend{ display:flex; gap:18px; font-size:12.5px; color:var(--ink2); margin:2px 0 0; }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .legend i{ width:12px; height:12px; border-radius:4px; display:inline-block; }
 
   /* status rows */
   .srow{ display:grid; grid-template-columns:110px 1fr 70px; gap:10px; align-items:center; margin-bottom:9px; font-size:13.5px; }
@@ -252,6 +259,8 @@
     const leadsBy = Object.fromEntries(months.map(m => [m.key, 0]));
     const revBy   = Object.fromEntries(months.map(m => [m.key, 0]));
     const wonCountBy = Object.fromEntries(months.map(m => [m.key, 0]));
+    const costByM = Object.fromEntries(months.map(m => [m.key, 0]));
+    const valByM  = Object.fromEntries(months.map(m => [m.key, 0]));
     rows.forEach(r => {
       const ck = (r.created_at || '').slice(0,7);
       if (ck in leadsBy) leadsBy[ck]++;
@@ -259,6 +268,14 @@
         const wk = (r.move_date || r.created_at || '').slice(0,7);
         if (wk in revBy) revBy[wk] += val(r);
         if (wk in wonCountBy) wonCountBy[wk]++;
+      }
+      // costed jobs feed the margin-vs-spent chart
+      if (['move_booked','won'].includes(st(r)) && val(r) > 0 && Array.isArray(r.costs) && r.costs.length){
+        const mk = (r.move_date || r.created_at || '').slice(0,7);
+        if (mk in costByM){
+          costByM[mk] += r.costs.reduce((x,c) => x + (Number(c.amount)||0), 0);
+          valByM[mk] += val(r);
+        }
       }
     });
 
@@ -339,6 +356,14 @@
           ${barChart(months.map(m => ({ lab: m.lab, v: revBy[m.key] })), true)}
         </div>`}
       </div>
+
+      ${staff ? '' : `
+      <div class="card" id="profit-chart">
+        <h2>Margin vs spent per month</h2>
+        <p class="sub">Each bar is that month's costed job value: green is what you kept, amber is what the jobs cost</p>
+        ${marginChart(months.map(m => ({ lab: m.lab, v: valByM[m.key], c: costByM[m.key] })))}
+        <div class="legend"><span><i class="seg-margin" style="background:#1da84f"></i> margin kept</span><span><i style="background:#dc8b16"></i> costs spent</span></div>
+      </div>`}
 
       <div class="grid">
         <div class="card">
@@ -437,6 +462,27 @@
       card.scrollIntoView({ behavior:'smooth', block:'center' });
       card.classList.remove('pulse'); void card.offsetWidth; card.classList.add('pulse');
     });
+  }
+
+  // Stacked margin-vs-spent columns: bar height = month job value,
+  // amber base = costs, green top = margin, labelled with the margin %.
+  function marginChart(data){
+    const max = Math.max(1, ...data.map(d => d.v));
+    if (!data.some(d => d.v > 0)) return '<p class="empty">Cost up a booked or completed job and its month appears here.</p>';
+    return '<div class="chart">' + data.map((d) => {
+      if (!d.v) return `<div class="col" title="${d.lab}: no costed jobs"><div class="stack" style="height:2px"></div><span class="lab">${d.lab}</span></div>`;
+      const h = Math.max(4, Math.round(d.v / max * 100));
+      const marginPct = Math.round((d.v - d.c) / d.v * 100);
+      const costShare = Math.min(100, Math.round(d.c / d.v * 100));
+      return `<div class="col" title="${d.lab}: ${money(d.v)} of jobs \u2022 ${money(d.c)} spent \u2022 ${money(d.v - d.c)} kept (${marginPct}%)">
+        <span class="val show">${marginPct}%</span>
+        <div class="stack" style="height:${h}%">
+          <div class="seg-margin" style="flex:${100 - costShare} 0 0"></div>
+          <div class="seg-cost" style="flex:${costShare} 0 0"></div>
+        </div>
+        <span class="lab">${d.lab}</span>
+      </div>`;
+    }).join('') + '</div>';
   }
 
   // Single-series column chart. Values show on hover; the peak and the latest
