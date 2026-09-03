@@ -28,7 +28,7 @@
   .muted{ color:var(--ink3); font-size:13px; }
 
   /* KPI tiles — colourful 3D key-caps, one colour per tile */
-  .kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:22px; }
+  .kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:22px; }
   .kpi{ border-radius:14px; padding:16px 18px; color:#fff; border:none;
         box-shadow:inset 0 1px 0 rgba(255,255,255,.25), 0 3px 0 rgba(0,0,0,.18), 0 8px 20px rgba(13,31,60,.18);
         transition:transform .08s ease; }
@@ -315,9 +315,9 @@
         <div class="kpi"><div class="l">New leads this month</div><div class="n">${leadsThis}</div><div class="s">${delta === null ? (leadsLast === 0 && leadsThis > 0 ? 'first month with leads' : 'vs ' + leadsLast + ' last month') : (delta >= 0 ? '<span class="up">&#9650; ' + delta + '%</span>' : '<span class="down">&#9660; ' + Math.abs(delta) + '%</span>') + ' vs ' + leadsLast + ' last month'}</div></div>
         ${staff ? '' : `
         <div class="kpi click" id="kpi-profit" title="See the per-job breakdown">
-          <div class="l">&#128176; Job profitability</div>
-          <div class="n">${costPct === null ? '—' : costPct + '% spent'}</div>
-          <div class="s">${costPct === null ? 'add costs to a booked job to track margins' : money(costValue - costTotal) + ' margin • ' + costed.length + ' costed job' + (costed.length===1?'':'s') + ' • <u>tap for details</u>'}</div>
+          <div class="l">Job profitability</div>
+          <div class="n">${costPct === null ? '—' : (100 - costPct) + '%'}</div>
+          <div class="s">${costPct === null ? 'cost up a job to track margins' : 'margin • ' + money(costValue - costTotal) + ' kept • <u>details</u>'}</div>
         </div>`}
       </div>
 
