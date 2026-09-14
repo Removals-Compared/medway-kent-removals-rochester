@@ -182,6 +182,13 @@ export default async function handler(req, res) {
         if (b[k] !== undefined) fields[k] = b[k] === '' ? null : b[k];
       });
 
+      // The received-date stamp on the lead page is click-to-edit.
+      if (b.created_at !== undefined) {
+        const d = new Date(b.created_at);
+        if (isNaN(d)) return res.status(400).json({ error: 'invalid received date' });
+        fields.created_at = d.toISOString();
+      }
+
       // Staff cannot recycle a lead through the status field either.
       if (b.status === 'deleted' && role === 'staff') return res.status(403).json({ error: 'deleting is not available on the staff login' });
       if (b.status !== undefined) fields.status = b.status;
@@ -215,11 +222,12 @@ export default async function handler(req, res) {
         let nm = null; try { nm = (prev || await getQuote(id)).name; } catch {}
         await logActivity({ actor, action: 'updated job costs', lead_id: id, lead_name: nm, detail: '\u00a3' + total.toFixed(0) + ' total' });
       }
-      if (touchedDetails || b.status !== undefined) {
+      if (touchedDetails || b.status !== undefined || fields.created_at !== undefined) {
         let current = prev;
         if (!current) { try { current = await getQuote(id); } catch {} }
         if (touchedDetails) await logActivity({ actor, action: 'updated details', lead_id: id, lead_name: current && current.name });
         if (b.status !== undefined) await logActivity({ actor, action: 'changed status', lead_id: id, lead_name: current && current.name, detail: String(b.status) });
+        if (fields.created_at !== undefined) await logActivity({ actor, action: 'changed received date', lead_id: id, lead_name: current && current.name, detail: fields.created_at.slice(0, 10) });
       }
 
 

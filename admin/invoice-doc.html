@@ -302,7 +302,7 @@
       <div class="totals-inner">
         <div class="totals-row"><span>Subtotal</span><span id="sub-amt">—</span></div>
         <div class="totals-row"><span>VAT</span><span>Not applicable</span></div>
-        <div class="totals-row invoice-only"><span contenteditable="true">Deposit received</span><span id="dep-amt" contenteditable="true">−£50</span></div>
+        <div class="totals-row invoice-only"><span contenteditable="true">Deposit received (10%)</span><span id="dep-amt" contenteditable="true">—</span></div>
         <div class="totals-row grand invoice-only">
           <span class="lbl">Balance Due</span>
           <span class="total-amt" id="due-amt">—</span>
@@ -451,9 +451,11 @@
     if (!isFinite(val)) val = 0;
     $('tbl-amt').textContent = money(val, 2);
     $('sub-amt').textContent = money(val, 2);
-    $('due-amt').textContent = money(Math.max(0, val - 50), 0);
+    var dep = Math.round(val * 0.10);
+    $('dep-amt').textContent = '\u2212' + money(dep, 0);
+    $('due-amt').textContent = money(Math.max(0, val - dep), 0);
     $('paid-amt').textContent = money(val, 0);
-    $('pay-amt').textContent = money(Math.max(0, val - 50), 0);
+    $('pay-amt').textContent = money(Math.max(0, val - dep), 0);
 
     var today = new Date();
     $('d-issued').textContent = fmtMed(today);

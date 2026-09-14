@@ -287,7 +287,7 @@
               <dt>Property</dt><dd>${esc(q.property_size||'—')}</dd>
               <dt>Move date</dt><dd>${fmtDate(q.move_date)}</dd>
               <dt>Customer notes</dt><dd>${esc(q.notes||'—')}</dd>
-              <dt>Received</dt><dd>${fmtDate(q.created_at)}</dd>
+              <dt>Received</dt><dd><span id="received-stamp" title="Click to change the received date" style="cursor:pointer;border-bottom:1px dashed #9aa3b5">${fmtDate(q.created_at)}</span></dd>
             </dl>
           </div>
 
@@ -357,7 +357,7 @@
           </div>
           <div class="group-label">Customer messages</div>
           <div class="btn-row">
-            <button class="btn green full" id="send-deposit">&#128183; WhatsApp the &pound;50 deposit link</button>
+            <button class="btn green full" id="send-deposit">&#128183; WhatsApp the 10% deposit link</button>
             <button class="btn" id="send-followup" style="color:#4338ca">&#9203; Quote follow-up</button>
             <button class="btn" id="send-review" style="color:#92400e">&#11088; Review request</button>
             <button class="btn full" id="review-received" style="color:#15803d">&#10003; Mark review received</button>
@@ -506,6 +506,33 @@
       $('details-view').style.display = 'block';
       $('edit-toggle').textContent = 'Edit';
     });
+
+    // ── Received date: click the stamp to change it ──
+    $('received-stamp').addEventListener('click', () => {
+      const cur = (QUOTE.created_at || '').slice(0, 10);
+      $('received-stamp').outerHTML = '<input type="date" id="received-edit" value="' + cur + '" style="padding:5px 8px;border:1px solid #cfd6e4;border-radius:6px;font:inherit">';
+      const inp = $('received-edit');
+      inp.focus();
+      let done = false;
+      const save = async () => {
+        if (done) return; done = true;
+        const v = inp.value;
+        if (!v || v === cur){ render(); return; }
+        // Keep the original time of day so only the date part moves.
+        const time = (QUOTE.created_at || '').includes('T') ? QUOTE.created_at.slice(10) : 'T09:00:00';
+        try {
+          const r = await api('/api/admin/quote/' + LEAD_ID, {
+            method:'PATCH', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ created_at: v + time }),
+          });
+          if (r.ok){ QUOTE = (await r.json()).quote; pendingFlash = { id:'flash-left', msg:'Received date changed.', ok:true }; }
+          else flash('flash-left', 'Could not change the received date.', false);
+        } catch { flash('flash-left', 'Network error \u2014 please try again.', false); }
+        render();
+      };
+      inp.addEventListener('change', save);
+      inp.addEventListener('blur', () => { if (!done){ done = true; render(); } });
+    });
     $('details-edit').addEventListener('submit', async (e) => {
       e.preventDefault();
       const payload = {
@@ -619,10 +646,11 @@
       if (!QUOTE || !QUOTE.phone){ flash('flash-left', 'No phone number on this lead.', false); return; }
       const waNum = String(QUOTE.phone).replace(/[^\d]/g, '').replace(/^0/, '44');
       const first = (QUOTE.name || 'there').split(' ')[0];
+      const depAmt = Math.round((Number(QUOTE.value) || 0) * 0.10);
       const msg = 'Hi ' + first + ', thank you for confirming your move with Medway and Kent Removals. '
-        + 'To secure your date, please pay your \u00a350 deposit using this secure link: '
+        + 'To secure your date, please pay your 10% deposit' + (depAmt ? ' of \u00a3' + depAmt.toLocaleString('en-GB') : '') + ' using this secure link: '
         + DEPOSIT_LINK
-        + ' \u2014 once it is paid, your date is locked in. Any questions, just reply here. Thanks!';
+        + ' \u2014 the remaining 90% is payable on the move date. Once the deposit is paid, your date is locked in. Any questions, just reply here. Thanks!';
       window.open('https://wa.me/' + waNum + '?text=' + encodeURIComponent(msg), '_blank');
       // Best-effort history entry; opening WhatsApp is not proof of sending,
       // so the note says opened, not sent.

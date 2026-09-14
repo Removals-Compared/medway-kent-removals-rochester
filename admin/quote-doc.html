@@ -344,7 +344,7 @@
       <h3>Terms &amp; Booking</h3>
       <ol>
         <li>This is a fixed, all-inclusive price based on the move details provided. The price is held provided the property contents and access are as described.</li>
-        <li>To secure your moving date, a deposit of <strong>£50</strong> is payable on booking, with the balance of <strong id="t-balance">—</strong> due on completion on the day of the move.</li>
+        <li>To secure your moving date, a deposit of <strong>10% (<span id="t-deposit">—</span>)</strong> is payable on booking, with the remaining 90% balance of <strong id="t-balance">—</strong> payable on the move date.</li>
         <li>Please ensure all boxes are packed and sealed before the crew arrives, unless a packing service has been separately arranged.</li>
         <li>Parking should be available at both addresses. Please advise us in advance of any permits, restrictions or long carrying distances.</li>
         <li>This quotation is valid for 14 days from the date issued and is subject to availability at the time of booking.</li>
@@ -402,7 +402,9 @@
     var first = (q.name || 'there').split(' ')[0];
     var fromS = streetName(q.from_postcode), toS = streetName(q.to_postcode);
     var dShort = q.move_date ? fmtShort(new Date(q.move_date + 'T00:00:00')) : '';
-    var amt = money(Number(q.value) || 0, 0);
+    var v10 = Number(q.value) || 0;
+    var amt = money(v10, 0);
+    var dep10 = Math.round(v10 * 0.10);
     document.getElementById('m-to').value = q.email || '';
     document.getElementById('m-subject').value = 'Your removal quote' + (dShort ? ' — ' + dShort : '');
     document.getElementById('m-body').value = [
@@ -412,7 +414,7 @@
       '',
       'Please find your fixed, all-inclusive quote attached. It covers 1 maxi loader Luton van and 2 movers, with full protection and insurance, for ' + amt + ' with no hidden charges.',
       '',
-      'To secure the date we ask for a £50 deposit, with the balance due on completion on the day. If you are happy with everything, just tap the green button below to accept your quote:',
+      'To secure the date we ask for a 10% deposit' + (dep10 ? ' (' + money(dep10, 0) + ')' : '') + ', with the remaining 90%' + (dep10 ? ' (' + money(v10 - dep10, 0) + ')' : '') + ' payable on the move date. If you are happy with everything, just tap the green button below to accept your quote:',
       '',
       (window.ACCEPT_LINK || ''),
       '',
@@ -458,7 +460,9 @@
     if (!isFinite(val)) val = 0;
     $('sub-amt').textContent = money(val, 2);
     $('grand-amt').textContent = money(val, 0);
-    $('t-balance').textContent = money(Math.max(0, val - 50), 0);
+    var dep = Math.round(val * 0.10);
+    $('t-deposit').textContent = money(dep, 0);
+    $('t-balance').textContent = money(Math.max(0, val - dep), 0);
     if (!val){
       $('grand-amt').textContent = '£0';
       $('grand-amt').insertAdjacentHTML('afterend', '');

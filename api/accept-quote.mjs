@@ -57,7 +57,7 @@ export default async function handler(req, res) {
             from: 'MKR Admin <quotes@medwaykentremovals.co.uk>',
             to: ['info@medwaykentremovals.co.uk'],
             subject: `Quote ACCEPTED: ${q.name || 'Customer'}`,
-            text: `${q.name || 'A customer'} has accepted their quote via the email link.\n\nPhone: ${q.phone || ''}\nEmail: ${q.email || ''}\nMove date: ${q.move_date || 'not set'}\n\nOpen the lead: https://www.medwaykentremovals.co.uk/admin/quote/${id}\n\nNext step: call to confirm the date and take the £50 deposit.`,
+            text: `${q.name || 'A customer'} has accepted their quote via the email link.\n\nPhone: ${q.phone || ''}\nEmail: ${q.email || ''}\nMove date: ${q.move_date || 'not set'}\n\nOpen the lead: https://www.medwaykentremovals.co.uk/admin/quote/${id}\n\nNext step: call to confirm the date and take the 10% deposit${Math.round((Number(q.value) || 0) * 0.10) ? ` (\u00a3${Math.round((Number(q.value) || 0) * 0.10).toLocaleString('en-GB')})` : ''}.`,
           }),
         });
       } catch (e) { console.error('accept notify', e); }
@@ -66,7 +66,7 @@ export default async function handler(req, res) {
     return res.status(200).send(page('Quote accepted',
       `<div class="tick">&#10003;</div>
        <h1>Thank you, ${first}!</h1>
-       <p>Your quote is accepted and your move is now with our booking team. We will call you shortly to confirm your date and take the small deposit that secures it.</p>
+       <p>Your quote is accepted and your move is now with our booking team. We will call you shortly to confirm your date and take the 10% deposit that secures it, with the balance payable on the move date.</p>
        <p>Need us sooner? We are 7 days a week.</p>
        <a class="phone" href="tel:01634971005">Call 01634 971005</a>
        <a class="wa" href="https://wa.me/447359917380?text=Hi%2C%20I%20just%20accepted%20my%20removals%20quote" target="_blank" rel="noopener"><svg viewBox="0 0 32 32" fill="#fff" aria-hidden="true"><path d="M16 .5C7.4.5.5 7.4.5 16c0 2.8.7 5.4 2 7.8L.4 31.6l8-2.1c2.3 1.3 4.9 1.9 7.6 1.9 8.6 0 15.5-6.9 15.5-15.5S24.6.5 16 .5zm0 28.3c-2.4 0-4.7-.6-6.7-1.8l-.5-.3-4.8 1.3 1.3-4.6-.3-.5c-1.3-2.1-2-4.5-2-7C3 8.9 8.9 3 16 3s13 5.9 13 13-5.9 12.8-13 12.8zm7.1-9.6c-.4-.2-2.3-1.1-2.6-1.3-.4-.1-.6-.2-.9.2-.3.4-1 1.3-1.2 1.5-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3.1-1.9-1.1-1-1.9-2.3-2.1-2.7-.2-.4 0-.6.2-.8.2-.2.4-.4.6-.7.2-.2.3-.4.4-.7.1-.3 0-.5 0-.7-.1-.2-.9-2.1-1.2-2.9-.3-.8-.6-.7-.9-.7h-.8c-.3 0-.7.1-1 .5-.4.4-1.3 1.3-1.3 3.1s1.4 3.6 1.5 3.9c.2.3 2.7 4.1 6.5 5.8.9.4 1.6.6 2.2.8.9.3 1.7.2 2.4.1.7-.1 2.3-.9 2.6-1.8.3-.9.3-1.6.2-1.8-.1-.2-.3-.3-.7-.5z"/></svg>WhatsApp us</a>
