@@ -171,7 +171,7 @@ function buildHtmlPage(post, articleContent) {
     "@type": "BlogPosting",
     "headline": post.title,
     "description": `${post.title} — expert advice from Medway and Kent Removals, Rochester.`,
-    "author": { "@type": "Organization", "name": "Medway and Kent Removals" },
+    "author": {"@type":"Person","name":"Amos Osho","jobTitle":"Founder","url":"https://www.medwaykentremovals.co.uk/about","worksFor":{"@type":"Organization","name":"Medway and Kent Removals"}},
     "publisher": {
       "@type": "Organization",
       "name": "Medway and Kent Removals",
@@ -258,7 +258,7 @@ function buildHtmlPage(post, articleContent) {
     <div class="post-meta">
       <span>&#128197; ${dateStr}</span>
       <span>&#128336; 6 min read</span>
-      <span>&#128101; Medway &amp; Kent Removals Team</span>
+      <span>&#128101; By Amos Osho, Founder</span>
     </div>
   </div>
 </div>
