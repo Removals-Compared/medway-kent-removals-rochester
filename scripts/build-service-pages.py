@@ -8,6 +8,7 @@ import json, re, sys, os, importlib.util
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BLOCKS = json.load(open(os.path.join(ROOT, 'scripts/.svc-template-blocks.json')))
 CONTENT_DIR = os.path.join(ROOT, 'scripts/svc-content')
+IMG_SIZES = {'/images/packing-crew-loading-van.webp': (1010, 630), '/images/mkr-logo-on-dark.webp': (500, 500), '/images/family-moving-in.webp': (612, 408), '/images/mkr-logo-on-light.webp': (500, 500), '/images/crew-with-boxes.webp': (800, 575), '/images/new-build-detached-home.webp': (700, 394), '/images/removals-van-on-road.webp': (700, 467), '/images/period-flint-cottages.webp': (900, 600), '/images/moving-truck-loaded.webp': (933, 700), '/images/victorian-terrace-bay-window.webp': (800, 533)}
 
 SERVICES = [
     ('house-removals',        'House Removals'),
@@ -16,11 +17,11 @@ SERVICES = [
     ('man-and-van',           'Man and Van'),
     ('storage',               'Storage'),
     ('long-distance-removals','Long Distance Removals'),
+    ('student-removals',      'Student Removals'),
 ]
 
-FONTS_GTAG = '''<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,600&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,600&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet"></noscript>
+FONTS_GTAG = '''<link rel="preload" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,600&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="/fonts/fonts.css"></noscript>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-2FXN3VMLGT"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -158,7 +159,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </div>
 </div>'''
-    figure = f'''<figure style="margin:28px 0"><img src="{img_src}" alt="{esc(img_alt)}" loading="lazy" decoding="async" style="width:100%;height:auto;border-radius:14px;box-shadow:var(--sh)"><figcaption style="font-size:13px;color:var(--muted);margin-top:10px;font-style:italic">{esc(page['img_caption'])}</figcaption></figure>'''
+    dims = IMG_SIZES.get(img_src)
+    dim_attr = f' width="{dims[0]}" height="{dims[1]}"' if dims else ''
+    figure = f'''<figure style="margin:28px 0"><img{dim_attr} src="{img_src}" alt="{esc(img_alt)}" loading="lazy" decoding="async" style="width:100%;height:auto;border-radius:14px;box-shadow:var(--sh)"><figcaption style="font-size:13px;color:var(--muted);margin-top:10px;font-style:italic">{esc(page['img_caption'])}</figcaption></figure>'''
     body = page['body'].replace('<!--FIGURE-->', figure)
     main = f'''<section style="padding:64px 0">
   <div class="container">

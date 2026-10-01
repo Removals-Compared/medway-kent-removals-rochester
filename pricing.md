@@ -1,8 +1,10 @@
-# Pricing — Medway & Kent Removals
+# Pricing: Medway & Kent Removals
 
 Fixed price removal quotes across Medway and Kent. Every quote is itemised, all inclusive and held provided the property contents and access are as described. No hidden charges, no moving day surprises, no extra fees for stairs, parking waits or heavy items beyond what is stated in the quote.
 
-Last reviewed: 15 September 2026
+Last reviewed: 1 October 2026
+
+Full guide with tables: https://www.medwaykentremovals.co.uk/removal-costs-kent
 
 ## House removals, local (within Medway: Rochester, Chatham, Gillingham, Strood, Rainham)
 
@@ -42,6 +44,7 @@ Last reviewed: 15 September 2026
 
 - Packing service: full or partial packing with materials, priced per job
 - Man and van: smaller moves, single item pickups and deliveries, priced per job
+- Student removals: a single room moved locally is typically well under £100; between Kent towns £100 to £180
 - Storage: secure short and long term storage, priced per week by volume
 
 ## Get an exact fixed quote

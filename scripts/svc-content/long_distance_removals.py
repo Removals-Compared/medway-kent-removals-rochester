@@ -1,10 +1,10 @@
 PAGE = dict(
     slug='long-distance-removals',
     svc_param='Long+Distance+Move',
-    title='Long Distance Removals Kent | Kent to Anywhere in the UK | Medway & Kent Removals',
-    desc='Long distance removals from Rochester, Medway and Kent to anywhere in Great Britain. Fixed prices, one crew door to door, fully insured. Call 01634 971005.',
+    title='Moving from Kent? Long Distance Removals to Anywhere in the UK | Medway & Kent Removals',
+    desc='Moving from Kent to anywhere in the UK. Long distance removals from Rochester, Medway and all of Kent at fixed prices, one crew door to door, fully insured. Call 01634 971005.',
     label='Long Distance Removals from Kent',
-    h1='Long distance removals. Kent to <em>anywhere in Britain</em>, one crew, door to door.',
+    h1='Moving from Kent? <em>Anywhere in Britain</em>, one crew, door to door.',
     intro='Moving out of Kent is a bigger decision than moving across it, and the removal needs to match: earlier starts, tighter planning, and a crew that stays with your belongings from your old front door to your new one. We run long distance moves from Rochester, Medway and Kent to every corner of Great Britain, at fixed prices, with the same in-house crew at both ends. No handovers, no freight depots, no strangers meeting you at the destination.',
     urgency='Long distance dates need the most notice, especially Fridays.',
     cta_btn='Get a Free Long Distance Quote',
@@ -17,7 +17,7 @@ PAGE = dict(
     schema_name='Long Distance Removals',
     schema_desc='Fixed-price long distance removals between Kent and anywhere in Great Britain by Medway and Kent Removals. One in-house crew door to door, goods-in-transit insurance and optional packing and storage.',
     body='''
-<h2>Long distance moves from Rochester, Medway and Kent</h2>
+<h2>Moving from Kent: how a long distance move works</h2>
 <p>A long distance move is any move where the driving becomes part of the plan: Kent to Manchester, Medway to Bristol, Rochester to Edinburgh, or the reverse, bringing a family home to Kent from elsewhere in the country. These moves carry more moving parts than a local job: completion timings at both ends, a route that can include the M25 at its worst, overnight logistics for the longest trips, and no possibility of nipping back for whatever got forgotten.</p>
 <p>Our answer to all of that is planning and ownership. One crew, from our own staff, loads your home in Kent and unloads it at the destination. Your belongings never change vehicles, never sit in a freight depot, and are never handed to a partner firm you have not met. The crew that wrapped your furniture is the crew that unwraps it, three hundred miles later, and the price agreed before the day covers the whole journey: fuel, tolls, crew hours and, where the schedule needs it, overnight accommodation. Nothing is added afterwards.</p>
 <!--FIGURE-->
@@ -80,6 +80,8 @@ PAGE = dict(
          'This is common when buying at a distance, and our storage near Rochester is built for it: we load on your Kent date, hold everything securely for days or months, and deliver onwards when your new home is ready. The reverse works for moves into Kent.'),
         ('How far in advance should I book a long distance move?',
          'Six weeks or more if you can, especially for Fridays and month-end. Long moves block out a crew and vehicle for one to two days, so the diary fills earlier than for local work. If your completion has landed suddenly, call anyway and we will do our best.'),
+        ('I am moving from Kent to another part of the country. Where do I start?',
+         'Start with the destination and the date, then call 01634 971005 or send the quote form. We plan the whole move from your Kent address: survey, fixed quote, packing if you want it, one crew door to door, and storage if the dates do not line up. Moving from Kent is our daily work, whether the destination is London, the Midlands, the North or Scotland.'),
         ('Do you also bring people back into Kent?',
          'Constantly. Rochester and Medway are among the fastest-growing destinations for London leavers, and we run collection legs from across the country back to Kent. At the delivery end you get a crew that genuinely knows the area you are arriving into.'),
     ],
