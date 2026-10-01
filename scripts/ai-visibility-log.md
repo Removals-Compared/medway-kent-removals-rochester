@@ -30,3 +30,12 @@ Rubix Removals (211 reviews), Fontana Moving, SCS Removals & Storage (158), Fore
 2. Create a Bing Places listing (bingplaces.com, can import straight from Google Business Profile). Unlocks the Bing local pack and Copilot. Owner action.
 3. Claim a real Checkatrade profile. Checkatrade results were quoted in ChatGPT and Perplexity answers repeatedly; MKR's schema currently links a Checkatrade search page, not a profile. Owner action.
 4. Verify the "800+ moves since 2020" claim Perplexity attributes to MKR (likely from a directory profile) and keep such claims consistent everywhere.
+
+## Content actions shipped 1 October 2026 (from the BrightLocal 22/100 report)
+
+- student removals prompt (was 0): new /student-removals service page, in nav, sitemap and llms.txt
+- removals company in TN28 prompt (was 0): new /removals-new-romney location page covering TN28/TN29 and Romney Marsh
+- moving from kent prompt (was 0): /long-distance-removals retitled and reworked around "Moving from Kent", new FAQ
+- cost prompts: /removal-costs-kent pillar page with price tables, Article + FAQPage schema; old cost blog post canonicals to it
+- Remaining owner actions: Google reviews volume (Rubix benchmark 211), Checkatrade profile (the number 2 AI source), Bing Places listing, GBP activity
+- Next check: re-run BrightLocal "Update data" in early November and compare prompt scores
