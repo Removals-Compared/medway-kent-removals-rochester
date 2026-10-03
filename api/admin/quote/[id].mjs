@@ -31,6 +31,8 @@ async function sendReviewRequest(quote) {
     '',
     'If anything was not perfect, please reply to this email instead and we will put it right.',
     '',
+    'PS. Know someone moving? Send them our way and once their move completes you get \u00a325 off a future job or a \u00a325 voucher, your choice. Just ask them to mention your name when they book. Details: https://www.medwaykentremovals.co.uk/refer-a-friend',
+    '',
     'Thanks again,',
     'Medway and Kent Removals',
     '01634 971005',
@@ -43,6 +45,7 @@ async function sendReviewRequest(quote) {
     <p style="margin:22px 0"><a href="${REVIEW_LINK}" style="background:#E04E1B;color:#fff;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:8px;display:inline-block">Leave us a Google review</a></p>
     <p style="color:#555;font-size:13.5px">Just tap the stars and write a line or two, then press Post. Google may ask a few extra questions about price, and you can skip those completely.</p>
     <p>If anything was not perfect, please reply to this email instead and we will put it right.</p>
+    <p style="background:#f6f0e4;border-radius:8px;padding:12px 16px;font-size:13.5px;color:#444">PS. Know someone moving? Send them our way and once their move completes you get &pound;25 off a future job or a &pound;25 voucher, your choice. Just ask them to mention your name when they book. <a href="https://www.medwaykentremovals.co.uk/refer-a-friend" style="color:#E04E1B;font-weight:700">How it works</a></p>
     <p>Thanks again,<br>Medway and Kent Removals</p>
     <div style="text-align:center;margin:22px 0 4px">
       <a href="tel:01634971005" style="background:#E04E1B;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128222; Call 01634 971005</a>
@@ -105,6 +108,101 @@ export default async function handler(req, res) {
         try { await appendNote(id, `Restored by ${actor}`); } catch {}
         await logActivity({ actor, action: 'restored', lead_id: id, lead_name: q.name, detail: `back to ${was}` });
         return res.status(200).json({ quote, restored: true, role });
+      }
+
+      // Shared plain-letter email sender for the small customer nudges.
+      const sendLetter = async (q, subject, lines) => {
+        const text = lines.join('\n');
+        const lEsc = (x) => String(x || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#222;line-height:1.6;white-space:pre-wrap">' + lEsc(text) + '</div>'
+          + '<div style="text-align:center;margin:22px 0 4px">'
+          + '<a href="tel:01634971005" style="background:#E04E1B;color:#fff;text-decoration:none;font-weight:700;font-family:Arial,sans-serif;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128222; Call 01634 971005</a>'
+          + '<a href="https://wa.me/447359917380" style="background:#1EBE57;color:#fff;text-decoration:none;font-weight:700;font-family:Arial,sans-serif;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128172; WhatsApp us</a>'
+          + '</div>';
+        const r2 = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+          body: JSON.stringify({
+            from: 'Medway & Kent Removals <quotes@medwaykentremovals.co.uk>',
+            to: [q.email], bcc: ['info@medwaykentremovals.co.uk'],
+            reply_to: 'info@medwaykentremovals.co.uk',
+            subject, text, html,
+          }),
+        });
+        if (!r2.ok) throw new Error(`resend ${r2.status}`);
+      };
+
+      // Price-hold reminder: quotes are valid 14 days, so near expiry the
+      // customer gets one honest nudge. No prices in it, both roles can send.
+      if (b.send_expiry === true) {
+        const q = await getQuote(id);
+        if (!q) return res.status(404).json({ error: 'not found' });
+        if (!q.email) return res.status(400).json({ error: 'no email on this lead' });
+        // The send-quote endpoint notes "Quote emailed to ..." with a timestamp;
+        // the latest of those is the clock the 14 days run from.
+        let sentAt = null;
+        (Array.isArray(q.admin_notes) ? q.admin_notes : []).forEach((n) => {
+          if (/^quote emailed to/i.test(n.text || '')) sentAt = n.at || sentAt;
+        });
+        const until = sentAt
+          ? new Date(new Date(sentAt).getTime() + 14 * 86400000).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+          : null;
+        const first = (q.name || 'there').split(' ')[0];
+        try {
+          await sendLetter(q, 'Your fixed removal price is held' + (until ? ' until ' + until : ''), [
+            `Hi ${first},`,
+            '',
+            until
+              ? `A quick note that the fixed price on your removal quote is held until ${until}. After that date we may need to requote, as our diary and costs move about.`
+              : 'A quick note that the fixed price on your removal quote is held for 14 days from the date it was issued. After that we may need to requote, as our diary and costs move about.',
+            '',
+            'If you are ready to go ahead, a quick reply or a call on 01634 971005 locks in both the price and your date. If anything about the move has changed, tell us and we will update the quote the same day.',
+            '',
+            'Best regards,',
+            'Medway and Kent Removals',
+            '01634 971005 | WhatsApp 07359 917380',
+          ]);
+          const actorX = role === 'staff' ? (req._staffName || 'staff') : (process.env.ADMIN_NAME || 'Amos Osho');
+          await appendNote(id, `Price-hold reminder emailed to ${q.email} by ${actorX}`);
+          await logActivity({ actor: actorX, action: 'sent price-hold reminder', lead_id: id, lead_name: q.name });
+          if (role === 'staff') { delete q.value; delete q.costs; }
+          return res.status(200).json({ quote: q, expiry: 'sent', role });
+        } catch (e) {
+          console.error('price-hold', e);
+          return res.status(502).json({ error: String(e.message || e) });
+        }
+      }
+
+      // Win-back: a lead marked lost weeks ago gets one friendly check-in.
+      // No prices in it, both roles can send; the note is the dedupe marker.
+      if (b.send_winback === true) {
+        const q = await getQuote(id);
+        if (!q) return res.status(404).json({ error: 'not found' });
+        if (!q.email) return res.status(400).json({ error: 'no email on this lead' });
+        const first = (q.name || 'there').split(' ')[0];
+        try {
+          await sendLetter(q, 'Did your move go ahead?', [
+            `Hi ${first},`,
+            '',
+            'We quoted for your move a little while ago, and I wanted to check how things worked out.',
+            '',
+            'If the move is still to happen, we would love to help: just reply and we will refresh your quote, and if dates or details have changed we will update it the same day.',
+            '',
+            'And if you are already settled in your new place, please ignore this note and accept our best wishes for the new home.',
+            '',
+            'Best regards,',
+            'Medway and Kent Removals',
+            '01634 971005 | WhatsApp 07359 917380',
+          ]);
+          const actorW = role === 'staff' ? (req._staffName || 'staff') : (process.env.ADMIN_NAME || 'Amos Osho');
+          await appendNote(id, `Win-back email sent to ${q.email} by ${actorW}`);
+          await logActivity({ actor: actorW, action: 'sent win-back email', lead_id: id, lead_name: q.name });
+          if (role === 'staff') { delete q.value; delete q.costs; }
+          return res.status(200).json({ quote: q, winback: 'sent', role });
+        } catch (e) {
+          console.error('win-back', e);
+          return res.status(502).json({ error: String(e.message || e) });
+        }
       }
 
       // Gentle quote-chase email — no prices in it, so staff can send it too.

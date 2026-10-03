@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Agent Intro Letter — Admin — Medway &amp; Kent Removals</title>
+<style>
+  :root{ --navy:#0d1f3c; --orange:#e04e1b; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:Georgia,'Times New Roman',serif; background:#f4f5f7; color:#1a2233; }
+  .toolbar{ background:var(--navy); color:#fff; padding:12px 24px; display:flex; align-items:center; gap:14px; font-family:-apple-system,Arial,sans-serif; }
+  .toolbar .spacer{ flex:1; }
+  .toolbar a{ color:#cfd6e4; text-decoration:none; font-size:14px; }
+  .toolbar button{ background:var(--orange); color:#fff; border:none; border-radius:8px; padding:9px 18px; font-weight:700; font-size:14px; cursor:pointer; }
+  .hint{ max-width:720px; margin:14px auto 0; font-size:13px; color:#667; font-family:-apple-system,Arial,sans-serif; padding:0 20px; }
+  .sheet{ background:#fff; max-width:720px; margin:16px auto 40px; padding:56px 64px; box-shadow:0 6px 30px rgba(13,31,60,.12); line-height:1.75; font-size:15.5px; }
+  .lh{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:34px; }
+  .lh .brand{ font-family:-apple-system,Arial,sans-serif; }
+  .lh .brand .nm{ font-size:19px; font-weight:800; color:var(--navy); }
+  .lh .brand .tg{ font-size:12px; color:var(--orange); font-weight:700; letter-spacing:.6px; }
+  .lh .addr{ text-align:right; font-size:12.5px; color:#667; font-family:-apple-system,Arial,sans-serif; line-height:1.7; }
+  [contenteditable]:hover{ outline:1.5px dashed #c9d2e4; outline-offset:3px; }
+  p{ margin:0 0 14px; }
+  ul{ margin:0 0 14px 20px; }
+  li{ margin-bottom:6px; }
+  .sig{ margin-top:30px; }
+  .sig .nm{ font-weight:700; }
+  @media print{
+    .toolbar, .hint{ display:none; }
+    body{ background:#fff; }
+    .sheet{ box-shadow:none; margin:0; max-width:none; padding:10mm 14mm; }
+    @page{ margin:12mm; }
+  }
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <span style="font-weight:700">Agent intro letter</span>
+    <span class="spacer"></span>
+    <a href="/admin/dashboard">&larr; Leads</a>
+    <button onclick="window.print()">&#128424; Print</button>
+  </div>
+  <p class="hint">Click any part of the letter to edit it before printing (the branch name line especially). Print one per branch and hand it over in person with a stack of business cards; the conversation matters more than the paper.</p>
+
+  <div class="sheet" contenteditable="true">
+    <div class="lh" contenteditable="false">
+      <div class="brand">
+        <div class="nm">Medway &amp; Kent Removals</div>
+        <div class="tg">FIXED PRICES &bull; FULLY INSURED &bull; 5&#9733; RATED</div>
+      </div>
+      <div class="addr">
+        Knight Templar Way, Rochester, Kent ME2 2ZE<br>
+        01634 971005 &bull; 07359 917380 (WhatsApp)<br>
+        info@medwaykentremovals.co.uk<br>
+        medwaykentremovals.co.uk
+      </div>
+    </div>
+
+    <p>Dear Branch Manager,</p>
+
+    <p>When a sale completes or a tenancy starts, the removal firm is the last trade your client deals with, and the one whose mistakes come back to your front desk. I am writing to introduce a local firm you can recommend without that risk.</p>
+
+    <p>Medway &amp; Kent Removals is a Rochester based removal company working across the whole of Kent, seven days a week. We hold 5 stars from more than fifty Google reviews, and every move is carried out by our own directly employed, insured crew, never subcontracted. For your clients that means:</p>
+
+    <ul>
+      <li>A fixed, itemised quote within 60 minutes during business hours, with no doorstep surcharges, ever</li>
+      <li>Priority scheduling on confirmed completion dates, including month end</li>
+      <li>Patience when keys run late: the vehicle waits with their belongings locked and insured, at no extra charge</li>
+      <li>A simple 10% deposit to secure the date, with the balance payable on the move date</li>
+      <li>Packing, storage, end of tenancy moves and clearances under the same roof</li>
+    </ul>
+
+    <p>There is nothing to sign and nothing to administer. Keep our card at the desk, and when a buyer, seller, landlord or tenant asks who to use, you have an answer. Clients who mention your branch are flagged on our system, and branches that refer regularly are welcome to talk to me about a more formal arrangement.</p>
+
+    <p>I would be glad to call in for five minutes and introduce myself properly. In the meantime, our number is 01634 971005, and I answer it personally.</p>
+
+    <div class="sig">
+      <p>Yours faithfully,</p>
+      <p class="nm">Amos Osho<br><span style="font-weight:400;font-size:13.5px;color:#556">Founder, Medway &amp; Kent Removals<br>01634 971005 &bull; info@medwaykentremovals.co.uk</span></p>
+    </div>
+  </div>
+
+<script>
+  // Admin-gated like every other admin page: bounce to login if the session is gone.
+  fetch('/api/admin/quotes?limit=1').then((r) => { if (r.status === 401) window.location.href = '/admin'; }).catch(() => {});
+</script>
+</body>
+</html>

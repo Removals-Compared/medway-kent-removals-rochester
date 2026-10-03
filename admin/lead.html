@@ -364,6 +364,8 @@
           <div class="btn-row">
             <button class="btn green full" id="send-deposit">&#128183; WhatsApp the 10% deposit link</button>
             <button class="btn" id="send-followup" style="color:#4338ca">&#9203; Quote follow-up</button>
+            ${q.status === 'quote_sent' ? '<button class="btn" id="send-expiry" style="color:#b45309">&#8987; Price-hold reminder</button>' : ''}
+            ${q.status === 'lost' ? '<button class="btn full" id="send-winback" style="color:#0f766e">&#128260; Win-back email</button>' : ''}
             <button class="btn" id="send-review" style="color:#92400e">&#11088; Review request</button>
             <button class="btn full" id="review-received" style="color:#15803d">&#10003; Mark review received</button>
           </div>
@@ -720,6 +722,34 @@
         });
         if (r.ok){ QUOTE = (await r.json()).quote; render(); }
       } catch {}
+    });
+    if ($('send-expiry')) $('send-expiry').addEventListener('click', async () => {
+      if (!QUOTE || !QUOTE.email){ flash('flash-left', 'No email address on this lead.', false); return; }
+      if (!confirm('Email ' + QUOTE.email + ' a reminder that their fixed price is held for 14 days?')) return;
+      const b = $('send-expiry'); b.disabled = true;
+      try {
+        const r = await api('/api/admin/quote/' + LEAD_ID, {
+          method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ send_expiry: true }),
+        });
+        if (r.ok){ QUOTE = (await r.json()).quote; pendingFlash = { id:'flash-left', msg:'Price-hold reminder sent.', ok:true }; render(); return; }
+        const d = await r.json().catch(() => ({}));
+        flash('flash-left', 'Could not send: ' + (d.error || 'error'), false);
+      } catch(e){ if (String(e.message) !== 'unauth') flash('flash-left', 'Network error, please try again.', false); }
+      b.disabled = false;
+    });
+    if ($('send-winback')) $('send-winback').addEventListener('click', async () => {
+      if (!QUOTE || !QUOTE.email){ flash('flash-left', 'No email address on this lead.', false); return; }
+      if (!confirm('Email ' + QUOTE.email + ' a friendly did-your-move-go-ahead check-in?')) return;
+      const b = $('send-winback'); b.disabled = true;
+      try {
+        const r = await api('/api/admin/quote/' + LEAD_ID, {
+          method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ send_winback: true }),
+        });
+        if (r.ok){ QUOTE = (await r.json()).quote; pendingFlash = { id:'flash-left', msg:'Win-back email sent.', ok:true }; render(); return; }
+        const d = await r.json().catch(() => ({}));
+        flash('flash-left', 'Could not send: ' + (d.error || 'error'), false);
+      } catch(e){ if (String(e.message) !== 'unauth') flash('flash-left', 'Network error, please try again.', false); }
+      b.disabled = false;
     });
     $('send-followup').addEventListener('click', async () => {
       if (!QUOTE || !QUOTE.email){ flash('flash-left', 'No email address on this lead.', false); return; }

@@ -414,10 +414,33 @@
     const calls = rows.filter((r) => r.reminder && r.reminder.remind_on <= today);
     const stale = rows.filter((r) => r.status === 'quote_sent' && (r.created_at || '') < weekAgo);
 
+    // Price holds near their 14-day expiry (clock runs from the latest
+    // "Quote emailed" note) and lost leads old enough for a win-back.
+    const noteAt = (r, re) => {
+      let at = null;
+      (Array.isArray(r.admin_notes) ? r.admin_notes : []).forEach((n) => { if (re.test(n.text || '')) at = n.at || at; });
+      return at;
+    };
+    const expiring = rows.filter((r) => {
+      if (r.status !== 'quote_sent') return false;
+      const sent = noteAt(r, /^quote emailed to/i);
+      if (!sent) return false;
+      const days = (Date.now() - new Date(sent).getTime()) / 86400000;
+      return days >= 10 && days < 14;
+    });
+    const winback = rows.filter((r) => {
+      if (r.status !== 'lost' || !r.email) return false;
+      if (noteAt(r, /^win-back email sent/i)) return false;
+      const days = (Date.now() - new Date(r.updated_at || r.created_at).getTime()) / 86400000;
+      return days >= 42 && days <= 180;
+    });
+
     const cards = [];
     if (moves.length) cards.push(`<div class="td-card moves"><div class="t">&#128666; Moving today</div>${cap(moves, (r) => link(r))}</div>`);
     if (calls.length) cards.push(`<div class="td-card remind"><div class="t">&#128222; Calls due</div>${cap(calls, (r) => link(r, r.reminder.remind_time ? ' &bull; ' + esc(r.reminder.remind_time) : ''))}</div>`);
     if (stale.length) cards.push(`<div class="td-card chase"><div class="t">&#9203; Quotes to chase</div>${cap(stale, (r) => link(r))}</div>`);
+    if (expiring.length) cards.push(`<div class="td-card chase"><div class="t">&#8987; Price holds expiring</div>${cap(expiring, (r) => link(r))}</div>`);
+    if (winback.length) cards.push(`<div class="td-card remind"><div class="t">&#128260; Worth a win-back</div>${cap(winback, (r) => link(r))}</div>`);
     $('today').innerHTML = cards.length ? '<div class="today">' + cards.join('') + '</div>' : '';
   }
 
