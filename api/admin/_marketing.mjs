@@ -328,6 +328,14 @@ export function foldDuplicates(rows, prev) {
     const [primary, ...rest] = g;
     for (const r of rest) { r.dup_of = primary.id; folded++; }
     primary.dupe_links = rest.map((r) => ({ url: r.rightmove_url || r.zoopla_url, agent: r.agent, price: r.price }));
+    // The door is as fresh as its newest listing, so it never drops out of the
+    // recent-STC window just because the copy we keep is the older one.
+    const newest = g.reduce((m, r) => (r.stc_date && (!m || r.stc_date > m.stc_date) ? r : m), null);
+    if (newest && newest !== primary) {
+      primary.stc_date = newest.stc_date;
+      primary.stc_seen_on = newest.stc_seen_on || primary.stc_seen_on;
+      primary.stc_estimate = newest.stc_estimate || primary.stc_estimate;
+    }
     // A tick on any copy counts for the door.
     if (!prev.get(primary.id)?.done && rest.some((r) => prev.get(r.id)?.done)) carryDone.push(primary.id);
   }
