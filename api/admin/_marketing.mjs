@@ -179,7 +179,7 @@ export async function fetchRightmove() {
       seen.set(p.id, {
         id: `rm-${p.id}`, source: 'rightmove', rightmove_id: String(p.id),
         status: p.displayStatus || '',
-        address: p.displayAddress, district: code, area: AREAS[code],
+        address: String(p.displayAddress || '').replace(/[\s,]+$/, ''), district: code, area: AREAS[code],
         lat: p.location?.latitude ?? null, lng: p.location?.longitude ?? null,
         beds: p.bedrooms ?? null, prop_type: p.propertySubType || null,
         price: p.price?.displayPrices?.[0]?.displayPrice || null,

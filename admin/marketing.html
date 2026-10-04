@@ -74,6 +74,8 @@
   @media(max-width:700px){
     .wrap{ padding:14px 12px; }
     .topbar{ padding:12px 14px; }
+    .head .grow{ flex-basis:100%; }
+    .head .btn{ flex:1; justify-content:center; }
     .row{ grid-template-columns:auto 1fr; }
     .row img, .row .ph{ display:none; }
     .acts{ grid-column:1 / -1; flex-direction:row; align-items:center; }
@@ -129,6 +131,7 @@ const AREAS = { 'Strood & Hoo':'#1d4ed8', 'Rochester':'#b91c1c', 'Chatham & Wald
 let drops = [], area = 'All', showDone = false, map, layer;
 try { area = localStorage.getItem('mkr-mkt-area') || 'All'; showDone = localStorage.getItem('mkr-mkt-done') === '1'; } catch {}
 
+const cleanAddr = (a) => String(a || '').replace(/[\s,]+$/, '');
 const fmtDay = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '';
 const ago = (d) => { const n = Math.round((Date.now() - new Date(d + 'T12:00:00')) / 864e5); return n <= 0 ? 'today' : n === 1 ? '1 day ago' : n + ' days ago'; };
 const driveUrl = (d) => d.lat != null
@@ -177,7 +180,7 @@ function render(){
       <input type="checkbox" ${d.done ? 'checked' : ''} aria-label="Leaflet delivered" title="Leaflet delivered">
       ${d.photo ? `<img src="${esc(d.photo)}" alt="" loading="lazy">` : '<div class="ph"></div>'}
       <div>
-        <div class="addr">${esc(d.address)}</div>
+        <div class="addr">${esc(cleanAddr(d.address))}</div>
         <div class="meta">${[d.beds ? d.beds + ' bed' : '', d.prop_type, d.price, d.agent].filter(Boolean).map(esc).join(' · ')}</div>
         <div class="tags">
           <span class="tag ${d.status === 'Under offer' ? 'uo' : 'stc'}">${esc(d.status)}</span>
@@ -225,7 +228,7 @@ function drawMap(list){
     pts.push([d.lat, d.lng]);
     L.circleMarker([d.lat, d.lng], { radius: 7, weight: 2, color: '#fff', fillColor: d.done ? '#9aa3b2' : (AREAS[d.area] || '#333'), fillOpacity: .95 })
       .addTo(layer)
-      .bindPopup(`<b>${esc(d.address)}</b><br>${esc(d.status)} · ${d.stc_seen_on ? fmtDay(d.stc_seen_on) : 'since ' + fmtDay(d.stc_estimate)}<br><a href="${driveUrl(d)}" target="_blank" rel="noopener">Drive here</a>`);
+      .bindPopup(`<b>${esc(cleanAddr(d.address))}</b><br>${esc(d.status)} · ${d.stc_seen_on ? fmtDay(d.stc_seen_on) : 'since ' + fmtDay(d.stc_estimate)}<br><a href="${driveUrl(d)}" target="_blank" rel="noopener">Drive here</a>`);
   });
   map.fitBounds(pts, { padding: [24, 24], maxZoom: 14 });
 }
