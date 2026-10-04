@@ -69,6 +69,24 @@
   .small-links{ display:flex; gap:10px; justify-content:center; }
   .small-links a{ color:var(--ink2); }
   .empty{ color:var(--ink3); padding:30px 0; text-align:center; }
+
+  /* Route planner */
+  .routecard{ background:var(--card); border:2px solid var(--navy); border-radius:14px; padding:14px; margin-bottom:14px; }
+  .routecard h2{ margin:0 0 2px; font-size:16px; color:var(--navy); }
+  .routecard .legs, .routecard .ctl{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; align-items:center; }
+  .routecard .legs a{ background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:6px 10px; font-size:13px; font-weight:600; color:var(--ink); text-decoration:none; }
+  .routecard select{ border:1px solid var(--line); border-radius:8px; padding:7px; font-size:13px; background:var(--card); color:var(--ink); }
+  #nextbox{ position:sticky; bottom:0; z-index:5; }
+  .nextbar{ background:var(--navy); color:#fff; border-radius:14px; padding:12px 14px; margin:0 0 14px; display:flex; gap:10px; align-items:center; box-shadow:0 8px 24px rgba(13,31,60,.35); }
+  .nextbar .what{ flex:1; min-width:0; }
+  .nextbar .what b{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .nextbar .what span{ font-size:12.5px; color:#cfd6e4; }
+  .nextbar a, .nextbar button{ border:none; border-radius:9px; padding:10px 14px; font-weight:700; font-size:14px; cursor:pointer; text-decoration:none; white-space:nowrap; }
+  .nextbar a{ background:var(--orange); color:#fff; }
+  .nextbar button{ background:#22b558; color:#fff; }
+  .num{ display:inline-flex; align-items:center; justify-content:center; min-width:24px; height:24px; padding:0 6px; border-radius:12px; background:var(--navy); color:#fff; font-size:12px; font-weight:800; margin-right:6px; vertical-align:1px; }
+  .row.next{ border:2px solid var(--orange); }
+  .leg{ font-size:12px; color:var(--ink3); margin-top:3px; }
   .note{ font-size:12.5px; color:var(--ink3); margin:14px 0 0; line-height:1.5; }
 
   @media(max-width:700px){
@@ -81,6 +99,9 @@
     .acts{ grid-column:1 / -1; flex-direction:row; align-items:center; }
     .drive{ flex:1; }
     label.toggle{ margin-left:0; }
+    .nextbar{ flex-wrap:wrap; border-radius:14px 14px 0 0; margin:0 -12px 14px; }
+    .nextbar .what{ flex-basis:100%; }
+    .nextbar a, .nextbar button{ flex:1; text-align:center; }
   }
   @media (prefers-color-scheme: dark){
     :root{ --bg:#0e1422; --card:#18213a; --line:#293651; --ink:#dfe5f0; --ink2:#aab6cf; --ink3:#7c89a5; }
@@ -92,6 +113,9 @@
     .tag.when{ background:#3d2016; color:#ffb393; }
     .tag.zp{ background:#2b2350; color:#c4b5fd; }
     .drive{ background:var(--orange); }
+    .routecard{ border-color:#3b4d75; }
+    .routecard h2{ color:#fff; }
+    .num{ background:var(--orange); }
   }
 </style>
 </head>
@@ -110,14 +134,16 @@
         <h1>Sold STC leaflet drops</h1>
         <div class="muted" id="lastrun">Loading…</div>
       </div>
-      <button class="btn" id="route" title="Opens Google Maps with the next 9 doors in the filtered list, nearest first">&#128506; Route next 9</button>
+      <button class="btn" id="route" title="Puts this area's doors in the shortest order so you go A → B → C">&#129517; Plan route</button>
       <button class="btn primary" id="refresh">&#8635; Refresh now</button>
     </div>
 
     <div class="kpis" id="kpis"></div>
     <div class="filters" id="filters"></div>
+    <div id="routebox"></div>
     <div id="map"></div>
     <div class="list" id="list"><div class="empty">Loading…</div></div>
+    <div id="nextbox"></div>
     <p class="note">Newest Sold STC first. Rightmove and Zoopla are merged, so a home listed on both appears once.
       A date marked <b>est.</b> means the home was already Sold STC the first time we saw it, so it went STC on or after that date.
       Check the listing photos against Street View before posting.</p>
@@ -128,7 +154,7 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 const YARD = { lat: 51.384353, lng: 0.484489 };
 const AREAS = { 'Strood & Hoo':'#1d4ed8', 'Rochester':'#b91c1c', 'Chatham & Walderslade':'#047857', 'Gillingham & Rainham':'#7c3aed', 'Maidstone':'#c2410c' };
-let drops = [], area = 'All', showDone = false, map, layer;
+let drops = [], area = 'All', showDone = false, map, layer, route = null;
 try { area = localStorage.getItem('mkr-mkt-area') || 'All'; showDone = localStorage.getItem('mkr-mkt-done') === '1'; } catch {}
 
 const cleanAddr = (a) => String(a || '').replace(/[\s,]+$/, '');
@@ -140,6 +166,111 @@ const driveUrl = (d) => d.lat != null
 const streetUrl = (d) => `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${d.lat},${d.lng}`;
 function miles(a, b){ const R=3958.8, r=Math.PI/180, dLat=(b.lat-a.lat)*r, dLng=(b.lng-a.lng)*r;
   const h=Math.sin(dLat/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLng/2)**2; return 2*R*Math.asin(Math.sqrt(h)); }
+
+// ── Route planner ──────────────────────────────────────────
+// Orders one area's doors so each stop leads to the nearest next one
+// (nearest-neighbour, then 2-opt to undo any crossings): A → B → C,
+// never A → Y → C. The plan is kept per area on this device.
+const routeKey = (a) => 'mkr-route-' + a;
+function loadRoute(){ try { const r = JSON.parse(localStorage.getItem(routeKey(area)) || 'null'); return r && r.ids ? r : null; } catch { return null; } }
+function saveRoute(){ try { route ? localStorage.setItem(routeKey(area), JSON.stringify(route)) : localStorage.removeItem(routeKey(area)); } catch {} }
+
+function planOrder(points, start){
+  const left = [...points], path = [start];
+  let cur = start;
+  while (left.length){
+    let bi = 0;
+    for (let i = 1; i < left.length; i++) if (miles(cur, left[i]) < miles(cur, left[bi])) bi = i;
+    cur = left.splice(bi, 1)[0]; path.push(cur);
+  }
+  // 2-opt on an open path: the start stays fixed, the end is free.
+  const n = path.length;
+  for (let improved = true, guard = 0; improved && guard < 60; guard++){
+    improved = false;
+    for (let i = 1; i < n - 1; i++){
+      for (let k = i + 1; k < n; k++){
+        const a = path[i - 1], b = path[i], c = path[k], d = path[k + 1];
+        const delta = miles(a, c) - miles(a, b) + (d ? miles(b, d) - miles(c, d) : 0);
+        if (delta < -1e-7){ path.splice(i, k - i + 1, ...path.slice(i, k + 1).reverse()); improved = true; }
+      }
+    }
+  }
+  return path.slice(1);
+}
+
+function getHere(){
+  return new Promise((ok, no) => {
+    if (!navigator.geolocation) return no(new Error('no geolocation'));
+    navigator.geolocation.getCurrentPosition((p) => ok({ lat: p.coords.latitude, lng: p.coords.longitude }), no, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+  });
+}
+
+async function planRoute(from){
+  if (area === 'All') return alert('Pick an area first (e.g. Rochester), then plan its route.');
+  let start = { lat: YARD.lat, lng: YARD.lng, label: 'the yard' };
+  if (from === 'me'){
+    try { start = { ...(await getHere()), label: 'your location' }; }
+    catch { alert('Couldn’t get your location, so the route starts from the yard. Check location is allowed for this site.'); from = 'yard'; }
+  }
+  const pts = drops.filter((d) => d.area === area && !d.done && d.lat != null);
+  if (!pts.length) return alert('No doors left to route in ' + area + '.');
+  route = { area, from, start, mode: (route && route.mode) || 'driving', ids: planOrder(pts, start).map((d) => d.id), at: new Date().toISOString() };
+  saveRoute(); render();
+  $('routebox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Route stops in order; homes added since the plan go on the end until re-planned.
+function routeStops(){
+  const byId = new Map(drops.map((d) => [d.id, d]));
+  const inRoute = route.ids.map((id) => byId.get(id)).filter(Boolean);
+  const extra = drops.filter((d) => d.area === route.area && !d.done && d.lat != null && !route.ids.includes(d.id));
+  return { stops: [...inRoute, ...extra], added: extra.length };
+}
+
+function legLinks(stops, mode){
+  const left = stops.filter((d) => !d.done);
+  const out = [];
+  for (let i = 0; i < left.length; i += 9){
+    const chunk = left.slice(i, i + 9), dest = chunk[chunk.length - 1], way = chunk.slice(0, -1);
+    const origin = i ? `&origin=${left[i - 1].lat},${left[i - 1].lng}` : ''; // first leg starts wherever you are
+    out.push({
+      label: `Stops ${stops.indexOf(chunk[0]) + 1}–${stops.indexOf(dest) + 1}`,
+      href: `https://www.google.com/maps/dir/?api=1&travelmode=${mode}${origin}&destination=${dest.lat},${dest.lng}` + (way.length ? `&waypoints=${way.map((s) => s.lat + ',' + s.lng).join('%7C')}` : ''),
+    });
+  }
+  return out;
+}
+
+function renderRoute(){
+  if (!route){ $('routebox').innerHTML = ''; $('nextbox').innerHTML = ''; return null; }
+  const { stops, added } = routeStops();
+  const legs = stops.map((d, i) => miles(i ? stops[i - 1] : route.start, d));
+  stops.forEach((d, i) => { d._n = i + 1; d._leg = legs[i]; });
+  const total = legs.reduce((t, m) => t + m, 0);
+  const left = stops.filter((d) => !d.done);
+  const next = left[0];
+  const leftMiles = next ? left.reduce((t, d) => t + d._leg, 0) : 0;
+  $('routebox').innerHTML = `<div class="routecard">
+    <h2>&#129517; Route: ${esc(route.area)}</h2>
+    <div class="muted">${stops.length} doors in order from ${esc(route.start.label)} · about ${total.toFixed(1)} mi in straight lines · ${left.length} to go${added ? ` · ${added} new since planned (added at the end, re-plan to fit them in)` : ''}</div>
+    <div class="legs">${left.length ? legLinks(stops, route.mode).map((l) => `<a href="${l.href}" target="_blank" rel="noopener">&#128506; ${l.label}</a>`).join('') : '<span class="muted">Every door on this route is done.</span>'}</div>
+    <div class="ctl">
+      <select id="rmode" aria-label="Travel mode"><option value="driving"${route.mode === 'driving' ? ' selected' : ''}>Driving</option><option value="walking"${route.mode === 'walking' ? ' selected' : ''}>Walking</option></select>
+      <button class="btn" id="replan-yard">Re-plan from yard</button>
+      <button class="btn" id="replan-me">Re-plan from my location</button>
+      <button class="btn" id="route-exit">Close route</button>
+    </div></div>`;
+  $('rmode').onchange = (e) => { route.mode = e.target.value; saveRoute(); render(); };
+  $('replan-yard').onclick = () => planRoute('yard');
+  $('replan-me').onclick = () => planRoute('me');
+  $('route-exit').onclick = () => { route = null; saveRoute(); render(); };
+  $('nextbox').innerHTML = next ? `<div class="nextbar">
+      <div class="what"><span>Next stop ${next._n} of ${stops.length} · ${next._leg.toFixed(2)} mi${left.length > 1 ? ` · ${leftMiles.toFixed(1)} mi left` : ''}</span><b>${esc(cleanAddr(next.address))}</b></div>
+      <a href="https://www.google.com/maps/dir/?api=1&travelmode=${route.mode}&destination=${next.lat},${next.lng}" target="_blank" rel="noopener">&#128663; Go</a>
+      <button id="next-done">&#10003; Done</button></div>` : '';
+  if (next) $('next-done').onclick = () => toggle(next.id, true);
+  return { stops, next };
+}
 
 async function load(){
   let r;
@@ -174,13 +305,17 @@ function render(){
   document.querySelectorAll('.chip').forEach((b) => b.onclick = () => { area = b.dataset.area; try { localStorage.setItem('mkr-mkt-area', area); } catch {} render(); });
   $('showdone').onchange = (e) => { showDone = e.target.checked; try { localStorage.setItem('mkr-mkt-done', showDone ? '1' : '0'); } catch {} render(); };
 
-  const list = visible();
+  if (route && route.area !== area) route = null;
+  if (!route && area !== 'All') route = loadRoute();
+  const planned = renderRoute();
+  const list = planned ? planned.stops : visible();
   $('list').innerHTML = list.length ? list.map((d) => `
-    <div class="row${d.done ? ' done' : ''}" data-id="${esc(d.id)}">
+    <div class="row${d.done ? ' done' : ''}${planned && planned.next === d ? ' next' : ''}" data-id="${esc(d.id)}">
       <input type="checkbox" ${d.done ? 'checked' : ''} aria-label="Leaflet delivered" title="Leaflet delivered">
       ${d.photo ? `<img src="${esc(d.photo)}" alt="" loading="lazy">` : '<div class="ph"></div>'}
       <div>
-        <div class="addr">${esc(cleanAddr(d.address))}</div>
+        <div class="addr">${planned ? `<span class="num">${d._n}</span>` : ''}${esc(cleanAddr(d.address))}</div>
+        ${planned ? `<div class="leg">${d._n === 1 ? 'From ' + esc(route.start.label) : 'From stop ' + (d._n - 1)}: ${d._leg.toFixed(2)} mi</div>` : ''}
         <div class="meta">${[d.beds ? d.beds + ' bed' : '', d.prop_type, d.price, d.agent].filter(Boolean).map(esc).join(' · ')}</div>
         <div class="tags">
           <span class="tag ${d.status === 'Under offer' ? 'uo' : 'stc'}">${esc(d.status)}</span>
@@ -201,7 +336,7 @@ function render(){
     </div>`).join('') : `<div class="empty">${drops.length ? 'Nothing left here. Every door in this area is done.' : 'No recent Sold STC homes yet.'}</div>`;
 
   document.querySelectorAll('.row input[type=checkbox]').forEach((cb) => cb.onchange = () => toggle(cb.closest('.row').dataset.id, cb.checked));
-  drawMap(list);
+  drawMap(list, planned);
 }
 
 async function toggle(id, done){
@@ -214,7 +349,7 @@ async function toggle(id, done){
   render();
 }
 
-function drawMap(list){
+function drawMap(list, planned){
   if (!window.L) return;
   if (!map){
     map = L.map('map', { scrollWheelZoom: false });
@@ -223,6 +358,19 @@ function drawMap(list){
   if (layer) layer.remove();
   layer = L.layerGroup().addTo(map);
   L.circleMarker([YARD.lat, YARD.lng], { radius: 8, color: '#0d1f3c', fillColor: '#e04e1b', fillOpacity: 1 }).addTo(layer).bindPopup('Yard — Knight Templar Way');
+  if (planned){
+    const line = [[route.start.lat, route.start.lng], ...planned.stops.map((d) => [d.lat, d.lng])];
+    if (route.from === 'me') L.circleMarker(line[0], { radius: 8, color: '#fff', weight: 3, fillColor: '#2563eb', fillOpacity: 1 }).addTo(layer).bindPopup('Route start: your location');
+    L.polyline(line, { color: AREAS[route.area] || '#0d1f3c', weight: 3, opacity: .7 }).addTo(layer);
+    planned.stops.forEach((d) => {
+      const isNext = planned.next === d, sz = isNext ? 30 : 22;
+      L.marker([d.lat, d.lng], { zIndexOffset: isNext ? 1000 : 0, icon: L.divIcon({ className: '', iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2],
+        html: `<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${d.done ? '#9aa3b2' : isNext ? '#e04e1b' : (AREAS[d.area] || '#333')};color:#fff;font:700 11px/${sz - 4}px system-ui;text-align:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4)">${d._n}</div>` }) })
+        .addTo(layer).bindPopup(`<b>${d._n}. ${esc(cleanAddr(d.address))}</b><br><a href="${driveUrl(d)}" target="_blank" rel="noopener">Drive here</a>`);
+    });
+    map.fitBounds(line, { padding: [24, 24], maxZoom: 16 });
+    return;
+  }
   const pts = [[YARD.lat, YARD.lng]];
   list.filter((d) => d.lat != null).forEach((d) => {
     pts.push([d.lat, d.lng]);
@@ -233,20 +381,7 @@ function drawMap(list){
   map.fitBounds(pts, { padding: [24, 24], maxZoom: 14 });
 }
 
-// Next 9 undone doors in the current filter, ordered nearest-first from the yard.
-$('route').onclick = () => {
-  let left = visible().filter((d) => !d.done && d.lat != null);
-  if (!left.length) return alert('No doors to route in this view.');
-  const stops = []; let cur = YARD;
-  while (stops.length < 9 && left.length){
-    left.sort((a, b) => miles(cur, a) - miles(cur, b));
-    cur = left.shift(); stops.push(cur);
-  }
-  const last = stops.pop();
-  const url = `https://www.google.com/maps/dir/?api=1&travelmode=driving&origin=${YARD.lat},${YARD.lng}&destination=${last.lat},${last.lng}`
-    + (stops.length ? `&waypoints=${stops.map((s) => s.lat + ',' + s.lng).join('%7C')}` : '');
-  window.open(url, '_blank', 'noopener');
-};
+$('route').onclick = () => planRoute('yard');
 
 $('refresh').onclick = async () => {
   const b = $('refresh'); b.disabled = true; b.textContent = 'Refreshing… (about a minute)';
