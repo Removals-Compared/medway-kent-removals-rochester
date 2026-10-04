@@ -322,8 +322,8 @@ function buildHtmlPage(post, articleContent) {
     <div class="footer-col"><h4>Blog</h4><ul><li><a href="/blog">All Articles</a></li></ul></div>
     <div class="footer-col"><h4>Company</h4><ul><li><a href="/about">About Us</a></li><li><a href="/contact">Get a Quote</a></li><li><a href="/privacy-policy">Privacy Policy</a></li></ul></div>
   </div>
-  <div style="border-top:1px solid rgba(255,255,255,0.08);padding:20px 5%;max-width:1120px;margin:0 auto">
-    <p style="font-size:12px;color:rgba(255,255,255,0.35)">&copy; 2025 Medway &amp; Kent Removals. All rights reserved.</p>
+  <div style="background:#e04e1b;padding:20px 5%">
+    <p style="font-size:12px;color:rgba(255,255,255,0.95)">&copy; 2025 Medway &amp; Kent Removals. All rights reserved.</p>
   </div>
 </footer>
 <script src="/script.js"></script>
