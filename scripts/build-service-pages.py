@@ -8,7 +8,7 @@ import json, re, sys, os, importlib.util
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BLOCKS = json.load(open(os.path.join(ROOT, 'scripts/.svc-template-blocks.json')))
 CONTENT_DIR = os.path.join(ROOT, 'scripts/svc-content')
-IMG_SIZES = {'/images/packing-crew-loading-van.webp': (1010, 630), '/images/mkr-logo-on-dark.webp': (500, 500), '/images/family-moving-in.webp': (612, 408), '/images/mkr-logo-on-light.webp': (500, 500), '/images/crew-with-boxes.webp': (800, 575), '/images/new-build-detached-home.webp': (700, 394), '/images/removals-van-on-road.webp': (700, 467), '/images/period-flint-cottages.webp': (900, 600), '/images/moving-truck-loaded.webp': (933, 700), '/images/victorian-terrace-bay-window.webp': (800, 533)}
+IMG_SIZES = {'/images/mkr-fleet.webp': (1000, 666), '/images/packing-crew-loading-van.webp': (1010, 630), '/images/mkr-logo-on-dark.webp': (500, 500), '/images/family-moving-in.webp': (612, 408), '/images/mkr-logo-on-light.webp': (500, 500), '/images/crew-with-boxes.webp': (800, 575), '/images/new-build-detached-home.webp': (700, 394), '/images/removals-van-on-road.webp': (700, 467), '/images/period-flint-cottages.webp': (900, 600), '/images/moving-truck-loaded.webp': (933, 700), '/images/victorian-terrace-bay-window.webp': (800, 533)}
 
 SERVICES = [
     ('house-removals',        'House Removals'),
