@@ -92,6 +92,15 @@
   ],
   "headers": [
     {
+      "source": "/images/gbp-cover.jpg",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    },
+    {
       "source": "/images/(.*)",
       "headers": [
         {
