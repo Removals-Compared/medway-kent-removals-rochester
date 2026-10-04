@@ -5,6 +5,10 @@
     {
       "path": "/api/admin/reminders-run",
       "schedule": "30 8 * * *"
+    },
+    {
+      "path": "/api/admin/marketing?run=1",
+      "schedule": "0 5 * * 1"
     }
   ],
   "redirects": [
@@ -157,5 +161,10 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/admin/marketing.mjs": {
+      "maxDuration": 300
+    }
+  }
 }

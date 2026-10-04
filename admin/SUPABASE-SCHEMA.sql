@@ -103,3 +103,54 @@ alter table activity_log disable row level security;
 -- ── Migration (2026-08-19): job cost allocation ──
 -- Line-item costs per job: [{"label":"Crew wages","amount":180}, ...]
 -- Run once: alter table quote_requests add column if not exists costs jsonb default '[]';
+
+-- ── Marketing: sold-STC leaflet drops (2026-10-04) ──
+-- Every Rightmove listing in the Medway/Maidstone districts, refreshed weekly
+-- by the /api/admin/marketing cron, plus Zoopla-only listings read from the
+-- support@ alert emails. The admin Marketing tab shows the recent Sold STC /
+-- Under offer ones. Server-only access, so RLS stays off.
+create table if not exists marketing_listings (
+  id            text primary key,          -- 'rm-<rightmove id>' or 'zp-<zoopla id>'
+  source        text not null default 'rightmove',  -- rightmove | zoopla | both
+  rightmove_id  text,
+  zoopla_id     text,
+  status        text not null default '',  -- '' (available) | 'Sold STC' | 'Under offer'
+  address       text,
+  district      text,
+  area          text,
+  lat           double precision,
+  lng           double precision,
+  beds          int,
+  prop_type     text,
+  price         text,
+  price_num     int,
+  agent         text,
+  photo         text,
+  rightmove_url text,
+  zoopla_url    text,
+  listed_on     date,
+  last_change   date,
+  stc_seen_on   date,                      -- first run that saw it flip to STC (exact to the week)
+  stc_estimate  date,                      -- listed / re-priced date when the flip wasn't observed
+  stc_date      date,                      -- coalesce(stc_seen_on, stc_estimate): sort key
+  first_seen    timestamptz default now(),
+  last_seen     timestamptz default now(),
+  done          boolean not null default false,
+  done_at       timestamptz,
+  done_by       text
+);
+alter table marketing_listings disable row level security;
+create index if not exists marketing_listings_stc_idx on marketing_listings (stc_date desc) where status <> '';
+create index if not exists marketing_listings_seen_idx on marketing_listings (last_seen);
+
+create table if not exists marketing_runs (
+  id        uuid primary key default gen_random_uuid(),
+  ran_at    timestamptz not null default now(),
+  listings  int default 0,
+  stc       int default 0,
+  new_stc   int default 0,
+  zoopla    int default 0,
+  merged    int default 0,
+  note      text default ''
+);
+alter table marketing_runs disable row level security;

@@ -3,3 +3,7 @@ __pycache__/
 *.pyc
 .vercel
 .env*
+
+# Sold-STC drop lists (private, generated)
+drop-lists/
+node_modules/

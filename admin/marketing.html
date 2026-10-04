@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="apple-touch-icon" href="/images/admin-touch-icon.png">
+<link rel="manifest" href="/admin/manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="MKR Admin">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0D1F3C">
+<meta name="robots" content="noindex, nofollow">
+<title>Marketing — Admin — Medway &amp; Kent Removals</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{
+    --navy:#0d1f3c; --orange:#e04e1b; --bg:#f4f5f7; --line:#e3e6ec;
+    --ink:#1a2233; --ink2:#556; --ink3:#889; --good:#15803d; --card:#fff;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; background:var(--bg); color:var(--ink); }
+  .topbar{ background:var(--navy); color:#fff; padding:14px 24px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .topbar .brand{ font-weight:700; }
+  .topbar .crumb{ color:#ff9a75; font-size:14px; }
+  .topbar .spacer{ flex:1; }
+  .topbar a{ color:#cfd6e4; text-decoration:none; font-size:14px; }
+  .wrap{ max-width:1180px; margin:0 auto; padding:24px; }
+  .muted{ color:var(--ink3); font-size:13px; }
+
+  .head{ display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+  .head h1{ margin:0; font-size:22px; color:var(--navy); }
+  .head .grow{ flex:1; }
+  .btn{ border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:9px; padding:9px 14px; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+  .btn.primary{ background:var(--orange); border-color:var(--orange); color:#fff; }
+  .btn:disabled{ opacity:.55; cursor:wait; }
+
+  .kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:14px; }
+  .kpi{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+  .kpi .n{ font-size:24px; font-weight:800; color:var(--navy); font-variant-numeric:tabular-nums; }
+  .kpi .l{ font-size:12px; color:var(--ink3); text-transform:uppercase; letter-spacing:.5px; font-weight:700; }
+
+  .filters{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+  .chip{ border:1px solid var(--line); background:var(--card); border-radius:999px; padding:7px 13px; font-size:13px; font-weight:600; cursor:pointer; color:var(--ink2); }
+  .chip[aria-pressed="true"]{ background:var(--navy); border-color:var(--navy); color:#fff; }
+  .chip .dot{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+  label.toggle{ font-size:13px; color:var(--ink2); display:inline-flex; gap:6px; align-items:center; margin-left:auto; }
+
+  #map{ height:46vh; min-height:300px; border-radius:14px; border:1px solid var(--line); margin-bottom:14px; z-index:0; }
+
+  .list{ display:flex; flex-direction:column; gap:10px; }
+  .row{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; display:grid; grid-template-columns:auto 112px 1fr auto; gap:12px; align-items:center; }
+  .row.done{ opacity:.5; }
+  .row.done .addr{ text-decoration:line-through; }
+  .row input[type=checkbox]{ width:24px; height:24px; accent-color:var(--good); cursor:pointer; }
+  .row img{ width:112px; height:76px; object-fit:cover; border-radius:8px; background:var(--line); display:block; }
+  .row .ph{ width:112px; height:76px; border-radius:8px; background:var(--line); }
+  .addr{ font-weight:700; font-size:15px; }
+  .meta{ font-size:13px; color:var(--ink2); margin-top:3px; }
+  .tags{ margin-top:5px; display:flex; gap:6px; flex-wrap:wrap; }
+  .tag{ font-size:11.5px; font-weight:700; padding:2px 7px; border-radius:6px; background:#eef1f6; color:var(--ink2); }
+  .tag.stc{ background:#dcfce7; color:#166534; }
+  .tag.uo{ background:#fef9c3; color:#854d0e; }
+  .tag.when{ background:#fde8df; color:#b23c12; }
+  .tag.zp{ background:#ede9fe; color:#5b21b6; }
+  .acts{ display:flex; flex-direction:column; gap:6px; }
+  .acts a{ font-size:13px; }
+  .drive{ background:var(--navy); color:#fff !important; border-radius:9px; padding:10px 14px; font-weight:700; text-decoration:none; text-align:center; white-space:nowrap; }
+  .small-links{ display:flex; gap:10px; justify-content:center; }
+  .small-links a{ color:var(--ink2); }
+  .empty{ color:var(--ink3); padding:30px 0; text-align:center; }
+  .note{ font-size:12.5px; color:var(--ink3); margin:14px 0 0; line-height:1.5; }
+
+  @media(max-width:700px){
+    .wrap{ padding:14px 12px; }
+    .topbar{ padding:12px 14px; }
+    .row{ grid-template-columns:auto 1fr; }
+    .row img, .row .ph{ display:none; }
+    .acts{ grid-column:1 / -1; flex-direction:row; align-items:center; }
+    .drive{ flex:1; }
+    label.toggle{ margin-left:0; }
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0e1422; --card:#18213a; --line:#293651; --ink:#dfe5f0; --ink2:#aab6cf; --ink3:#7c89a5; }
+    .topbar{ background:#0a1020; }
+    .head h1, .kpi .n{ color:#fff; }
+    .tag{ background:#232e48; color:#aab6cf; }
+    .tag.stc{ background:#14361f; color:#86efac; }
+    .tag.uo{ background:#3a3112; color:#fde68a; }
+    .tag.when{ background:#3d2016; color:#ffb393; }
+    .tag.zp{ background:#2b2350; color:#c4b5fd; }
+    .drive{ background:var(--orange); }
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="brand">Medway &amp; Kent Removals</span>
+    <span class="crumb">Admin / Marketing</span>
+    <span class="spacer"></span>
+    <a href="/admin/dashboard">&larr; Leads</a>
+    <a href="/admin/insights">&#128200; Insights</a>
+  </div>
+
+  <div class="wrap">
+    <div class="head">
+      <div class="grow">
+        <h1>Sold STC leaflet drops</h1>
+        <div class="muted" id="lastrun">Loading…</div>
+      </div>
+      <button class="btn" id="route" title="Opens Google Maps with the next 9 doors in the filtered list, nearest first">&#128506; Route next 9</button>
+      <button class="btn primary" id="refresh">&#8635; Refresh now</button>
+    </div>
+
+    <div class="kpis" id="kpis"></div>
+    <div class="filters" id="filters"></div>
+    <div id="map"></div>
+    <div class="list" id="list"><div class="empty">Loading…</div></div>
+    <p class="note">Newest Sold STC first. Rightmove and Zoopla are merged, so a home listed on both appears once.
+      A date marked <b>est.</b> means the home was already Sold STC the first time we saw it, so it went STC on or after that date.
+      Check the listing photos against Street View before posting.</p>
+  </div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const YARD = { lat: 51.384353, lng: 0.484489 };
+const AREAS = { 'Strood & Hoo':'#1d4ed8', 'Rochester':'#b91c1c', 'Chatham & Walderslade':'#047857', 'Gillingham & Rainham':'#7c3aed', 'Maidstone':'#c2410c' };
+let drops = [], area = 'All', showDone = false, map, layer;
+try { area = localStorage.getItem('mkr-mkt-area') || 'All'; showDone = localStorage.getItem('mkr-mkt-done') === '1'; } catch {}
+
+const fmtDay = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '';
+const ago = (d) => { const n = Math.round((Date.now() - new Date(d + 'T12:00:00')) / 864e5); return n <= 0 ? 'today' : n === 1 ? '1 day ago' : n + ' days ago'; };
+const driveUrl = (d) => d.lat != null
+  ? `https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${d.lat},${d.lng}`
+  : `https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${encodeURIComponent(d.address)}`;
+const streetUrl = (d) => `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${d.lat},${d.lng}`;
+function miles(a, b){ const R=3958.8, r=Math.PI/180, dLat=(b.lat-a.lat)*r, dLng=(b.lng-a.lng)*r;
+  const h=Math.sin(dLat/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLng/2)**2; return 2*R*Math.asin(Math.sqrt(h)); }
+
+async function load(){
+  let r;
+  try { r = await fetch('/api/admin/marketing'); } catch { $('list').innerHTML = '<div class="empty">Couldn’t reach the server.</div>'; return; }
+  if (r.status === 401){ window.location.href = '/admin'; return; }
+  const j = await r.json();
+  if (!r.ok){ $('list').innerHTML = `<div class="empty">${esc(j.error || 'Error')}</div>`; return; }
+  drops = j.drops || [];
+  const lr = j.lastRun;
+  $('lastrun').textContent = lr
+    ? `Last refreshed ${new Date(lr.ran_at).toLocaleString('en-GB', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })} · ${lr.new_stc} newly Sold STC · refreshes every Monday morning${lr.note ? ' · ' + lr.note : ''}`
+    : 'Not refreshed yet. Press “Refresh now”.';
+  render();
+}
+
+function visible(){ return drops.filter((d) => (area === 'All' || d.area === area) && (showDone || !d.done)); }
+
+function render(){
+  const todo = drops.filter((d) => !d.done);
+  const week = Date.now() - 7 * 864e5;
+  $('kpis').innerHTML = [
+    [todo.length, 'Doors to do'],
+    [drops.filter((d) => d.done && new Date(d.done_at) > week).length, 'Done this week'],
+    [todo.filter((d) => d.stc_seen_on).length, 'New STC (exact date)'],
+    [drops.filter((d) => d.source !== 'rightmove').length, 'Found on Zoopla'],
+  ].map(([n, l]) => `<div class="kpi"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+
+  const counts = {}; todo.forEach((d) => { counts[d.area] = (counts[d.area] || 0) + 1; });
+  $('filters').innerHTML = ['All', ...Object.keys(AREAS)].map((a) =>
+    `<button class="chip" data-area="${esc(a)}" aria-pressed="${a === area}">${a === 'All' ? '' : `<span class="dot" style="background:${AREAS[a]}"></span>`}${esc(a)} <span class="muted">${a === 'All' ? todo.length : (counts[a] || 0)}</span></button>`).join('')
+    + `<label class="toggle"><input type="checkbox" id="showdone" ${showDone ? 'checked' : ''}> Show done</label>`;
+  document.querySelectorAll('.chip').forEach((b) => b.onclick = () => { area = b.dataset.area; try { localStorage.setItem('mkr-mkt-area', area); } catch {} render(); });
+  $('showdone').onchange = (e) => { showDone = e.target.checked; try { localStorage.setItem('mkr-mkt-done', showDone ? '1' : '0'); } catch {} render(); };
+
+  const list = visible();
+  $('list').innerHTML = list.length ? list.map((d) => `
+    <div class="row${d.done ? ' done' : ''}" data-id="${esc(d.id)}">
+      <input type="checkbox" ${d.done ? 'checked' : ''} aria-label="Leaflet delivered" title="Leaflet delivered">
+      ${d.photo ? `<img src="${esc(d.photo)}" alt="" loading="lazy">` : '<div class="ph"></div>'}
+      <div>
+        <div class="addr">${esc(d.address)}</div>
+        <div class="meta">${[d.beds ? d.beds + ' bed' : '', d.prop_type, d.price, d.agent].filter(Boolean).map(esc).join(' · ')}</div>
+        <div class="tags">
+          <span class="tag ${d.status === 'Under offer' ? 'uo' : 'stc'}">${esc(d.status)}</span>
+          <span class="tag when">${d.stc_seen_on ? 'STC ' + fmtDay(d.stc_seen_on) + ' · ' + ago(d.stc_seen_on) : 'STC since ' + fmtDay(d.stc_estimate) + ' (est.)'}</span>
+          <span class="tag">${esc(d.area || d.district)}</span>
+          ${d.source !== 'rightmove' ? `<span class="tag zp">${d.source === 'both' ? 'Rightmove + Zoopla' : 'Zoopla'}</span>` : ''}
+          ${d.done ? `<span class="tag">Done ${fmtDay((d.done_at || '').slice(0, 10))}${d.done_by && d.done_by !== 'admin' ? ' by ' + esc(d.done_by) : ''}</span>` : ''}
+        </div>
+      </div>
+      <div class="acts">
+        <a class="drive" href="${driveUrl(d)}" target="_blank" rel="noopener">&#128663; Drive</a>
+        <div class="small-links">
+          ${d.lat != null ? `<a href="${streetUrl(d)}" target="_blank" rel="noopener">Street View</a>` : ''}
+          ${d.rightmove_url ? `<a href="${esc(d.rightmove_url)}" target="_blank" rel="noopener">Rightmove</a>` : ''}
+          ${d.zoopla_url ? `<a href="${esc(d.zoopla_url)}" target="_blank" rel="noopener">Zoopla</a>` : ''}
+        </div>
+      </div>
+    </div>`).join('') : `<div class="empty">${drops.length ? 'Nothing left here. Every door in this area is done.' : 'No recent Sold STC homes yet.'}</div>`;
+
+  document.querySelectorAll('.row input[type=checkbox]').forEach((cb) => cb.onchange = () => toggle(cb.closest('.row').dataset.id, cb.checked));
+  drawMap(list);
+}
+
+async function toggle(id, done){
+  const d = drops.find((x) => x.id === id); if (!d) return;
+  Object.assign(d, { done, done_at: done ? new Date().toISOString() : null });
+  render();
+  const r = await fetch('/api/admin/marketing', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ id, done }) });
+  if (r.ok){ const j = await r.json(); if (j.row) Object.assign(d, j.row); }
+  else { Object.assign(d, { done: !done }); alert('Couldn’t save that tick. Check your connection and try again.'); }
+  render();
+}
+
+function drawMap(list){
+  if (!window.L) return;
+  if (!map){
+    map = L.map('map', { scrollWheelZoom: false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+  }
+  if (layer) layer.remove();
+  layer = L.layerGroup().addTo(map);
+  L.circleMarker([YARD.lat, YARD.lng], { radius: 8, color: '#0d1f3c', fillColor: '#e04e1b', fillOpacity: 1 }).addTo(layer).bindPopup('Yard — Knight Templar Way');
+  const pts = [[YARD.lat, YARD.lng]];
+  list.filter((d) => d.lat != null).forEach((d) => {
+    pts.push([d.lat, d.lng]);
+    L.circleMarker([d.lat, d.lng], { radius: 7, weight: 2, color: '#fff', fillColor: d.done ? '#9aa3b2' : (AREAS[d.area] || '#333'), fillOpacity: .95 })
+      .addTo(layer)
+      .bindPopup(`<b>${esc(d.address)}</b><br>${esc(d.status)} · ${d.stc_seen_on ? fmtDay(d.stc_seen_on) : 'since ' + fmtDay(d.stc_estimate)}<br><a href="${driveUrl(d)}" target="_blank" rel="noopener">Drive here</a>`);
+  });
+  map.fitBounds(pts, { padding: [24, 24], maxZoom: 14 });
+}
+
+// Next 9 undone doors in the current filter, ordered nearest-first from the yard.
+$('route').onclick = () => {
+  let left = visible().filter((d) => !d.done && d.lat != null);
+  if (!left.length) return alert('No doors to route in this view.');
+  const stops = []; let cur = YARD;
+  while (stops.length < 9 && left.length){
+    left.sort((a, b) => miles(cur, a) - miles(cur, b));
+    cur = left.shift(); stops.push(cur);
+  }
+  const last = stops.pop();
+  const url = `https://www.google.com/maps/dir/?api=1&travelmode=driving&origin=${YARD.lat},${YARD.lng}&destination=${last.lat},${last.lng}`
+    + (stops.length ? `&waypoints=${stops.map((s) => s.lat + ',' + s.lng).join('%7C')}` : '');
+  window.open(url, '_blank', 'noopener');
+};
+
+$('refresh').onclick = async () => {
+  const b = $('refresh'); b.disabled = true; b.textContent = 'Refreshing… (about a minute)';
+  try {
+    const r = await fetch('/api/admin/marketing?run=1');
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.status);
+  } catch (e) { alert('Refresh failed: ' + e.message); }
+  b.disabled = false; b.innerHTML = '&#8635; Refresh now';
+  load();
+};
+
+load();
+</script>
+</body>
+</html>
