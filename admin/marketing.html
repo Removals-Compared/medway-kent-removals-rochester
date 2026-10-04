@@ -51,6 +51,8 @@
   .list{ display:flex; flex-direction:column; gap:10px; }
   .row{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; display:grid; grid-template-columns:auto 112px 1fr auto; gap:12px; align-items:center; }
   .row.done{ opacity:.5; }
+  .row[data-area]{ border-left:6px solid var(--area); }
+  .tag.area{ background:var(--area); color:#fff; }
   .row.done .addr{ text-decoration:line-through; }
   .row input[type=checkbox]{ width:24px; height:24px; accent-color:var(--good); cursor:pointer; }
   .row img{ width:112px; height:76px; object-fit:cover; border-radius:8px; background:var(--line); display:block; }
@@ -85,7 +87,7 @@
   .nextbar a{ background:var(--orange); color:#fff; }
   .nextbar button{ background:#22b558; color:#fff; }
   .num{ display:inline-flex; align-items:center; justify-content:center; min-width:24px; height:24px; padding:0 6px; border-radius:12px; background:var(--navy); color:#fff; font-size:12px; font-weight:800; margin-right:6px; vertical-align:1px; }
-  .row.next{ border:2px solid var(--orange); }
+  .row.next{ box-shadow:0 0 0 2px var(--orange); }
   .leg{ font-size:12px; color:var(--ink3); margin-top:3px; }
   .note{ font-size:12.5px; color:var(--ink3); margin:14px 0 0; line-height:1.5; }
 
@@ -310,7 +312,7 @@ function render(){
   const planned = renderRoute();
   const list = planned ? planned.stops : visible();
   $('list').innerHTML = list.length ? list.map((d) => `
-    <div class="row${d.done ? ' done' : ''}${planned && planned.next === d ? ' next' : ''}" data-id="${esc(d.id)}">
+    <div class="row${d.done ? ' done' : ''}${planned && planned.next === d ? ' next' : ''}" data-id="${esc(d.id)}"${AREAS[d.area] ? ` data-area style="--area:${AREAS[d.area]}"` : ''}>
       <input type="checkbox" ${d.done ? 'checked' : ''} aria-label="Leaflet delivered" title="Leaflet delivered">
       ${d.photo ? `<img src="${esc(d.photo)}" alt="" loading="lazy">` : '<div class="ph"></div>'}
       <div>
@@ -320,7 +322,7 @@ function render(){
         <div class="tags">
           <span class="tag ${d.status === 'Under offer' ? 'uo' : 'stc'}">${esc(d.status)}</span>
           <span class="tag when">${d.stc_seen_on ? 'STC ' + fmtDay(d.stc_seen_on) + ' · ' + ago(d.stc_seen_on) : 'STC since ' + fmtDay(d.stc_estimate) + ' (est.)'}</span>
-          <span class="tag">${esc(d.area || d.district)}</span>
+          <span class="tag${AREAS[d.area] ? ' area' : ''}">${esc(d.area || d.district)}</span>
           ${d.source !== 'rightmove' ? `<span class="tag zp">${d.source === 'both' ? 'Rightmove + Zoopla' : 'Zoopla'}</span>` : ''}
           ${d.done ? `<span class="tag">Done ${fmtDay((d.done_at || '').slice(0, 10))}${d.done_by && d.done_by !== 'admin' ? ' by ' + esc(d.done_by) : ''}</span>` : ''}
         </div>
