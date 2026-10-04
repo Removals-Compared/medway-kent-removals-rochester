@@ -32,6 +32,8 @@ export const AREAS = {
 export const YARD = { lat: 51.384353, lng: 0.484489 }; // Knight Templar Way, ME2 2ZE
 const SKIP_SUBTYPES = /land|plot|garage|parking|commercial/i;
 const MAX_MILES = 20; // pins further than this from the yard are agent errors
+const SAME_DOOR_M = 60;   // two Rightmove pins this close, same street/beds/price → one door
+const ZOOPLA_NEAR_M = 500; // Zoopla addresses geocode to the street, not the house
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -69,7 +71,7 @@ const rest = (path) => `${SUPABASE_URL}/rest/v1/${path}`;
 async function existingRows() {
   const out = [];
   for (let from = 0; ; from += 1000) {
-    const r = await fetch(rest(`${T}?select=id,status,stc_seen_on,stc_estimate,source,zoopla_id,zoopla_url,first_seen`), {
+    const r = await fetch(rest(`${T}?select=id,status,stc_seen_on,stc_estimate,source,zoopla_id,zoopla_url,first_seen,dup_of,done`), {
       headers: h({ Range: `${from}-${from + 999}`, 'Range-Unit': 'items' }),
     });
     if (!r.ok) throw new Error(`marketing read ${r.status}: ${await r.text()}`);
@@ -98,8 +100,9 @@ export async function listDrops({ days = 56 } = {}) {
   // Only listings still live on the most recent run (completed sales drop off).
   const liveSince = lastRun ? new Date(new Date(lastRun.ran_at).getTime() - 36e5 * 6).toISOString() : since;
   const q = new URLSearchParams({
-    select: 'id,source,status,address,district,area,lat,lng,beds,prop_type,price,agent,photo,rightmove_url,zoopla_url,stc_seen_on,stc_estimate,stc_date,done,done_at,done_by',
+    select: 'id,source,status,address,district,area,lat,lng,beds,prop_type,price,agent,photo,rightmove_url,zoopla_url,stc_seen_on,stc_estimate,stc_date,done,done_at,done_by,dupe_links',
     status: 'neq.',
+    dup_of: 'is.null', // duplicates are folded into one row per door
     stc_date: `gte.${since}`,
     // Zoopla-only homes arrive once (by alert email), so they stay for the window.
     or: `(source.eq.zoopla,last_seen.gte."${liveSince}")`,
@@ -261,13 +264,74 @@ async function geocode(address) {
   } catch { return null; }
 }
 
+const priceClose = (a, b) => !!a && !!b && Math.abs(a - b) / Math.max(a, b) <= 0.03;
+const metres = (a, b) => miles(a, b) * 1609.34;
+
+// The Rightmove listing a Zoopla alert describes: same district, street,
+// beds and price (within 3%), and — when we could place the Zoopla address —
+// on that stretch of street, nearest first.
 function findTwin(z, rmRows) {
   const key = streetKey(z.address);
   if (!key) return null;
-  return rmRows.find((r) =>
+  let cands = rmRows.filter((r) =>
     r.district === z.district && streetKey(r.address) === key &&
     (!z.beds || !r.beds || z.beds === r.beds) &&
-    (!z.price_num || !r.price_num || Math.abs(z.price_num - r.price_num) / r.price_num <= 0.03)) || null;
+    (!z.price_num || !r.price_num || priceClose(z.price_num, r.price_num)));
+  if (z.pos) {
+    cands = cands.filter((r) => r.lat != null && metres(z.pos, r) <= ZOOPLA_NEAR_M)
+      .sort((a, b) => metres(z.pos, a) - metres(z.pos, b));
+  }
+  return cands[0] || null;
+}
+
+// Fold Sold STC listings that are the same house marketed by two agents into
+// a single row: same district, street, beds and property type, price within
+// 3%, pins within 60m, different agents. The row that was
+// already the visible one stays visible, so ticks and saved routes hold.
+export function foldDuplicates(rows, prev) {
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  const parent = new Map();
+  const find = (id) => { while (parent.get(id) !== id) id = parent.get(id); return id; };
+  const buckets = new Map();
+  for (const r of rows) {
+    if (!r.status || r.lat == null) continue;
+    parent.set(r.id, r.id);
+    const k = `${r.district}|${streetKey(r.address)}`;
+    if (!buckets.has(k)) buckets.set(k, []);
+    buckets.get(k).push(r);
+  }
+  for (const list of buckets.values()) {
+    for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) {
+      const a = list[i], b = list[j];
+      // One house marketed by two agents. Matching listings from the SAME agent
+      // are separate units (barn conversions, plots), and agents often pin a
+      // whole street to one spot, so address + pin alone would merge different
+      // houses. Missing a door is worse than posting twice, so all must agree.
+      if (!a.agent || !b.agent || a.agent === b.agent) continue;
+      if (a.beds == null || a.beds !== b.beds || (a.prop_type || '') !== (b.prop_type || '')) continue;
+      if (!priceClose(a.price_num, b.price_num) || metres(a, b) > SAME_DOOR_M) continue;
+      parent.set(find(b.id), find(a.id));
+    }
+  }
+  const groups = new Map();
+  for (const id of parent.keys()) {
+    const root = find(id);
+    if (!groups.has(root)) groups.set(root, []);
+    groups.get(root).push(byId.get(id));
+  }
+  const carryDone = [];
+  let folded = 0;
+  for (const g of groups.values()) {
+    if (g.length < 2) continue;
+    const score = (r) => { const p = prev.get(r.id); return [p && !p.dup_of ? 0 : 1, p ? p.first_seen : '9', r.id]; };
+    g.sort((a, b) => { const x = score(a), y = score(b); return x[0] - y[0] || String(x[1]).localeCompare(String(y[1])) || x[2].localeCompare(y[2]); });
+    const [primary, ...rest] = g;
+    for (const r of rest) { r.dup_of = primary.id; folded++; }
+    primary.dupe_links = rest.map((r) => ({ url: r.rightmove_url || r.zoopla_url, agent: r.agent, price: r.price }));
+    // A tick on any copy counts for the door.
+    if (!prev.get(primary.id)?.done && rest.some((r) => prev.get(r.id)?.done)) carryDone.push(primary.id);
+  }
+  return { folded, carryDone };
 }
 
 // ── The weekly run ─────────────────────────────────────────
@@ -275,6 +339,17 @@ export async function refresh() {
   const today = new Date().toISOString().slice(0, 10);
   const now = new Date().toISOString();
   const [prev, rm, zp] = await Promise.all([existingRows(), fetchRightmove(), fetchZooplaAlerts()]);
+
+  // Place each new Zoopla alert on the map (street-level) so it can be matched by distance.
+  let geocoded = 0;
+  for (const z of zp.listings) {
+    const p = prev.get(`zp-${z.zoopla_id}`);
+    if (p && p.status === z.status) continue; // already handled on an earlier run
+    if (geocoded >= 120) break; // Nominatim allows 1 a second; keep the run well inside its time limit
+    z.pos = await geocode(z.address);
+    geocoded++;
+    await sleep(1100);
+  }
 
   // Fold Zoopla alerts into their Rightmove twins; keep the rest as Zoopla-only.
   let merged = 0;
@@ -293,8 +368,7 @@ export async function refresh() {
   }
   for (const z of zOnly) {
     if (prev.has(`zp-${z.zoopla_id}`) && prev.get(`zp-${z.zoopla_id}`).status === z.status) continue;
-    const pos = await geocode(z.address);
-    await sleep(1100); // Nominatim: max 1 request a second
+    const pos = z.pos;
     rm.push({
       id: `zp-${z.zoopla_id}`, source: 'zoopla', zoopla_id: z.zoopla_id, zoopla_url: z.zoopla_url,
       status: z.status, address: z.address, district: z.district, area: AREAS[z.district],
@@ -320,17 +394,20 @@ export async function refresh() {
       rightmove_url: r.rightmove_url || null, agent: r.agent || null, photo: r.photo || null, prop_type: r.prop_type || null,
       stc_seen_on, stc_estimate, stc_date: stc_seen_on || stc_estimate,
       last_seen: now, first_seen: p?.first_seen || now,
+      dup_of: null, dupe_links: [],
     };
   });
 
+  const { folded, carryDone } = foldDuplicates(rows, prev);
   await upsert(rows);
+  for (const id of carryDone) await setDone(id, true, 'carried over from a duplicate listing');
   const summary = {
     listings: rows.length,
     stc: rows.filter((r) => r.status).length,
     new_stc: newStc,
     zoopla: zp.listings.length,
     merged,
-    note: [prev.size ? '' : 'First run: STC dates are estimates', zp.note].filter(Boolean).join(' · '),
+    note: [prev.size ? '' : 'First run: STC dates are estimates', folded ? `${folded} duplicate listings folded into one door each` : '', zp.note].filter(Boolean).join(' · '),
   };
   await fetch(rest(RUNS), { method: 'POST', headers: h({ Prefer: 'return=minimal' }), body: JSON.stringify(summary) });
   return summary;

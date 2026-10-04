@@ -154,3 +154,9 @@ create table if not exists marketing_runs (
   note      text default ''
 );
 alter table marketing_runs disable row level security;
+
+-- ── Migration (2026-10-04): fold duplicate listings into one door ──
+alter table marketing_listings
+  add column if not exists dup_of     text,
+  add column if not exists dupe_links jsonb not null default '[]'::jsonb;
+create index if not exists marketing_listings_dup_idx on marketing_listings (dup_of);
