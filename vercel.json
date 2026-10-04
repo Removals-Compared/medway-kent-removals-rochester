@@ -26,6 +26,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/admin/logout",
+      "destination": "/api/admin/login?logout=1"
+    },
+    {
       "source": "/admin",
       "destination": "/admin/index.html"
     },
