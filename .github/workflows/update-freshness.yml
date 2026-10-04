@@ -1,0 +1,37 @@
+name: MKR Freshness Stamps
+
+on:
+  schedule:
+    - cron: '30 5 * * 1'   # weekly check; the script only acts every 21+ days
+  workflow_dispatch:
+
+jobs:
+  refresh-stamps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Refresh the Page last updated stamps
+        run: node scripts/update-freshness.mjs
+
+      - name: Commit and push if anything changed
+        run: |
+          git config user.name "mkr-freshness-bot"
+          git config user.email "actions@github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+          else
+            git commit -m "Refresh Page last updated stamps"
+            git push
+          fi
