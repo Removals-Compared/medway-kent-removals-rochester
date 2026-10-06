@@ -600,4 +600,10 @@
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+  <url>
+    <loc>https://www.medwaykentremovals.co.uk/blog/posts/how-to-move-a-home-office-without-losing-a-day-of-work</loc>
+    <lastmod>2026-10-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
 </urlset>
