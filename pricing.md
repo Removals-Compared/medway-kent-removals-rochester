@@ -35,6 +35,9 @@ Full guide with tables: https://www.medwaykentremovals.co.uk/removal-costs-kent
 
 ## Booking and payment terms
 
+- Payment methods: all major credit and debit cards, bank transfer, cash and cryptocurrency
+- Cancellation: free, with the deposit refunded in full
+- Same-day moves: available subject to availability, call 01634 971005
 - Deposit: 10% of the quote value, payable on booking to secure the date
 - Balance: remaining 90% payable on the move date
 - Quotes are valid for 14 days from the date issued and subject to availability
