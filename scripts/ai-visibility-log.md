@@ -39,3 +39,11 @@ Rubix Removals (211 reviews), Fontana Moving, SCS Removals & Storage (158), Fore
 - cost prompts: /removal-costs-kent pillar page with price tables, Article + FAQPage schema; old cost blog post canonicals to it
 - Remaining owner actions: Google reviews volume (Rubix benchmark 211), Checkatrade profile (the number 2 AI source), Bing Places listing, GBP activity
 - Next check: re-run BrightLocal "Update data" in early November and compare prompt scores
+
+## Bing and infrastructure progress, 8 October 2026
+
+- Bing Places listing verified and Pending publish (ETA 7 to 12 days), synced from the Google Business Profile: name, phone, hours, description, 15 photos, services and 8 service areas including Kent, UK. Address hidden by design (service area business). Once live, this closes the Bing local pack gap and lets Copilot surface MKR.
+- Known Bing Places bug: the locked, Google-synced phone field fails Bing's own validation, which blocks saving the two remaining cosmetic fields (email, Movers additional category). Retry after publish or via a fresh Sync; revisit at the 5 November check.
+- Bing Webmaster Tools: site verified, sitemap resubmitted 8 October (101 URLs, processing). Google Search Console: sitemap resubmitted 8 October (102 URLs, Success).
+- IndexNow wired in: key file hosted on the domain, all 102 URLs submitted (HTTP 202), and a GitHub Action now pings changed pages to Bing on every deploy.
+- Email deliverability closed out: root SPF and DMARC with reporting live at Namecheap, mail-tester score 9.5/10 for admin quote emails. Flip DMARC to p=quarantine around 5 November if reports are clean.
