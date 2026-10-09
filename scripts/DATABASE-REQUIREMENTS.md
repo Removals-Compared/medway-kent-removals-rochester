@@ -25,7 +25,7 @@ application layer does its own auth (HMAC cookies) and permissioning.
 - Storage: well under 100 MB including indexes
 - Region preference: UK or EU
 
-## 3. Data model (full schema in admin/SUPABASE-SCHEMA.sql)
+## 3. Data model (full schema in admin/SCHEMA.sql)
 
 ### quote_requests (the leads table, written by the PUBLIC quote form)
 - id bigint (auto), name, phone, email, service, from_postcode, to_postcode,
