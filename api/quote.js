@@ -13,8 +13,6 @@
 //    DATABASE_URL  (Neon connection string)
 // ════════════════════════════════════════════════════════════
 
-import { q } from './admin/_sql.mjs';
-
 export default async function handler(req, res) {
 
   // ── Only accept POST requests ──
@@ -218,13 +216,15 @@ export default async function handler(req, res) {
   // ════════════════════════════════════════════════════════
   //  3. NEON — Insert row into quote_requests
   // ════════════════════════════════════════════════════════
-  const dbPromise = q(
+  // quote.js is CommonJS-style, so the ES-module DB helper must be loaded with a
+  // dynamic import (a static import fails with ERR_REQUIRE_ESM on Vercel).
+  const dbPromise = import('./admin/_sql.mjs').then(({ q }) => q(
     `INSERT INTO quote_requests
        (name, phone, email, service, from_postcode, to_postcode, property_size, move_date, notes)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
     [fullName, phone, email, service, from_postcode, to_postcode,
      property_size || '', move_date || '', `Access: ${accessText} | ${notesText}`],
-  );
+  ));
 
   // ════════════════════════════════════════════════════════
   //  Run all three in parallel — don't let one block another
