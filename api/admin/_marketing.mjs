@@ -13,8 +13,7 @@
 //     date — it went STC after that.
 // ════════════════════════════════════════════════════════════
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_KEY;
+import { q, jsonify } from './_sql.mjs';
 const T = 'marketing_listings';
 const RUNS = 'marketing_runs';
 
@@ -62,68 +61,58 @@ export function streetKey(address) {
   return '';
 }
 
-// ── Supabase ───────────────────────────────────────────────
-function h(extra = {}) {
-  return { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, ...extra };
-}
-const rest = (path) => `${SUPABASE_URL}/rest/v1/${path}`;
-
+// ── Database (Neon) ────────────────────────────────────────
 async function existingRows() {
-  const out = [];
-  for (let from = 0; ; from += 1000) {
-    const r = await fetch(rest(`${T}?select=id,status,stc_seen_on,stc_estimate,source,zoopla_id,zoopla_url,first_seen,dup_of,done`), {
-      headers: h({ Range: `${from}-${from + 999}`, 'Range-Unit': 'items' }),
-    });
-    if (!r.ok) throw new Error(`marketing read ${r.status}: ${await r.text()}`);
-    const rows = await r.json();
-    out.push(...rows);
-    if (rows.length < 1000) break;
-  }
-  return new Map(out.map((r) => [r.id, r]));
+  const rows = await q(`SELECT id, status, stc_seen_on, stc_estimate, source, zoopla_id, zoopla_url, first_seen, dup_of, done FROM ${T}`);
+  return new Map(rows.map((r) => [r.id, r]));
 }
 
+// Bulk upsert (insert, or merge into the existing row on id). Rows are
+// grouped by their column set so each statement has a uniform shape.
 async function upsert(rows) {
-  for (let i = 0; i < rows.length; i += 500) {
-    const r = await fetch(rest(`${T}?on_conflict=id`), {
-      method: 'POST',
-      headers: h({ Prefer: 'resolution=merge-duplicates,return=minimal' }),
-      body: JSON.stringify(rows.slice(i, i + 500)),
-    });
-    if (!r.ok) throw new Error(`marketing upsert ${r.status}: ${await r.text()}`);
+  const groups = new Map();
+  for (const row of rows) {
+    const cols = Object.keys(row).sort();
+    const key = cols.join(',');
+    if (!groups.has(key)) groups.set(key, { cols, rows: [] });
+    groups.get(key).rows.push(row);
+  }
+  for (const { cols, rows: list } of groups.values()) {
+    cols.forEach((c) => { if (!/^[a-z_][a-z0-9_]*$/.test(c)) throw new Error(`bad column ${c}`); });
+    const update = cols.filter((c) => c !== 'id').map((c) => `${c} = EXCLUDED.${c}`).join(', ');
+    for (let i = 0; i < list.length; i += 200) {
+      const chunk = list.slice(i, i + 200);
+      const params = [];
+      const values = chunk.map((row) => '(' + cols.map((c) => { params.push(jsonify(row[c])); return `$${params.length}`; }).join(', ') + ')');
+      await q(`INSERT INTO ${T} (${cols.join(', ')}) VALUES ${values.join(', ')} ON CONFLICT (id) DO UPDATE SET ${update}`, params);
+    }
   }
 }
 
 export async function listDrops({ days = 56 } = {}) {
   const since = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10);
-  const runR = await fetch(rest(`${RUNS}?select=*&order=ran_at.desc&limit=1`), { headers: h() });
-  const lastRun = runR.ok ? (await runR.json())[0] || null : null;
+  const lastRun = (await q(`SELECT * FROM ${RUNS} ORDER BY ran_at DESC LIMIT 1`).catch(() => []))[0] || null;
   // Only listings still live on the most recent run (completed sales drop off).
   const liveSince = lastRun ? new Date(new Date(lastRun.ran_at).getTime() - 36e5 * 6).toISOString() : since;
-  const q = new URLSearchParams({
-    select: 'id,source,status,address,district,area,lat,lng,beds,prop_type,price,agent,photo,rightmove_url,zoopla_url,stc_seen_on,stc_estimate,stc_date,done,done_at,done_by,dupe_links',
-    status: 'neq.',
-    dup_of: 'is.null', // duplicates are folded into one row per door
-    stc_date: `gte.${since}`,
-    // Zoopla-only homes arrive once (by alert email), so they stay for the window.
-    or: `(source.eq.zoopla,last_seen.gte."${liveSince}")`,
-    order: 'stc_date.desc,area.asc',
-    limit: '2000',
-  });
-  const r = await fetch(rest(`${T}?${q}`), { headers: h() });
-  if (!r.ok) throw new Error(`marketing list ${r.status}: ${await r.text()}`);
-  return { drops: await r.json(), lastRun };
+  const drops = await q(
+    `SELECT id, source, status, address, district, area, lat, lng, beds, prop_type, price, agent, photo,
+            rightmove_url, zoopla_url, stc_seen_on, stc_estimate, stc_date, done, done_at, done_by, dupe_links
+       FROM ${T}
+      WHERE status <> '' AND dup_of IS NULL AND stc_date >= $1
+        AND (source = 'zoopla' OR last_seen >= $2)
+      ORDER BY stc_date DESC, area ASC
+      LIMIT 2000`,
+    [since, liveSince],
+  );
+  return { drops, lastRun };
 }
 
 export async function setDone(id, done, by) {
-  const r = await fetch(rest(`${T}?id=eq.${encodeURIComponent(id)}`), {
-    method: 'PATCH',
-    headers: h({ Prefer: 'return=representation' }),
-    body: JSON.stringify(done
-      ? { done: true, done_at: new Date().toISOString(), done_by: by || '' }
-      : { done: false, done_at: null, done_by: null }),
-  });
-  if (!r.ok) throw new Error(`marketing done ${r.status}: ${await r.text()}`);
-  return (await r.json())[0] || null;
+  const rows = await q(
+    `UPDATE ${T} SET done = $2, done_at = $3, done_by = $4 WHERE id = $1 RETURNING *`,
+    done ? [id, true, new Date().toISOString(), by || ''] : [id, false, null, null],
+  );
+  return rows[0] || null;
 }
 
 // ── Rightmove ──────────────────────────────────────────────
@@ -417,6 +406,7 @@ export async function refresh() {
     merged,
     note: [prev.size ? '' : 'First run: STC dates are estimates', folded ? `${folded} duplicate listings folded into one door each` : '', zp.note].filter(Boolean).join(' · '),
   };
-  await fetch(rest(RUNS), { method: 'POST', headers: h({ Prefer: 'return=minimal' }), body: JSON.stringify(summary) });
+  await q(`INSERT INTO ${RUNS} (listings, stc, new_stc, zoopla, merged, note) VALUES ($1, $2, $3, $4, $5, $6)`,
+    [summary.listings, summary.stc, summary.new_stc, summary.zoopla, summary.merged, summary.note]);
   return summary;
 }

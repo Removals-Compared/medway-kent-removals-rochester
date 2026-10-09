@@ -1,70 +1,61 @@
 // ════════════════════════════════════════════════════════════
-//  Supabase PostgREST wrapper for the admin dashboard.
-//  SUPABASE_KEY is the ANON key — RLS must stay OFF on these tables.
+//  Neon Postgres data layer for the admin dashboard.
+//  Same exported functions and row shapes as the old PostgREST wrapper.
 // ════════════════════════════════════════════════════════════
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_KEY;
+import { q, setClause, jsonify } from './_sql.mjs';
 
 const TABLE = 'quote_requests';
 const APPT = 'appointments';
 const REMIND = 'reminders';
 
-const base = () => `${SUPABASE_URL}/rest/v1`;
+// Run an UPDATE … RETURNING * for a table by id.
+async function updateById(table, id, fields) {
+  const keys = Object.keys(fields);
+  if (!keys.length) return null;
+  const s = setClause(fields);
+  const rows = await q(`UPDATE ${table} SET ${s.sql} WHERE id = $${s.next} RETURNING *`, [...s.values, id]);
+  return rows[0] || null;
+}
 
-function headers(extra = {}) {
-  return {
-    'Content-Type': 'application/json',
-    apikey: SUPABASE_KEY,
-    Authorization: `Bearer ${SUPABASE_KEY}`,
-    ...extra,
-  };
+// INSERT one row (object) … RETURNING *.
+async function insertRow(table, row) {
+  const keys = Object.keys(row);
+  keys.forEach((k) => { if (!/^[a-z_][a-z0-9_]*$/.test(k)) throw new Error(`bad column ${k}`); });
+  const rows = await q(
+    `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${keys.map((_, i) => `$${i + 1}`).join(', ')}) RETURNING *`,
+    keys.map((k) => jsonify(row[k])),
+  );
+  return rows[0] || null;
 }
 
 // ── Leads ──────────────────────────────────────────────────
 export async function listQuotes({ status, search, limit = 200 } = {}) {
-  const p = new URLSearchParams();
-  p.set('select', '*');
-  p.set('order', 'created_at.desc');
-  p.set('limit', String(limit || 200));
-  if (status && status !== 'all') p.set('status', `eq.${status}`);
-  else p.set('status', 'neq.deleted'); // recycled leads never show in normal views
+  const where = [];
+  const params = [];
+  if (status && status !== 'all') { params.push(status); where.push(`status = $${params.length}`); }
+  else where.push(`status IS DISTINCT FROM 'deleted'`); // recycled leads never show in normal views
   if (search && search.trim()) {
-    // strip PostgREST-significant chars so the filter can't be broken
-    const t = search.replace(/[(),*]/g, ' ').trim();
-    if (t) p.set('or', `(name.ilike.*${t}*,email.ilike.*${t}*,phone.ilike.*${t}*,from_postcode.ilike.*${t}*,to_postcode.ilike.*${t}*,address.ilike.*${t}*)`);
+    const t = search.replace(/[%_\\]/g, ' ').trim();
+    if (t) {
+      params.push(`%${t}%`);
+      const n = params.length;
+      where.push('(' + ['name', 'email', 'phone', 'from_postcode', 'to_postcode', 'address']
+        .map((c) => `${c} ILIKE $${n}`).join(' OR ') + ')');
+    }
   }
-  const r = await fetch(`${base()}/${TABLE}?${p}`, { headers: headers() });
-  if (!r.ok) throw new Error(`listQuotes ${r.status}: ${await r.text()}`);
-  return r.json();
+  params.push(Number(limit) || 200);
+  return q(`SELECT * FROM ${TABLE} WHERE ${where.join(' AND ')} ORDER BY created_at DESC LIMIT $${params.length}`, params);
 }
 
 export async function getQuote(id) {
-  const r = await fetch(
-    `${base()}/${TABLE}?id=eq.${encodeURIComponent(id)}&select=*&limit=1`,
-    { headers: headers() }
-  );
-  if (!r.ok) throw new Error(`getQuote ${r.status}: ${await r.text()}`);
-  const rows = await r.json();
+  const rows = await q(`SELECT * FROM ${TABLE} WHERE id = $1 LIMIT 1`, [id]);
   return rows[0] || null;
 }
 
-export async function updateQuote(id, fields) {
-  const r = await fetch(`${base()}/${TABLE}?id=eq.${encodeURIComponent(id)}`, {
-    method: 'PATCH',
-    headers: headers({ Prefer: 'return=representation' }),
-    body: JSON.stringify(fields),
-  });
-  if (!r.ok) throw new Error(`updateQuote ${r.status}: ${await r.text()}`);
-  const rows = await r.json();
-  return rows[0] || null;
-}
+export const updateQuote = (id, fields) => updateById(TABLE, id, fields);
 
 export async function deleteQuote(id) {
-  const r = await fetch(`${base()}/${TABLE}?id=eq.${encodeURIComponent(id)}`, {
-    method: 'DELETE',
-    headers: headers(),
-  });
-  if (!r.ok) throw new Error(`deleteQuote ${r.status}: ${await r.text()}`);
+  await q(`DELETE FROM ${TABLE} WHERE id = $1`, [id]);
   return true;
 }
 
@@ -84,120 +75,54 @@ export async function createQuote(input = {}) {
     const n = Number(input.value);
     if (!Number.isNaN(n)) row.value = n;
   }
-  const r = await fetch(`${base()}/${TABLE}`, {
-    method: 'POST',
-    headers: headers({ Prefer: 'return=representation' }),
-    body: JSON.stringify(row),
-  });
-  if (!r.ok) throw new Error(`createQuote ${r.status}: ${await r.text()}`);
-  const rows = await r.json();
-  return rows[0] || null;
+  return insertRow(TABLE, row);
 }
 
 // Internal staff notes live in the jsonb "admin_notes" column so they do
 // NOT collide with the customer's text "notes" column from the public form.
 export async function appendNote(id, text) {
-  const q = await getQuote(id);
-  const notes = Array.isArray(q && q.admin_notes) ? q.admin_notes : [];
+  const q0 = await getQuote(id);
+  const notes = Array.isArray(q0 && q0.admin_notes) ? q0.admin_notes : [];
   notes.push({ text, at: new Date().toISOString() });
   return updateQuote(id, { admin_notes: notes, updated_at: new Date().toISOString() });
 }
 
 // ── Appointments ───────────────────────────────────────────
-export async function createAppointment(row) {
-  const r = await fetch(`${base()}/${APPT}`, {
-    method: 'POST',
-    headers: headers({ Prefer: 'return=representation' }),
-    body: JSON.stringify(row),
-  });
-  if (!r.ok) throw new Error(`createAppointment ${r.status}: ${await r.text()}`);
-  const rows = await r.json();
-  return rows[0] || null;
-}
-
-export async function updateAppointment(id, fields) {
-  const r = await fetch(`${base()}/${APPT}?id=eq.${encodeURIComponent(id)}`, {
-    method: 'PATCH',
-    headers: headers({ Prefer: 'return=representation' }),
-    body: JSON.stringify(fields),
-  });
-  if (!r.ok) throw new Error(`updateAppointment ${r.status}: ${await r.text()}`);
-  const rows = await r.json();
-  return rows[0] || null;
-}
+export const createAppointment = (row) => insertRow(APPT, row);
+export const updateAppointment = (id, fields) => updateById(APPT, id, fields);
 
 // Swallow errors: on a fresh schema (appointments not created yet) the page
 // must still load. Returns [] on any failure rather than throwing.
 export async function fetchAppointmentsByLeadIds(ids) {
   try {
-    if (!ids || !ids.length) return [];
-    const list = ids.map((i) => Number(i)).filter((n) => !Number.isNaN(n)).join(',');
-    if (!list) return [];
-    const r = await fetch(
-      `${base()}/${APPT}?lead_id=in.(${list})&select=*&order=scheduled_for.asc`,
-      { headers: headers() }
-    );
-    if (!r.ok) return [];
-    return r.json();
+    const list = (ids || []).map(Number).filter((n) => !Number.isNaN(n));
+    if (!list.length) return [];
+    return await q(`SELECT * FROM ${APPT} WHERE lead_id = ANY($1::bigint[]) ORDER BY scheduled_for ASC`, [list]);
   } catch {
     return [];
   }
 }
 
 // ── Reminders ──────────────────────────────────────────────
-export async function createReminder(row) {
-  const r = await fetch(`${base()}/${REMIND}`, {
-    method: 'POST',
-    headers: headers({ Prefer: 'return=representation' }),
-    body: JSON.stringify(row),
-  });
-  if (!r.ok) throw new Error(`createReminder ${r.status}: ${await r.text()}`);
-  const rows = await r.json();
-  return rows[0] || null;
-}
-
-export async function updateReminder(id, fields) {
-  const r = await fetch(`${base()}/${REMIND}?id=eq.${encodeURIComponent(id)}`, {
-    method: 'PATCH',
-    headers: headers({ Prefer: 'return=representation' }),
-    body: JSON.stringify(fields),
-  });
-  if (!r.ok) throw new Error(`updateReminder ${r.status}: ${await r.text()}`);
-  const rows = await r.json();
-  return rows[0] || null;
-}
+export const createReminder = (row) => insertRow(REMIND, row);
+export const updateReminder = (id, fields) => updateById(REMIND, id, fields);
 
 export async function fetchReminder(id) {
-  const r = await fetch(
-    `${base()}/${REMIND}?id=eq.${encodeURIComponent(id)}&select=*&limit=1`,
-    { headers: headers() }
-  );
-  if (!r.ok) throw new Error(`fetchReminder ${r.status}: ${await r.text()}`);
-  const rows = await r.json();
+  const rows = await q(`SELECT * FROM ${REMIND} WHERE id = $1 LIMIT 1`, [id]);
   return rows[0] || null;
 }
 
 export async function deleteReminder(id) {
-  const r = await fetch(`${base()}/${REMIND}?id=eq.${encodeURIComponent(id)}`, {
-    method: 'DELETE',
-    headers: headers(),
-  });
-  if (!r.ok) throw new Error(`deleteReminder ${r.status}: ${await r.text()}`);
+  await q(`DELETE FROM ${REMIND} WHERE id = $1`, [id]);
   return true;
 }
 
 // Swallow errors so the lead page still loads on a fresh schema.
 export async function fetchRemindersByLeadIds(ids) {
   try {
-    if (!ids || !ids.length) return [];
-    const list = ids.map((i) => Number(i)).filter((n) => !Number.isNaN(n)).join(',');
-    if (!list) return [];
-    const r = await fetch(
-      `${base()}/${REMIND}?lead_id=in.(${list})&select=*&order=remind_on.asc`,
-      { headers: headers() }
-    );
-    if (!r.ok) return [];
-    return r.json();
+    const list = (ids || []).map(Number).filter((n) => !Number.isNaN(n));
+    if (!list.length) return [];
+    return await q(`SELECT * FROM ${REMIND} WHERE lead_id = ANY($1::bigint[]) ORDER BY remind_on ASC`, [list]);
   } catch {
     return [];
   }
@@ -206,12 +131,7 @@ export async function fetchRemindersByLeadIds(ids) {
 // All un-sent reminders (for the dashboard 🔔 indicator). Errors → [].
 export async function fetchPendingReminders() {
   try {
-    const r = await fetch(
-      `${base()}/${REMIND}?sent=eq.false&select=lead_id,remind_on,remind_time,note&order=remind_on.asc`,
-      { headers: headers() }
-    );
-    if (!r.ok) return [];
-    return r.json();
+    return await q(`SELECT lead_id, remind_on, remind_time, note FROM ${REMIND} WHERE sent = false ORDER BY remind_on ASC`);
   } catch {
     return [];
   }
@@ -222,21 +142,14 @@ export async function fetchPendingReminders() {
 // calendar event exists, Google itself notifies at the chosen time, so the
 // cron skips it to avoid a duplicate alert.
 export async function fetchDueReminders(today) {
-  const r = await fetch(
-    `${base()}/${REMIND}?sent=eq.false&gcal_event_id=is.null&remind_on=lte.${today}&select=*&order=remind_on.asc`,
-    { headers: headers() }
+  return q(
+    `SELECT * FROM ${REMIND} WHERE sent = false AND gcal_event_id IS NULL AND remind_on <= $1 ORDER BY remind_on ASC`,
+    [today],
   );
-  if (!r.ok) throw new Error(`fetchDueReminders ${r.status}: ${await r.text()}`);
-  return r.json();
 }
 
 export async function markReminderSent(id) {
-  const r = await fetch(`${base()}/${REMIND}?id=eq.${encodeURIComponent(id)}`, {
-    method: 'PATCH',
-    headers: headers({ Prefer: 'return=minimal' }),
-    body: JSON.stringify({ sent: true, sent_at: new Date().toISOString() }),
-  });
-  if (!r.ok) throw new Error(`markReminderSent ${r.status}: ${await r.text()}`);
+  await q(`UPDATE ${REMIND} SET sent = true, sent_at = $2 WHERE id = $1`, [id, new Date().toISOString()]);
   return true;
 }
 
@@ -244,32 +157,18 @@ export async function markReminderSent(id) {
 // Who added / updated / deleted what. Best-effort by design: if the
 // activity_log table does not exist yet, logging fails silently and
 // nothing else is affected.
-const ACT = 'activity_log';
-
 export async function logActivity({ actor, action, lead_id, lead_name, detail }) {
   try {
-    await fetch(`${base()}/${ACT}`, {
-      method: 'POST',
-      headers: headers({ Prefer: 'return=minimal' }),
-      body: JSON.stringify({
-        actor: actor || 'unknown',
-        action: action || '',
-        lead_id: lead_id == null ? null : String(lead_id),
-        lead_name: lead_name || '',
-        detail: detail || '',
-      }),
-    });
+    await q(
+      'INSERT INTO activity_log (actor, action, lead_id, lead_name, detail) VALUES ($1, $2, $3, $4, $5)',
+      [actor || 'unknown', action || '', lead_id == null ? null : String(lead_id), lead_name || '', detail || ''],
+    );
   } catch {}
 }
 
 export async function fetchActivity(limit = 30) {
   try {
-    const r = await fetch(
-      `${base()}/${ACT}?select=*&order=at.desc&limit=${Number(limit) || 30}`,
-      { headers: headers() },
-    );
-    if (!r.ok) return [];
-    return await r.json();
+    return await q('SELECT * FROM activity_log ORDER BY at DESC LIMIT $1', [Number(limit) || 30]);
   } catch { return []; }
 }
 
@@ -278,29 +177,24 @@ export async function fetchActivity(limit = 30) {
 export async function fetchExpiredDeleted(days = 30) {
   const cutoff = new Date(Date.now() - days * 86400000).toISOString();
   try {
-    const r = await fetch(
-      `${base()}/${TABLE}?status=eq.deleted&updated_at=lt.${encodeURIComponent(cutoff)}&select=id,name`,
-      { headers: headers() },
-    );
-    if (!r.ok) return [];
-    return await r.json();
+    return await q(`SELECT id, name FROM ${TABLE} WHERE status = 'deleted' AND updated_at < $1`, [cutoff]);
   } catch { return []; }
 }
 
 
 // Possible duplicates of a lead: another live lead sharing its phone or email.
 export async function fetchDuplicates(id, phone, email) {
+  const params = [id];
   const parts = [];
-  if (phone && String(phone).trim()) parts.push(`phone.eq.${encodeURIComponent(String(phone).trim())}`);
-  if (email && String(email).trim()) parts.push(`email.eq.${encodeURIComponent(String(email).trim().toLowerCase())}`);
+  if (phone && String(phone).trim()) { params.push(String(phone).trim()); parts.push(`phone = $${params.length}`); }
+  if (email && String(email).trim()) { params.push(String(email).trim().toLowerCase()); parts.push(`email = $${params.length}`); }
   if (!parts.length) return [];
   try {
-    const r = await fetch(
-      `${base()}/${TABLE}?or=(${parts.join(',')})&id=neq.${encodeURIComponent(id)}&status=neq.deleted&select=id,name,status,created_at&limit=5`,
-      { headers: headers() },
+    return await q(
+      `SELECT id, name, status, created_at FROM ${TABLE}
+       WHERE (${parts.join(' OR ')}) AND id <> $1 AND status IS DISTINCT FROM 'deleted' LIMIT 5`,
+      params,
     );
-    if (!r.ok) return [];
-    return await r.json();
   } catch { return []; }
 }
 
@@ -309,12 +203,10 @@ export async function fetchMovesOnDate(dayISO, excludeLeadId) {
   const from = `${dayISO}T00:00:00Z`;
   const next = new Date(new Date(from).getTime() + 86400000).toISOString();
   try {
-    const r = await fetch(
-      `${base()}/${APPT}?type=eq.move&scheduled_for=gte.${encodeURIComponent(from)}&scheduled_for=lt.${encodeURIComponent(next)}&select=lead_id,scheduled_for`,
-      { headers: headers() },
+    const rows = await q(
+      `SELECT lead_id, scheduled_for FROM ${APPT} WHERE type = 'move' AND scheduled_for >= $1 AND scheduled_for < $2`,
+      [from, next],
     );
-    if (!r.ok) return [];
-    const rows = await r.json();
     return rows.filter((a) => String(a.lead_id) !== String(excludeLeadId));
   } catch { return []; }
 }
