@@ -5,14 +5,15 @@
 //  Handles three things on every form submission:
 //  1. Sends an email alert to you via Resend
 //  2. Creates a Contact + Deal in HubSpot CRM
-//  3. Inserts the lead into Supabase for your records
+//  3. Inserts the lead into Neon Postgres for your records
 //
 //  Environment variables required in Vercel (never in code):
 //    RESEND_API_KEY
 //    HUBSPOT_TOKEN
-//    SUPABASE_URL
-//    SUPABASE_KEY
+//    DATABASE_URL  (Neon connection string)
 // ════════════════════════════════════════════════════════════
+
+import { q } from './admin/_sql.mjs';
 
 export default async function handler(req, res) {
 
@@ -24,8 +25,6 @@ export default async function handler(req, res) {
   // ── Pull environment variables ──
   const RESEND_API_KEY  = process.env.RESEND_API_KEY;
   const HUBSPOT_TOKEN   = process.env.HUBSPOT_TOKEN;
-  const SUPABASE_URL    = process.env.SUPABASE_URL;
-  const SUPABASE_KEY    = process.env.SUPABASE_KEY;
 
   // ── Destructure form data from request body ──
   const {
@@ -217,28 +216,15 @@ export default async function handler(req, res) {
   });
 
   // ════════════════════════════════════════════════════════
-  //  3. SUPABASE — Insert row into quote_requests
+  //  3. NEON — Insert row into quote_requests
   // ════════════════════════════════════════════════════════
-  const supabasePromise = fetch(`${SUPABASE_URL}/rest/v1/quote_requests`, {
-    method: 'POST',
-    headers: {
-      'Content-Type':  'application/json',
-      'apikey':        SUPABASE_KEY,
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
-      'Prefer':        'return=minimal',
-    },
-    body: JSON.stringify({
-      name:          fullName,
-      phone:         phone,
-      email:         email,
-      service:       service,
-      from_postcode: from_postcode,
-      to_postcode:   to_postcode,
-      property_size: property_size || '',
-      move_date:     move_date     || '',
-      notes:         `Access: ${accessText} | ${notesText}`,
-    }),
-  });
+  const dbPromise = q(
+    `INSERT INTO quote_requests
+       (name, phone, email, service, from_postcode, to_postcode, property_size, move_date, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+    [fullName, phone, email, service, from_postcode, to_postcode,
+     property_size || '', move_date || '', `Access: ${accessText} | ${notesText}`],
+  );
 
   // ════════════════════════════════════════════════════════
   //  Run all three in parallel — don't let one block another
@@ -246,12 +232,12 @@ export default async function handler(req, res) {
   const results = await Promise.allSettled([
     resendPromise,
     hubspotPromise,
-    supabasePromise,
+    dbPromise,
   ]);
 
   // Log any failures server-side (visible in Vercel logs)
   results.forEach((result, i) => {
-    const label = ['Resend', 'HubSpot', 'Supabase'][i];
+    const label = ['Resend', 'HubSpot', 'Database'][i];
     if (result.status === 'rejected') {
       console.error(`${label} failed:`, result.reason);
     }
