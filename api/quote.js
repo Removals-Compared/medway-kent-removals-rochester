@@ -2,14 +2,12 @@
 //  Medway & Kent Removals — Quote Handler
 //  Vercel Serverless Function  /api/quote
 //
-//  Handles three things on every form submission:
+//  Handles two things on every form submission:
 //  1. Sends an email alert to you via Resend
-//  2. Creates a Contact + Deal in HubSpot CRM
-//  3. Inserts the lead into Neon Postgres for your records
+//  2. Inserts the lead into Neon Postgres for your records
 //
 //  Environment variables required in Vercel (never in code):
 //    RESEND_API_KEY
-//    HUBSPOT_TOKEN
 //    DATABASE_URL  (Neon connection string)
 // ════════════════════════════════════════════════════════════
 
@@ -22,7 +20,6 @@ export default async function handler(req, res) {
 
   // ── Pull environment variables ──
   const RESEND_API_KEY  = process.env.RESEND_API_KEY;
-  const HUBSPOT_TOKEN   = process.env.HUBSPOT_TOKEN;
 
   // ── Destructure form data from request body ──
   const {
@@ -153,68 +150,7 @@ export default async function handler(req, res) {
   });
 
   // ════════════════════════════════════════════════════════
-  //  2. HUBSPOT — Create Contact then attach a Deal
-  // ════════════════════════════════════════════════════════
-  const hubspotPromise = fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
-    method: 'POST',
-    headers: {
-      'Content-Type':  'application/json',
-      'Authorization': `Bearer ${HUBSPOT_TOKEN}`,
-    },
-    body: JSON.stringify({
-      properties: {
-        firstname:       fname,
-        lastname:        lname,
-        phone:           phone,
-        email:           email,
-        hs_lead_status:  'NEW',
-        lifecyclestage:  'lead',
-        message: [
-          `Service: ${service}`,
-          `From: ${from_postcode}`,
-          `To: ${to_postcode}`,
-          `Property: ${property_size || 'Not specified'}`,
-          `Date: ${moveLabel}`,
-          `Access: ${accessText}`,
-          `Notes: ${notesText}`,
-        ].join(' | '),
-      },
-    }),
-  })
-  .then(r => r.json())
-  .then(async contact => {
-    if (!contact || !contact.id) return;
-
-    // Attach a Deal to the Contact
-    await fetch('https://api.hubapi.com/crm/v3/objects/deals', {
-      method: 'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${HUBSPOT_TOKEN}`,
-      },
-      body: JSON.stringify({
-        properties: {
-          dealname:    `Quote — ${fullName} (${service})`,
-          dealstage:   'appointmentscheduled',
-          pipeline:    'default',
-          closedate:   move_date ? new Date(move_date).getTime().toString() : '',
-          description: [
-            `From ${from_postcode} to ${to_postcode}`,
-            `Property: ${property_size || 'Not specified'}`,
-            `Access: ${accessText}`,
-            `Notes: ${notesText}`,
-          ].join(' | '),
-        },
-        associations: [{
-          to:    { id: contact.id },
-          types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 3 }],
-        }],
-      }),
-    });
-  });
-
-  // ════════════════════════════════════════════════════════
-  //  3. NEON — Insert row into quote_requests
+  //  2. NEON — Insert row into quote_requests
   // ════════════════════════════════════════════════════════
   // quote.js is CommonJS-style, so the ES-module DB helper must be loaded with a
   // dynamic import (a static import fails with ERR_REQUIRE_ESM on Vercel).
@@ -227,17 +163,16 @@ export default async function handler(req, res) {
   ));
 
   // ════════════════════════════════════════════════════════
-  //  Run all three in parallel — don't let one block another
+  //  Run both in parallel — don't let one block another
   // ════════════════════════════════════════════════════════
   const results = await Promise.allSettled([
     resendPromise,
-    hubspotPromise,
     dbPromise,
   ]);
 
   // Log any failures server-side (visible in Vercel logs)
   results.forEach((result, i) => {
-    const label = ['Resend', 'HubSpot', 'Database'][i];
+    const label = ['Resend', 'Database'][i];
     if (result.status === 'rejected') {
       console.error(`${label} failed:`, result.reason);
     }
