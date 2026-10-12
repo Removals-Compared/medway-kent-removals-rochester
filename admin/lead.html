@@ -799,12 +799,11 @@
       b.addEventListener('click', async () => {
         // Marking completed offers (but never auto-sends) the review request.
         let extra = null;
-        if (b.dataset.status === 'won' && QUOTE && QUOTE.email){
-          const alreadyAsked = Array.isArray(QUOTE.admin_notes)
+        if (b.dataset.status === 'won' && QUOTE && QUOTE.email && QUOTE.status !== 'won'){
+          const prior = Array.isArray(QUOTE.admin_notes)
             && QUOTE.admin_notes.some((n) => String(n && n.text).includes('Review request emailed'));
-          if (!alreadyAsked){
-            extra = { send_review: confirm('Also email ' + QUOTE.email + ' a thank-you with your Google review link?') };
-          }
+          extra = { send_review: confirm((prior ? 'A review request was already emailed to this customer. Send another to ' : 'Also email ')
+            + QUOTE.email + (prior ? '?' : ' a thank-you with your Google review link?')) };
         }
         const ok = await patchStatus(b.dataset.status, extra);
         if (ok){

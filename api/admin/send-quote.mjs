@@ -4,6 +4,7 @@
 // ════════════════════════════════════════════════════════════
 import { requireAuth } from './_session.mjs';
 import { appendNote } from './_db.mjs';
+import { cleanEmail } from './_addr.mjs';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const esc = (s) => String(s || '')
@@ -17,10 +18,12 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
 
   try {
-    const { lead_id, to, subject, body, pdf_base64, filename, kind } = req.body || {};
-    if (!to || !subject || !body) {
+    const { lead_id, to: toRaw, subject, body, pdf_base64, filename, kind } = req.body || {};
+    if (!toRaw || !subject || !body) {
       return res.status(400).json({ error: 'to, subject and body are required' });
     }
+    const to = cleanEmail(toRaw);
+    if (!to) return res.status(400).json({ error: `the email address is not valid: ${JSON.stringify(toRaw)}` });
 
     // The plain-text body keeps the raw accept URL; in the HTML version that
     // line is rendered as a proper 3D button instead.

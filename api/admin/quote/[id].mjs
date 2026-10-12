@@ -1,5 +1,6 @@
 import { requireAuth } from '../_session.mjs';
 import crypto from 'crypto';
+import { cleanEmail } from '../_addr.mjs';
 import {
   getQuote, updateQuote, deleteQuote, fetchAppointmentsByLeadIds,
   fetchRemindersByLeadIds, appendNote, logActivity, fetchDuplicates,
@@ -17,6 +18,8 @@ const REVIEW_LINK = 'https://g.page/r/CULm9CaG1nsvEAI/review';
 // review. Sent once per lead (the admin note is the dedupe marker); any
 // failure here must never block the status update itself.
 async function sendReviewRequest(quote) {
+  const to = cleanEmail(quote.email);
+  if (!to) throw new Error(`the email on this lead is not a valid address: ${JSON.stringify(quote.email)}`);
   const first = (quote.name || 'there').split(' ')[0];
   const text = [
     `Hi ${first},`,
@@ -57,7 +60,7 @@ async function sendReviewRequest(quote) {
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
     body: JSON.stringify({
       from: 'Medway & Kent Removals <quotes@medwaykentremovals.co.uk>',
-      to: [quote.email],
+      to: [to],
       bcc: ['info@medwaykentremovals.co.uk'],
       reply_to: 'info@medwaykentremovals.co.uk',
       subject: 'Thank you from Medway and Kent Removals',
@@ -112,6 +115,8 @@ export default async function handler(req, res) {
 
       // Shared plain-letter email sender for the small customer nudges.
       const sendLetter = async (q, subject, lines) => {
+        const to = cleanEmail(q.email);
+        if (!to) throw new Error(`the email on this lead is not a valid address: ${JSON.stringify(q.email)}`);
         const text = lines.join('\n');
         const lEsc = (x) => String(x || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#222;line-height:1.6;white-space:pre-wrap">' + lEsc(text) + '</div>'
@@ -124,7 +129,7 @@ export default async function handler(req, res) {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
           body: JSON.stringify({
             from: 'Medway & Kent Removals <quotes@medwaykentremovals.co.uk>',
-            to: [q.email], bcc: ['info@medwaykentremovals.co.uk'],
+            to: [to], bcc: ['info@medwaykentremovals.co.uk'],
             reply_to: 'info@medwaykentremovals.co.uk',
             subject, text, html,
           }),
@@ -210,6 +215,8 @@ export default async function handler(req, res) {
         const q = await getQuote(id);
         if (!q) return res.status(404).json({ error: 'not found' });
         if (!q.email) return res.status(400).json({ error: 'no email on this lead' });
+        const fuTo = cleanEmail(q.email);
+        if (!fuTo) return res.status(400).json({ error: `the email on this lead is not a valid address: ${JSON.stringify(q.email)}` });
         const first = (q.name || 'there').split(' ')[0];
         const text = [
           `Hi ${first},`,
@@ -234,7 +241,7 @@ export default async function handler(req, res) {
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
             body: JSON.stringify({
               from: 'Medway & Kent Removals <quotes@medwaykentremovals.co.uk>',
-              to: [q.email], bcc: ['info@medwaykentremovals.co.uk'],
+              to: [fuTo], bcc: ['info@medwaykentremovals.co.uk'],
               reply_to: 'info@medwaykentremovals.co.uk',
               subject: 'Your removal quote from Medway and Kent Removals',
               text, html: fuHtml,
@@ -333,9 +340,9 @@ export default async function handler(req, res) {
 
       let review_request = null;
       if (b.status === 'won' && b.send_review === true && prev && prev.status !== 'won') {
-        const alreadyAsked = Array.isArray(prev.admin_notes)
-          && prev.admin_notes.some((n) => String(n && n.text).includes('Review request emailed'));
-        if (!alreadyAsked && prev.email) {
+        // The admin confirmed in the prompt (which warns when one was already
+        // sent), so an earlier note no longer blocks a deliberate send.
+        if (prev.email) {
           try {
             await sendReviewRequest(prev);
             await appendNote(id, `Review request emailed to ${prev.email}`);
