@@ -64,7 +64,7 @@ export async function deleteQuote(id) {
 export async function createQuote(input = {}) {
   const allowed = [
     'name', 'phone', 'email', 'service', 'from_postcode',
-    'to_postcode', 'property_size', 'move_date', 'notes',
+    'to_postcode', 'property_size', 'move_date', 'notes', 'source',
   ];
   const row = { status: 'new' };
   allowed.forEach((k) => {

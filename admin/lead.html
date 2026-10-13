@@ -286,6 +286,7 @@
               <dt>Phone</dt><dd>${q.phone?`<a href="tel:${esc(q.phone)}">${esc(q.phone)}</a> &nbsp;<a href="https://wa.me/${waPhone}?text=${encodeURIComponent('Hi ' + (q.name||'').split(' ')[0] + ', it\'s Medway & Kent Removals about your removals quote.')}" target="_blank" rel="noopener" style="background:#1EBE57;color:#fff;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:12px;text-decoration:none">WhatsApp</a>`:'—'}</dd>
               <dt>Email</dt><dd>${q.email?`<a href="mailto:${esc(q.email)}">${esc(q.email)}</a>`:'—'}</dd>
               <dt>Service</dt><dd>${esc(q.service||'—')}</dd>
+              <dt>Source</dt><dd>${({phone:'Phone call',lsa:'Google Local Services',whatsapp:'WhatsApp',referral:'Referral',website:'Website',other:'Other'})[q.source] || (q.source ? esc(q.source) : 'Website (untagged)')}</dd>
               <dt>Moving from</dt><dd>${q.from_postcode ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q.from_postcode)}" target="_blank" rel="noopener" title="Open in Google Maps">${esc(q.from_postcode)} &#128205;</a>` : '—'}</dd>
               <dt>Moving to</dt><dd>${q.to_postcode ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q.to_postcode)}" target="_blank" rel="noopener" title="Open in Google Maps">${esc(q.to_postcode)} &#128205;</a>` : '—'}</dd>
               <dt>Distance</dt><dd id="lead-distance">${(q.from_postcode && q.to_postcode) ? 'Working it out\u2026' : '—'}</dd>
@@ -304,6 +305,16 @@
             </div>
             <label>Email</label><input id="e-email" type="email" value="${esc(q.email||'')}">
             <label>Service</label><input id="e-service" value="${esc(q.service||'')}">
+            <label>Lead source</label>
+            <select id="e-source">
+              <option value="" ${!q.source?'selected':''}>Not set</option>
+              <option value="phone" ${q.source==='phone'?'selected':''}>Phone call</option>
+              <option value="lsa" ${q.source==='lsa'?'selected':''}>Google Local Services</option>
+              <option value="whatsapp" ${q.source==='whatsapp'?'selected':''}>WhatsApp</option>
+              <option value="referral" ${q.source==='referral'?'selected':''}>Referral</option>
+              <option value="website" ${q.source==='website'?'selected':''}>Website</option>
+              <option value="other" ${q.source==='other'?'selected':''}>Other</option>
+            </select>
             <div class="inline">
               <div><label>Moving from</label><input id="e-from" value="${esc(q.from_postcode||'')}"></div>
               <div><label>Moving to</label><input id="e-to" value="${esc(q.to_postcode||'')}"></div>
@@ -601,6 +612,7 @@
         phone: $('e-phone').value.trim(),
         email: $('e-email').value.trim(),
         service: $('e-service').value.trim(),
+        source: $('e-source').value,
         from_postcode: $('e-from').value.trim(),
         to_postcode: $('e-to').value.trim(),
         property_size: $('e-property').value.trim(),

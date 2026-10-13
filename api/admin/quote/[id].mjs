@@ -274,7 +274,7 @@ export default async function handler(req, res) {
       // Editable lead details — empty string clears the column to null.
       const editable = [
         'name', 'phone', 'email', 'service', 'from_postcode',
-        'to_postcode', 'property_size', 'move_date', 'notes', 'address',
+        'to_postcode', 'property_size', 'move_date', 'notes', 'address', 'source',
       ];
       editable.forEach((k) => {
         if (b[k] !== undefined) fields[k] = b[k] === '' ? null : b[k];

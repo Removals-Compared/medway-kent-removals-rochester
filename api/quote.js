@@ -156,10 +156,10 @@ export default async function handler(req, res) {
   // dynamic import (a static import fails with ERR_REQUIRE_ESM on Vercel).
   const dbPromise = import('./admin/_sql.mjs').then(({ q }) => q(
     `INSERT INTO quote_requests
-       (name, phone, email, service, from_postcode, to_postcode, property_size, move_date, notes)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+       (name, phone, email, service, from_postcode, to_postcode, property_size, move_date, notes, source)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
     [fullName, phone, email, service, from_postcode, to_postcode,
-     property_size || '', move_date || '', `Access: ${accessText} | ${notesText}`],
+     property_size || '', move_date || '', `Access: ${accessText} | ${notesText}`, 'website'],
   ));
 
   // ════════════════════════════════════════════════════════
