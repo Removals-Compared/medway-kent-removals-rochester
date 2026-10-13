@@ -210,6 +210,7 @@ async function submitForm(e){
   var moveDate  = document.getElementById('cf-date').value;
   var access    = document.getElementById('cf-access') ? document.getElementById('cf-access').value : '';
   var notes     = document.getElementById('cf-notes').value.trim();
+  var source    = document.getElementById('cf-source') ? document.getElementById('cf-source').value : '';
 
   if(!fname || !phone || !email || !service || !fromPost || !toPost){
     alert('Please fill in all required fields before submitting.');
@@ -234,6 +235,7 @@ async function submitForm(e){
         move_date:     moveDate,
         access:        access,
         notes:         notes,
+        source:        source,
       }),
     });
 

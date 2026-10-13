@@ -34,7 +34,13 @@ export default async function handler(req, res) {
     move_date,
     access,
     notes,
+    source,
   } = req.body;
+
+  // Lead source: only known values are accepted; anything else falls back to
+  // 'website' (the form itself lives on the website).
+  const SOURCES = ['website', 'lsa', 'referral', 'other'];
+  const leadSource = SOURCES.includes(source) ? source : 'website';
 
   const fullName  = `${fname || ''} ${lname || ''}`.trim() || 'Customer';
   const moveLabel = move_date || 'Not specified';
@@ -85,6 +91,8 @@ export default async function handler(req, res) {
                   <td style="padding:10px 0;border-bottom:1px solid #e8e8e8;font-weight:600;color:#111">${esc(moveLabel)}</td></tr>
               <tr><td style="padding:10px 0;border-bottom:1px solid #e8e8e8;color:#666">Access issues</td>
                   <td style="padding:10px 0;border-bottom:1px solid #e8e8e8;font-weight:600;color:#111">${esc(accessText)}</td></tr>
+              <tr><td style="padding:10px 0;border-bottom:1px solid #e8e8e8;color:#666">How they found us</td>
+                  <td style="padding:10px 0;border-bottom:1px solid #e8e8e8;font-weight:600;color:#111">${esc({website:'Google / search engine', lsa:'Google Local Services ad', referral:'Recommendation', other:'Somewhere else'}[leadSource] || leadSource)}${source ? '' : ' (not answered)'}</td></tr>
               <tr><td style="padding:10px 0;color:#666;vertical-align:top">Notes</td>
                   <td style="padding:10px 0;font-weight:600;color:#111">${esc(notesText)}</td></tr>
             </table>
@@ -159,7 +167,7 @@ export default async function handler(req, res) {
        (name, phone, email, service, from_postcode, to_postcode, property_size, move_date, notes, source)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
     [fullName, phone, email, service, from_postcode, to_postcode,
-     property_size || '', move_date || '', `Access: ${accessText} | ${notesText}`, 'website'],
+     property_size || '', move_date || '', `Access: ${accessText} | ${notesText}`, leadSource],
   ));
 
   // ════════════════════════════════════════════════════════
