@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { parseJson, makeClaude, runDraft, slugify, researchPrompt } from '../scripts/seo-draft-lib.mjs';
-import { allowedAmountsFrom } from '../scripts/seo-quality-lib.mjs';
+import { parseJson, makeClaude, runDraft, slugify, researchPrompt } from '../seo/lib/seo-draft-lib.mjs';
+import { allowedAmountsFrom } from '../seo/lib/seo-quality-lib.mjs';
 
 const pricing = fs.readFileSync(new URL('../pricing.md', import.meta.url), 'utf8');
 const facts = JSON.parse(fs.readFileSync(new URL('../seo/business-facts.json', import.meta.url), 'utf8'));

@@ -31,7 +31,7 @@ import {
   opportunityData, setQueryStatus, reportData,
   getArticle, createDraftRequest, redraft, saveRevision, acknowledge, decide, archiveArticle,
 } from './_seo.mjs';
-import { buildOpportunities, TYPE_LABELS } from '../../scripts/seo-opportunities-lib.mjs';
+import { buildOpportunities, TYPE_LABELS } from '../../seo/lib/seo-opportunities-lib.mjs';
 
 const QUERY_STATUSES = ['new', 'targeted', 'ignored'];
 

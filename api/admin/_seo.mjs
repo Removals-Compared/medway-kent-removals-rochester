@@ -5,8 +5,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { q } from './_sql.mjs';
-import { checkDraft, allowedAmountsFrom, ACKNOWLEDGEABLE } from '../../scripts/seo-quality-lib.mjs';
-import { slugify } from '../../scripts/seo-draft-lib.mjs';
+import { checkDraft, allowedAmountsFrom, ACKNOWLEDGEABLE } from '../../seo/lib/seo-quality-lib.mjs';
+import { slugify } from '../../seo/lib/seo-draft-lib.mjs';
 
 export async function tablesReady() {
   const r = await q(`SELECT to_regclass('public.seo_jobs') AS jobs, to_regclass('public.seo_articles') AS articles`);

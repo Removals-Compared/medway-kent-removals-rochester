@@ -1,7 +1,7 @@
 // Run with:  node --test tests/
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parsePage, analyse, classify, toPath, internalPath, jaccard } from '../scripts/seo-audit-lib.mjs';
+import { parsePage, analyse, classify, toPath, internalPath, jaccard } from '../seo/lib/seo-audit-lib.mjs';
 
 const SITE = 'https://www.medwaykentremovals.co.uk';
 const page = (path, { title = 'A reasonable page title for testing', desc = 'x'.repeat(120), canonical, robots = '', h1 = 'Heading', words = 1200, extra = '', head = '' } = {}) => {

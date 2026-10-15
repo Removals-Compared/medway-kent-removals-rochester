@@ -12,7 +12,7 @@
 // ════════════════════════════════════════════════════════════
 import fs from 'node:fs';
 import path from 'node:path';
-import { SITE, toPath, parsePage, analyse, summarise } from './seo-audit-lib.mjs';
+import { SITE, toPath, parsePage, analyse, summarise } from '../seo/lib/seo-audit-lib.mjs';
 
 const args = process.argv.slice(2);
 const flag = (n) => args.includes('--' + n);

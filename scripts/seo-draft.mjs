@@ -11,8 +11,8 @@
 // ════════════════════════════════════════════════════════════
 import fs from 'node:fs';
 import path from 'node:path';
-import { makeClaude, runDraft, DEFAULT_MODEL } from './seo-draft-lib.mjs';
-import { allowedAmountsFrom, corpusEntry } from './seo-quality-lib.mjs';
+import { makeClaude, runDraft, DEFAULT_MODEL } from '../seo/lib/seo-draft-lib.mjs';
+import { allowedAmountsFrom, corpusEntry } from '../seo/lib/seo-quality-lib.mjs';
 
 const args = process.argv.slice(2);
 const val = (n) => { const i = args.indexOf('--' + n); return i > -1 ? args[i + 1] : null; };

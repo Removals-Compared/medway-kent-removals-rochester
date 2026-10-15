@@ -2,7 +2,7 @@
 //  Turns an APPROVED revision into the text of a scheduled post file, and
 //  checks whether a file already equals an approved revision. Pure functions.
 // ════════════════════════════════════════════════════════════
-import { cleanWriting } from './seo-quality-lib.mjs';
+import { cleanWriting } from '../seo/lib/seo-quality-lib.mjs';
 
 const TITLE_SUFFIX = ' | Medway Kent Removals';
 const decode = (s) => String(s).replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');

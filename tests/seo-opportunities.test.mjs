@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildOpportunities, typicalCtr } from '../scripts/seo-opportunities-lib.mjs';
+import { buildOpportunities, typicalCtr } from '../seo/lib/seo-opportunities-lib.mjs';
 
 const P = (path) => 'https://www.medwaykentremovals.co.uk' + path;
 const row = (query, path, clicks, impressions, position) => ({ query, page: P(path), clicks, impressions, position });

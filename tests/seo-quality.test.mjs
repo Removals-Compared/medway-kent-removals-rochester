@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { checkDraft, cleanWriting, allowedAmountsFrom, amountsIn, corpusEntry, keyOf } from '../scripts/seo-quality-lib.mjs';
+import { checkDraft, cleanWriting, allowedAmountsFrom, amountsIn, corpusEntry, keyOf } from '../seo/lib/seo-quality-lib.mjs';
 
 const pricing = fs.readFileSync(new URL('../pricing.md', import.meta.url), 'utf8');
 const allowedAmounts = allowedAmountsFrom(pricing);

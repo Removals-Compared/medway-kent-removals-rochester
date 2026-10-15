@@ -11,7 +11,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseQueuedPost } from './seo-queue-lib.mjs';
-import { checkDraft, allowedAmountsFrom, corpusEntry } from './seo-quality-lib.mjs';
+import { checkDraft, allowedAmountsFrom, corpusEntry } from '../seo/lib/seo-quality-lib.mjs';
 
 const args = process.argv.slice(2);
 const val = (n) => { const i = args.indexOf('--' + n); return i > -1 ? args[i + 1] : null; };
