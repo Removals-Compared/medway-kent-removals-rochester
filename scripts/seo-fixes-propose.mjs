@@ -76,8 +76,17 @@ if (useAi) {
       let got = [];
       try { got = parseJson(await llm({ system: `You write search-result snippets for a UK removals company.\n${RULES}\nReply with ONE JSON object and nothing else.`, user, maxTokens: 3000 })).items || []; } catch (e) { skipped.push(`${kind} batch failed: ${e.message}`); }
       for (const it of batchItems) {
-        const g = got.find((x) => x.path === it.path); const val = g && (kind === 'title' ? g.title : g.description);
-        const bad = !val ? 'no answer' : (kind === 'title' ? validateTitle(val, it.before) : validateDescription(val, it.before, allowed));
+        const g = got.find((x) => x.path === it.path); let val = g && (kind === 'title' ? g.title : g.description);
+        const check = (v) => (!v ? 'no answer' : (kind === 'title' ? validateTitle(v, it.before) : validateDescription(v, it.before, allowed)));
+        let bad = check(val);
+        // One second try when the wording is only the wrong length: show the model its own answer and the limit.
+        if (bad && val && /^must be \d+ to \d+ characters/.test(bad)) {
+          const [lo, hi] = bad.match(/\d+/g).slice(0, 2);
+          try {
+            const again = parseJson(await llm({ system: `You fix the length of search-result snippets for a UK removals company.\n${RULES}\nReply with ONE JSON object and nothing else.`, user: `This ${kind} is ${String(val).trim().length} characters. Rewrite it so it is between ${lo} and ${hi} characters (aim for ${Math.round((Number(lo) + Number(hi)) / 2) + 10}), keeping the meaning and using only facts already in it. Return JSON {"text": string}\n\n${val}`, maxTokens: 400 }));
+            if (again && again.text) { val = String(again.text).trim(); bad = check(val); }
+          } catch (e) { /* keep the original verdict */ }
+        }
         if (bad) { skipped.push(`${it.path} (${kind}): ${bad}`); continue; }
         out.push({ path: it.path, kind: kind === 'title' ? 'title' : 'meta_description', before: it.before, after: String(val).trim(), source: 'ai',
           reason: kind === 'title'
