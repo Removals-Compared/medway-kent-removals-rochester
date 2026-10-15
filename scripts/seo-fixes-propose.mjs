@@ -89,10 +89,26 @@ if (useAi) {
   proposals.push(...await ask('description', descriptionsNeeded(posts.map((p) => ({ path: p.path, meta_description: p.parsed.meta_description })))));
 }
 
+// Tidy up: if an earlier run left two open proposals for the same page and kind (AI wording differs run to run),
+// keep the first and reject the later ones. Related links are exempt. Touches only status='proposed'.
+{
+  const open = await q(`SELECT id, path, kind FROM seo_fixes WHERE status='proposed' AND kind <> 'related_link' ORDER BY id`);
+  const seen = new Set(); const extra = [];
+  for (const r of open) { const k = r.path + '|' + r.kind; if (seen.has(k)) extra.push(r.id); else seen.add(k); }
+  if (extra.length) {
+    await q(`UPDATE seo_fixes SET status='rejected', note='Alternative wording from a repeat run; the first proposal for this page was kept' WHERE id = ANY($1::bigint[]) AND status='proposed'`, [extra]);
+    console.log(`Rejected ${extra.length} repeat alternative proposal(s).`);
+  }
+}
+
 // ── Save (never duplicating something already proposed, rejected or applied) ──
 const counts = {};
 for (const f of proposals) {
-  const dup = await q(`SELECT 1 FROM seo_fixes WHERE path=$1 AND kind=$2 AND after_text=$3 LIMIT 1`, [f.path, f.kind, f.after]);
+  // one live proposal per page and kind (AI wording differs run to run, so match on path+kind, not the new text);
+  // related links are the exception: several different links may be proposed for one page
+  const dup = f.kind === 'related_link'
+    ? await q(`SELECT 1 FROM seo_fixes WHERE path=$1 AND kind=$2 AND after_text=$3 LIMIT 1`, [f.path, f.kind, f.after])
+    : await q(`SELECT 1 FROM seo_fixes WHERE path=$1 AND kind=$2 AND (status IN ('proposed','approved','applied') OR after_text=$3) LIMIT 1`, [f.path, f.kind, f.after]);
   if (dup.length) { counts.duplicate = (counts.duplicate || 0) + 1; continue; }
   await q(`INSERT INTO seo_fixes (batch, path, kind, before_text, after_text, reason, source) VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT DO NOTHING`, [batch, f.path, f.kind, f.before, f.after, f.reason, f.source]);
   counts[f.kind] = (counts[f.kind] || 0) + 1;
