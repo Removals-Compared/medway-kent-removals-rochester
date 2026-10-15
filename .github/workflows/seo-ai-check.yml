@@ -1,0 +1,48 @@
+name: MKR SEO AI Check
+
+# Monthly: asks each AI engine each tracked search (a few times) and records
+# whether Medway & Kent Removals was named or cited. Never changes the website.
+#
+# Repository secrets: DATABASE_URL (required), ANTHROPIC_API_KEY (Claude, already set).
+# Optional secrets that switch more engines on: PERPLEXITY_API_KEY, OPENAI_API_KEY.
+# Optional variables: AI_SAMPLES (answers per search, default 2), AI_MONTHLY_CAP (default 600).
+
+on:
+  schedule:
+    - cron: '0 7 1 * *'     # 07:00 UTC on the 1st of every month
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: 'Instead of checking, load the BrightLocal snapshot, the 15 Sep baseline and the list of searches (safe to repeat)'
+        type: boolean
+        required: false
+        default: false
+      job_id:
+        description: 'seo_jobs id queued from the dashboard (optional)'
+        required: false
+        default: ''
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - name: AI visibility
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AI_SAMPLES: ${{ vars.AI_SAMPLES }}
+          AI_MONTHLY_CAP: ${{ vars.AI_MONTHLY_CAP }}
+          SEED: ${{ github.event.inputs.seed }}
+          JOB_ID: ${{ github.event.inputs.job_id }}
+        run: |
+          if [ "$SEED" = "true" ]; then node scripts/seo-ai-check.mjs --seed
+          elif [ -n "$JOB_ID" ]; then node scripts/seo-ai-check.mjs --job "$JOB_ID"
+          else node scripts/seo-ai-check.mjs; fi

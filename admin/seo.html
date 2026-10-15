@@ -56,6 +56,8 @@
   .sev.error{ background:#fee2e2; color:#991b1b; } .sev.warn{ background:#fef3c7; color:#92400e; } .sev.info{ background:#e0e7ff; color:#3730a3; }
   .tag{ display:inline-block; font-size:12px; padding:2px 8px; border-radius:6px; background:#eef0f4; color:var(--ink2); }
   .tag.st-awaiting_approval{ background:#fef3c7; color:#92400e; font-weight:700; } .tag.st-approved,.tag.st-published{ background:#dcfce7; color:#166534; font-weight:700; } .tag.st-needs_revision,.tag.st-failed,.tag.st-rejected{ background:#fee2e2; color:#991b1b; }
+  .in{ width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); font:inherit; }
+  .tag.res-cited{ background:#dcfce7; color:#166534; font-weight:700; } .tag.res-named{ background:#dbeafe; color:#1e40af; font-weight:700; } .tag.res-not_named{ background:#f1f5f9; color:#64748b; } .tag.res-error{ background:#fee2e2; color:#991b1b; }
   .ok{ color:var(--good); font-weight:700; } .no{ color:var(--ink3); font-weight:700; }
   .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   .scroll{ overflow-x:auto; }
@@ -395,8 +397,109 @@ async function viewArticle(id) {
   $('a-archive').onclick = async () => { if (!confirm('Archive this article?')) return; try { await api('archive', {}, { article_id: a.id }); location.hash = '#content'; } catch (e) { alert(e.message); } };
   $('view').querySelectorAll('[data-ack]').forEach((b) => { b.onclick = async () => { b.disabled = true; try { await api('acknowledge', {}, { article_id: a.id, key: b.dataset.ack }); render(); } catch (e) { alert(e.message); b.disabled = false; } }; });
 }
-function viewAi() {
-  $('view').innerHTML = empty('AI search checks', 'The monthly check you already keep (Perplexity, ChatGPT, Bing) will be entered here by hand. Google AI Overviews cannot be checked automatically.');
+const ENG_ORDER = ['claude', 'perplexity', 'chatgpt', 'google_aio', 'google_ai_mode', 'bing_copilot', 'bing_local'];
+const ENG_SHORT = { claude: 'Claude', perplexity: 'Perplexity', chatgpt: 'ChatGPT', google_aio: 'Google AI Overviews', google_ai_mode: 'Google AI Mode', bing_copilot: 'Bing Copilot', bing_local: 'Bing local' };
+const RES_LABEL = { cited: 'Cited', named: 'Named', not_named: 'Not named', error: 'Error' };
+const RES_RANK = { not_named: 0, error: 0, named: 1, cited: 2 };
+const STOP = new Set(['removal', 'removals', 'company', 'companies', 'near', 'me', 'neer', 'best', 'cheap', 'house', 'movers', 'mover', 'the', 'and', 'for', 'from', 'moving', 'in', 'a', 'to', 'of', 'man', 'van']);
+function suggestPages(prompt, pages) {
+  const text = (p) => (p.path + ' ' + (p.title || '') + ' ' + (p.h1 || '') + ' ' + (p.meta_description || '')).toLowerCase();
+  const phrase = prompt.toLowerCase().replace(/\b(near me|neer me)\b/g, '').replace(/\s+/g, ' ').trim();
+  const exact = phrase.length > 8 ? pages.filter((p) => text(p).includes(phrase)) : [];
+  if (exact.length) return exact.slice(0, 2);
+  const toks = prompt.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length > 2 && !STOP.has(t));
+  const score = new Map();
+  for (const t of toks) { const h = pages.filter((p) => text(p).includes(t)); if (h.length && h.length <= 4) h.forEach((p) => score.set(p, (score.get(p) || 0) + 1)); }
+  return [...score].sort((x, y) => y[1] - x[1]).slice(0, 2).map(([p]) => p);
+}
+function cellHtml(cell) {
+  if (!cell || !cell.latest) return '<span class="muted">–</span>';
+  const l = cell.latest, pv = cell.previous;
+  const trend = pv ? (RES_RANK[l.result] > RES_RANK[pv.result] ? ' <span class="ok" title="Better than ' + esc(pv.checked_on) + '">&#9650;</span>' : RES_RANK[l.result] < RES_RANK[pv.result] ? ' <span style="color:var(--bad)" title="Worse than ' + esc(pv.checked_on) + '">&#9660;</span>' : '') : '';
+  const tip = `${l.checked_on} · ${l.method}${l.samples > 1 ? ` · ${l.samples} answers: named ${l.hits_named}, cited ${l.hits_cited}` : ''}${l.position ? ' · position ' + l.position : ''}${l.notes ? ' · ' + l.notes : ''}`;
+  return `<span class="tag res-${esc(l.result)}" title="${esc(tip)}">${esc(RES_LABEL[l.result] || l.result)}${l.position ? ' #' + l.position : ''}</span>${trend}`;
+}
+const ago2 = (n) => n == null ? '' : n === 0 ? 'today' : n === 1 ? 'yesterday' : n + ' days ago';
+
+async function viewAi() {
+  let d;
+  try { d = await api('ai'); } catch (e) { if (e.message === 'tables') { $('view').innerHTML = empty('One more setup step', 'The AI search tables do not exist yet. In GitHub, open Actions, run "MKR SEO Migrate", then reload this page.'); return; } throw e; }
+  const pages = (await api('pages').catch(() => ({ pages: [] }))).pages;
+  const bl = d.bl;
+  const engUsed = ENG_ORDER.filter((e) => d.queries.some((q) => d.grid[q.query] && d.grid[q.query][e]) || d.scoreboard[e]);
+  const cols = ENG_ORDER.filter((e) => engUsed.includes(e) || ['claude', 'google_aio', 'chatgpt', 'perplexity'].includes(e));
+  const active = d.queries.filter((q) => q.active);
+  const dueBanner = d.last_check == null
+    ? `<div class="banner"><b>No checks recorded yet.</b> Load your starting data below or run the first automatic check.</div>`
+    : d.due ? `<div class="banner"><b>Time for this month's check.</b> The last one was ${esc(d.last_check)} (${esc(ago2(d.days_since_check))}). Run the automatic check, then update BrightLocal's report and paste it in.</div>` : '';
+  const blStale = bl && bl.age_days > 28 ? `<div class="banner"><b>BrightLocal's report is ${bl.age_days} days old</b> (data from ${esc(bl.report_date)}). In BrightLocal press "Update data", then copy the page and paste it below.</div>` : '';
+
+  const score = (e) => { const x = d.scoreboard[e]; return x ? `<div class="kpi"><div class="n">${x.named_or_cited}<span style="font-size:15px;font-weight:600"> of ${x.checked}</span></div><div class="l">${esc(ENG_SHORT[e])}</div><div class="muted">named or cited${x.cited ? ' · cited ' + x.cited : ''} · ${esc(x.latest)}</div></div>` : ''; };
+  const sm = bl && bl.summary;
+  const dlt = (c, p) => p == null || c == null ? '' : `<div class="muted" style="color:${c >= p ? 'var(--good)' : 'var(--bad)'}">${c >= p ? '+' : ''}${(c - p).toFixed(1).replace(/\.0$/, '')} vs previous report</div>`;
+  $('view').innerHTML = `
+    ${dueBanner}${blStale}
+    <div class="kpis">
+      ${sm ? `<div class="kpi"><div class="n">${Math.round(sm.visibility)}<span style="font-size:15px;font-weight:600">/100</span></div><div class="l">BrightLocal visibility</div><div class="muted">${esc(bl.report_date)}</div>${dlt(sm.visibility, d.bl.previous_summary && d.bl.previous_summary.visibility)}</div>
+      <div class="kpi"><div class="n">${sm.mention_rate}%</div><div class="l">Mentioned in AI answers</div><div class="muted">share of voice ${sm.share_of_voice}%</div></div>` : ''}
+      ${ENG_ORDER.map(score).join('')}
+    </div>
+    ${!sm && !Object.keys(d.scoreboard).length ? empty('Nothing recorded yet', 'Paste your BrightLocal report below, add a check by hand, or run the automatic check.') : ''}
+
+    ${bl ? `<div class="card scroll"><h2>BrightLocal report <span class="muted" style="font-weight:400">· data from ${esc(bl.report_date)}</span></h2>
+      ${bl.platforms.length ? `<div style="margin-bottom:10px">${bl.platforms.map((p) => `<span class="tag" style="margin-right:6px">${esc(p.name)}: mentioned in ${p.mention_rate}% of answers</span>`).join('')}</div>` : ''}
+      <table class="stack"><tr><th>Question people ask</th><th>Score</th><th>Mentioned</th><th>Share of voice</th><th>Avg position</th><th>What to do</th></tr>
+      ${bl.prompts.map((p) => { const zero = !p.visibility; const sug = zero ? suggestPages(p.name, pages) : []; return `<tr><td><b>${esc(p.name)}</b></td><td>${Math.round(p.visibility)}</td><td>${p.mention_rate}%</td><td>${p.share_of_voice}%</td><td>${p.avg_position ? '#' + p.avg_position : '–'}</td>
+        <td>${!zero ? '<span class="muted">Showing up</span>' : sug.length ? `Not showing up yet. Your page ${sug.map((x) => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.path)}</a>`).join(' and ')} targets this. If it went live after ${esc(bl.report_date)}, press Update data in BrightLocal and paste the new page below.` : `Not showing up and no page targets it. <button class="btn small" data-draft="${esc(p.name)}" data-evid='${esc(JSON.stringify({ type: 'ai_visibility', brightlocal_visibility: 0 }))}'>Draft a guide</button>`}</td></tr>`; }).join('')}</table>
+      <h2 style="margin-top:18px">Who AI recommends instead</h2>
+      <table><tr><th>Business</th><th>Score</th><th>Mentioned</th><th>Avg position</th></tr>${bl.competitors.map((c) => `<tr><td>${esc(c.name)}</td><td>${Math.round(c.visibility)}</td><td>${c.mention_rate}%</td><td>${c.avg_position ? '#' + c.avg_position : '–'}</td></tr>`).join('')}</table>
+      <h2 style="margin-top:18px">Sites AI cites</h2>
+      <table><tr><th>Site</th><th>Citations</th><th>Cited in</th><th>Cited by</th></tr>${bl.sources.map((x) => `<tr style="${/medwaykentremovals/.test(x.name) ? 'font-weight:700' : ''}"><td>${esc(x.name)}${/medwaykentremovals/.test(x.name) ? ' (you)' : ''}</td><td>${x.citations}</td><td>${x.coverage_rate}% of answers</td><td>${esc(x.cited_by)}</td></tr>`).join('')}</table>
+      <div class="muted" style="margin-top:8px">BrightLocal shows the top 10 of each list. Reviews and Checkatrade keep appearing as the sources AI trusts.</div></div>` : ''}
+
+    <div class="card scroll"><h2>Direct checks <span class="muted" style="font-weight:400">· ${active.length} searches</span></h2>
+      <div class="muted" style="margin-bottom:8px">Each automatic check asks the engine the question several times, because answers vary, and records whether you were named in the answer or cited as a source.</div>
+      ${active.length ? `<table><tr><th>Search</th>${cols.map((e) => `<th>${esc(ENG_SHORT[e])}</th>`).join('')}</tr>
+      ${active.map((q) => `<tr><td>${esc(q.query)}</td>${cols.map((e) => `<td>${cellHtml(d.grid[q.query] && d.grid[q.query][e])}</td>`).join('')}</tr>`).join('')}</table>` : '<div class="muted">No searches are being tracked yet. Add them below, or load your starting data.</div>'}
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn primary" id="ai-run">Run automatic check</button>
+        <span class="muted">Claude always; Perplexity and ChatGPT when their keys are added in GitHub. Google AI Overviews, AI Mode and Bing are entered by hand or via BrightLocal. This month: ${d.usage.calls} of ${d.usage.cap} AI calls used.${d.last_auto ? ' Last run: ' + esc(d.last_auto.status) + (d.last_auto.last_error ? ' (' + esc(d.last_auto.last_error) + ')' : '') : ''}</span></div></div>
+
+    <div class="grid2" style="align-items:start">
+      <div class="card"><h2>Add a check you did by hand</h2>
+        <div style="display:grid;gap:8px">
+          <input id="ac-q" list="ac-ql" placeholder="The search, e.g. best removal company in Medway" class="in"><datalist id="ac-ql">${d.queries.map((q) => `<option value="${esc(q.query)}">`).join('')}</datalist>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><select id="ac-e">${ENG_ORDER.map((e) => `<option value="${e}">${esc(ENG_SHORT[e])}</option>`).join('')}</select>
+            <select id="ac-r"><option value="named">Named</option><option value="cited">Cited as a source</option><option value="not_named">Not named</option></select>
+            <input id="ac-p" placeholder="Position (optional)" class="in" style="width:140px"></div>
+          <input id="ac-c" placeholder="Who else was named (optional, comma separated)" class="in">
+          <input id="ac-n" placeholder="Note (optional)" class="in">
+          <div><button class="btn primary" id="ac-go">Save check</button> <span class="muted" id="ac-msg"></span></div></div></div>
+      <div class="card"><h2>Paste results</h2>
+        <div class="muted" style="margin-bottom:6px">One per line: search | engine | named, cited or not named. Optional: position | rivals | note.</div>
+        <textarea id="pi-t" rows="5" class="in" placeholder="best removal company in Medway | Perplexity | named | 1 | Rubix; Fontana&#10;removals chatham | Bing Copilot | not named"></textarea>
+        <div style="margin-top:8px"><button class="btn" id="pi-go">Add these</button> <span class="muted" id="pi-msg"></span></div></div>
+    </div>
+
+    <div class="card"><h2>Update from BrightLocal</h2>
+      <div class="muted" style="margin-bottom:6px">In BrightLocal open Local AI Visibility, press Update data, wait, then select the whole page (Cmd+A), copy (Cmd+C) and paste it here. The numbers, questions, rivals and cited sites are read for you. No password or login is shared.</div>
+      <textarea id="bl-t" rows="4" class="in" placeholder="Paste the BrightLocal Local AI Visibility page here"></textarea>
+      <div style="margin-top:8px"><button class="btn primary" id="bl-go">Read this report</button> <span class="muted" id="bl-msg"></span></div></div>
+
+    <div class="card"><h2>Searches tracked</h2>
+      <div style="display:flex;gap:8px;margin-bottom:10px"><input id="qs-q" placeholder="Add a search (max 20 tracked)" class="in" style="flex:1"><button class="btn" id="qs-go">Add</button></div>
+      <div>${d.queries.map((q) => `<button class="chip" data-qt="${q.id}" data-on="${q.active ? 0 : 1}" aria-pressed="${q.active}" title="Click to turn ${q.active ? 'off' : 'on'}">${esc(q.query)}</button>`).join(' ') || '<span class="muted">None yet.</span>'}</div></div>
+
+    <div class="card scroll"><h2>Recent checks</h2>${d.history.length ? `<table class="stack"><tr><th>Date</th><th>Search</th><th>Engine</th><th>Result</th><th>How</th><th></th></tr>
+      ${d.history.map((h) => `<tr><td>${esc(h.checked_on)}</td><td>${esc(h.query)}</td><td>${esc(ENG_SHORT[h.engine] || h.engine)}</td><td><span class="tag res-${esc(h.result)}">${esc(RES_LABEL[h.result] || h.result)}${h.position ? ' #' + h.position : ''}</span>${h.competitors && h.competitors.length ? `<div class="muted">also: ${esc(h.competitors.join(', '))}</div>` : ''}</td><td>${esc(h.method)}${h.samples > 1 ? ` (${h.samples} answers)` : ''}</td><td><button class="btn small" data-adel="${h.id}">Delete</button></td></tr>`).join('')}</table>` : '<div class="muted">Nothing yet.</div>'}</div>`;
+
+  const msg = (id, t) => { const el = $(id); if (el) el.textContent = t; };
+  $('ai-run').onclick = async () => { $('ai-run').disabled = true; try { const r = await api('run_ai_check', {}, {}); $('sub').textContent = r.dispatched ? 'AI check started. It takes several minutes; reload to see results.' : r.created === false ? 'A check is already queued or running.' : 'AI check queued. It runs on the 1st of the month, or start "MKR SEO AI Check" in GitHub Actions.'; } catch (e) { alert(e.message); } $('ai-run').disabled = false; };
+  $('ac-go').onclick = async () => { try { await api('ai_check_add', {}, { query: $('ac-q').value, engine: $('ac-e').value, result: $('ac-r').value, position: $('ac-p').value, competitors: $('ac-c').value, notes: $('ac-n').value }); render(); } catch (e) { msg('ac-msg', e.message); } };
+  $('pi-go').onclick = async () => { try { const r = await api('ai_import_checks', {}, { text: $('pi-t').value }); if (r.errors.length) msg('pi-msg', `${r.added} added. Skipped: ` + r.errors.map((x) => `line ${x.line} (${x.message})`).join('; ')); else render(); } catch (e) { msg('pi-msg', e.message); } };
+  $('bl-go').onclick = async () => { $('bl-go').disabled = true; try { const r = await api('ai_import_bl', {}, { text: $('bl-t').value }); msg('bl-msg', `Read report from ${r.report_date}: score ${r.visibility}, ${r.prompts} questions, ${r.competitors} rivals, ${r.sources} sites.`); setTimeout(render, 900); } catch (e) { msg('bl-msg', e.message); $('bl-go').disabled = false; } };
+  $('qs-go').onclick = async () => { try { await api('ai_query_add', {}, { query: $('qs-q').value }); render(); } catch (e) { alert(e.message); } };
+  $('view').querySelectorAll('[data-qt]').forEach((b) => { b.onclick = async () => { try { await api('ai_query_toggle', {}, { id: Number(b.dataset.qt), active: b.dataset.on === '1' }); render(); } catch (e) { alert(e.message); } }; });
+  $('view').querySelectorAll('[data-adel]').forEach((b) => { b.onclick = async () => { if (!confirm('Delete this check?')) return; try { await api('ai_check_delete', {}, { id: Number(b.dataset.adel) }); render(); } catch (e) { alert(e.message); } }; });
 }
 async function viewSettings() {
   const jobs = (await api('jobs')).jobs;

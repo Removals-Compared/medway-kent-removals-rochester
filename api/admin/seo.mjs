@@ -21,6 +21,11 @@
 //   POST acknowledge    owner confirms a flagged price or claim is true
 //   POST decide         approve / reject / request_changes on the CURRENT version
 //   POST archive        archive an article
+//   GET  ai             AI search visibility: grid, scoreboard, BrightLocal report, history
+//   POST ai_check_add / ai_check_delete / ai_query_add / ai_query_toggle
+//   POST ai_import_checks   paste results (one per line)
+//   POST ai_import_bl       paste a BrightLocal Local AI Visibility page
+//   POST run_ai_check       queue an automatic check (Claude, plus any engine with a key)
 //
 //  Nothing here publishes, approves or edits website content.
 // ════════════════════════════════════════════════════════════
@@ -30,6 +35,7 @@ import {
   listArticles, brightlocalBudget, dispatchWorkflow, logSeo, searchConsoleStatus,
   opportunityData, setQueryStatus, reportData,
   getArticle, createDraftRequest, redraft, saveRevision, acknowledge, decide, archiveArticle,
+  aiReady, aiOverview, aiAddCheck, aiDeleteCheck, aiAddQuery, aiToggleQuery, aiImportChecks, aiImportBrightLocal,
 } from './_seo.mjs';
 import { buildOpportunities, TYPE_LABELS } from '../../seo/lib/seo-opportunities-lib.mjs';
 
@@ -66,6 +72,10 @@ export default async function handler(req, res) {
       return res.status(503).json({ error: 'seo_tables_missing', message: 'Run admin/SEO-SCHEMA.sql in the Neon SQL editor first.' });
     }
 
+    if (/^(ai|ai_.*|run_ai_check)$/.test(action) && !(await aiReady())) {
+      return res.status(503).json({ error: 'ai_tables_missing', message: 'Run the "MKR SEO Migrate" workflow in GitHub Actions (it creates the AI tables), then reload.' });
+    }
+
     if (req.method === 'GET') {
       switch (action) {
         case 'overview': return res.status(200).json(await overview());
@@ -82,6 +92,7 @@ export default async function handler(req, res) {
         case 'report': return res.status(200).json(await reportData());
         case 'jobs': return res.status(200).json({ jobs: await listJobs() });
         case 'articles': return res.status(200).json({ articles: await listArticles() });
+        case 'ai': return res.status(200).json(await aiOverview());
         case 'article': {
           const a = await getArticle(Number(req.query.id));
           return a ? res.status(200).json(a) : res.status(404).json({ error: 'article not found' });
@@ -109,8 +120,8 @@ export default async function handler(req, res) {
         await logSeo(actor, 'query_' + row.status, row.query);
         return res.status(200).json({ keyword: row });
       }
-      if (action === 'run_audit' || action === 'run_import') {
-        const type = action === 'run_audit' ? 'audit' : 'gsc_import';
+      if (action === 'run_audit' || action === 'run_import' || action === 'run_ai_check') {
+        const type = { run_audit: 'audit', run_import: 'gsc_import', run_ai_check: 'ai_check' }[action];
         const { job, created } = await enqueueJob(type, actor);
         let dispatch = { dispatched: false, reason: 'already queued' };
         if (created) {
@@ -129,6 +140,12 @@ export default async function handler(req, res) {
         acknowledge: () => acknowledge(Number(body.article_id), String(body.key || ''), actor),
         decide: () => decide(Number(body.article_id), Number(body.revision_id), String(body.decision), body.reason, actor),
         archive: () => archiveArticle(Number(body.article_id), actor),
+        ai_check_add: () => aiAddCheck(body, actor),
+        ai_check_delete: () => aiDeleteCheck(Number(body.id), actor),
+        ai_query_add: () => aiAddQuery(body.query, actor),
+        ai_query_toggle: () => aiToggleQuery(Number(body.id), !!body.active, actor),
+        ai_import_checks: () => aiImportChecks(String(body.text || ''), actor),
+        ai_import_bl: () => aiImportBrightLocal(String(body.text || ''), actor),
       };
       if (articleActions[action]) {
         try { return res.status(200).json(await articleActions[action]()); }

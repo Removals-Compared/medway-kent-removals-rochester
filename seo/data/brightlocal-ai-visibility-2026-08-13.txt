@@ -1,0 +1,401 @@
+Local AI Visibility
+
+Track when AI assistants mention your business to customers searching locally.
+
+Settings
+Update data
+
+Last updated August 13, 2026
+
+What's new?
+
+Local AI Visibility Score
+
+22
+/100
+
+Your overall visibility is weak (Visibility Score 21.7, Share of Voice 6.8%), meaning AI systems mention you in just over a third of relevant prompts. The biggest gap is reputation: rivals have many more Google reviews, so you’re mentioned but not in the top 3 suggested firms, which likely costs you direct enquiries. Performance varies by platform, with AI Mode mentioning you 50% of the time vs 30% on ChatGPT and 0% in AI Overviews, so you’re not yet showing up in Google’s new AI results. Your strongest hooks are fixed-price, fully insured moves with no hidden fees and clear local focus on Rochester/Cliffe, but these aren’t yet backed by enough visible reviews. Priority should be boosting third‑party reviews and clearly promoting simple, student and storage packages online to stand out against Fontana, Rubix, and Road Runner.
+
+See how AI describes you
+Platforms
+How your visibility breaks down across each AI platform.
+AI platform
+All platforms
+Prompt type
+All prompts
+
+Visibility score
+
+22
+
+/100
+
+ChatGPT
+Google AI Mode
+Google AI Overview
+0
+25
+50
+75
+100
+
+Mention rate
+
+36%
+ChatGPT
+Google AI Mode
+Google AI Overview
+0
+25
+50
+75
+100
+
+Share of voice
+
+7%
+ChatGPT
+Google AI Mode
+Google AI Overview
+0
+25
+50
+75
+100
+
+Avg. position
+
+#2.6
+ChatGPT
+Google AI Mode
+0
+5
+10
+15
+20
+Prompts
+The questions you track, and how often you show up in the answers.
+Prompt
+
+Type
+
+Visibility score
+
+Mention rate
+
+Share of voice
+
+Avg. position
+
+Platform breakdown
+
+house movers Unbranded
+0
+
+0%
+
+0%
+
+—
+
+house removals medway Unbranded
+80
+
+100%
+
+18%
+
+#1
+
+moving from kent Unbranded
+0
+
+0%
+
+0%
+
+—
+
+removal company chatham Unbranded
+37
+
+100%
+
+18%
+
+#5
+
+removal company cliffe Unbranded
+43
+
+50%
+
+13%
+
+#1
+
+removal company lordswood Unbranded
+28
+
+50%
+
+9%
+
+#2
+
+removals company in TN28 Unbranded
+0
+
+0%
+
+0%
+
+—
+
+removals company neer me Unbranded
+0
+
+0%
+
+0%
+
+—
+
+removals rochester Unbranded
+52
+
+100%
+
+15%
+
+#4
+
+student removals Unbranded
+0
+
+0%
+
+0%
+
+—
+
+Competitors
+How your visibility compares with other local businesses.
+Business
+
+Visibility score
+
+Mention rate
+
+Share of voice
+
+Avg. position
+
+Platform breakdown
+
+Fontana Moving Ltd
+
+36
+
+50%
+
+9%
+
+#2.8
+
+Rubix Removals and Storage
+
+36
+
+45%
+
+9%
+
+#1.6
+
+ROAD RUNNER REMOVALS
+
+25
+
+41%
+
+8%
+
+#2.4
+
+AnyVan
+
+13
+
+18%
+
+3%
+
+#4.5
+
+Kent Movers Ltd
+
+10
+
+14%
+
+3%
+
+#3
+
+Pyramid Removals
+
+5
+
+14%
+
+3%
+
+#5.3
+
+Philip Marks Removals
+
+7
+
+14%
+
+3%
+
+#3.3
+
+Foremans Removals Ltd
+
+4
+
+9%
+
+2%
+
+#3.5
+
+My Baggage
+
+4
+
+9%
+
+2%
+
+#2
+
+Bravo UK Removals
+
+5
+
+9%
+
+2%
+
+#4.5
+
+Showing 1 to 10 of 64 results
+1
+2
+3
+4
+5
+6
+7
+AI sources
+The sites AI platforms cite when they answer your prompts.
+Domain
+
+Citations
+
+Coverage rate
+
+Cited by
+
+medwaykentremovals.co.uk
+
+18
+
+45%
+
+ChatGPT, Google AI Mode
+
+checkatrade.com
+
+17
+
+50%
+
+ChatGPT, Google AI Mode
+
+google.com
+
+16
+
+9%
+
+Google AI Mode
+
+fontanamoving.com
+
+9
+
+36%
+
+ChatGPT, Google AI Mode
+
+anyvan.com
+
+5
+
+18%
+
+ChatGPT, Google AI Mode, Google AI Overview
+
+roadrunnerremovals.com
+
+5
+
+23%
+
+ChatGPT, Google AI Mode
+
+yell.com
+
+4
+
+14%
+
+ChatGPT, Google AI Mode
+
+hellovans.com
+
+4
+
+9%
+
+Google AI Mode, Google AI Overview
+
+britannia-movers.co.uk
+
+3
+
+9%
+
+Google AI Mode
+
+rubixmove.com
+
+3
+
+14%
+
+Google AI Mode
+Showing 1 to 10 of 70 results
+1
+2
+3
+4
+5
+6
+7
+5

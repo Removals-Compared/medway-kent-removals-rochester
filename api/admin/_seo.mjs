@@ -7,6 +7,7 @@ import path from 'node:path';
 import { q } from './_sql.mjs';
 import { checkDraft, allowedAmountsFrom, ACKNOWLEDGEABLE } from '../../seo/lib/seo-quality-lib.mjs';
 import { slugify } from '../../seo/lib/seo-draft-lib.mjs';
+import { ENGINES, parseBrightLocalReport, reportRows, parseCheckImport } from '../../seo/lib/seo-ai-lib.mjs';
 
 export async function tablesReady() {
   const r = await q(`SELECT to_regclass('public.seo_jobs') AS jobs, to_regclass('public.seo_articles') AS articles`);
@@ -39,11 +40,11 @@ export async function overview() {
 
 export async function listPages() {
   return q(`
-    SELECT p.url, p.path, p.page_type, p.title, p.word_count, p.links_in, p.in_sitemap, p.last_crawled,
+    SELECT p.url, p.path, p.page_type, p.title, p.h1, p.meta_description, p.word_count, p.links_in, p.in_sitemap, p.last_crawled,
            count(i.id) FILTER (WHERE i.status = 'open' AND i.severity = 'error')::int AS errors,
            count(i.id) FILTER (WHERE i.status = 'open' AND i.severity = 'warn')::int  AS warnings
       FROM seo_pages p LEFT JOIN seo_audit_issues i ON i.url = p.url
-     GROUP BY p.url, p.path, p.page_type, p.title, p.word_count, p.links_in, p.in_sitemap, p.last_crawled
+     GROUP BY p.url, p.path, p.page_type, p.title, p.h1, p.meta_description, p.word_count, p.links_in, p.in_sitemap, p.last_crawled
      ORDER BY errors DESC, warnings DESC, p.path
      LIMIT 500`);
 }
@@ -108,7 +109,7 @@ export async function brightlocalBudget() {
   return { ...BRIGHTLOCAL_DEFAULT, ...v, remaining: Math.max(0, (v.limit ?? 1000) - (v.used ?? 0)) };
 }
 
-const WORKFLOWS = { audit: 'seo-audit.yml', gsc_import: 'seo-gsc-import.yml', draft: 'seo-draft.yml' };
+const WORKFLOWS = { audit: 'seo-audit.yml', gsc_import: 'seo-gsc-import.yml', draft: 'seo-draft.yml', ai_check: 'seo-ai-check.yml' };
 
 export async function dispatchWorkflow(type, jobId) {
   const file = WORKFLOWS[type];
@@ -348,4 +349,141 @@ export async function archiveArticle(articleId, actor) {
   if (!r[0]) throw Object.assign(new Error('Article not found or being published'), { status: 409 });
   await logSeo(actor, 'article_archived', '', articleId);
   return r[0];
+}
+
+// ═══════════════════════════════════════════════════════════
+//  AI search visibility
+// ═══════════════════════════════════════════════════════════
+const MAX_AI_QUERIES = 20;
+const DUE_AFTER_DAYS = 28; // a monthly check is due after four weeks
+const dayDiff = (a, b) => Math.round((new Date(a + 'T00:00:00Z') - new Date(b + 'T00:00:00Z')) / 864e5);
+const ymd = (d) => (d instanceof Date ? d.toISOString().slice(0, 10) : String(d).slice(0, 10));
+
+export async function aiReady() {
+  const r = await q(`SELECT to_regclass('public.seo_ai_checks') AS a, to_regclass('public.seo_ai_queries') AS b, to_regclass('public.seo_ai_bl_rows') AS c`);
+  return !!(r[0] && r[0].a && r[0].b && r[0].c);
+}
+
+export async function aiOverview() {
+  const [queries, checks, blDates, lastJob, usage] = await Promise.all([
+    q(`SELECT id, query, source, active FROM seo_ai_queries ORDER BY active DESC, id`),
+    q(`SELECT id, checked_on::text AS checked_on, query, engine, method, result, position, samples, hits_named, hits_cited, competitors, cited_urls, notes, created_by
+         FROM seo_ai_checks WHERE checked_on > now() - interval '400 days' ORDER BY checked_on DESC, id DESC LIMIT 4000`),
+    q(`SELECT DISTINCT report_date::text AS d FROM seo_ai_bl_rows ORDER BY d DESC LIMIT 2`),
+    q(`SELECT id, status, result, last_error, finished_at FROM seo_jobs WHERE type = 'ai_check' ORDER BY id DESC LIMIT 1`),
+    q(`SELECT value FROM seo_settings WHERE key = 'ai_check_usage'`),
+  ]);
+
+  // latest and previous (at least 20 days older) result for each search and engine
+  const grid = {};
+  for (const c of checks) {
+    const cell = ((grid[c.query] = grid[c.query] || {})[c.engine] = grid[c.query][c.engine] || { latest: null, previous: null });
+    if (!cell.latest) cell.latest = c;
+    else if (!cell.previous && dayDiff(cell.latest.checked_on, c.checked_on) >= 20) cell.previous = c;
+  }
+  const activeQ = queries.filter((x) => x.active).map((x) => x.query);
+  const scoreboard = {};
+  for (const e of Object.keys(ENGINES)) {
+    const cells = activeQ.map((qq) => grid[qq] && grid[qq][e] && grid[qq][e].latest).filter((c) => c && c.result !== 'error');
+    if (cells.length) scoreboard[e] = { checked: cells.length, named_or_cited: cells.filter((c) => c.result !== 'not_named').length, cited: cells.filter((c) => c.result === 'cited').length, latest: cells.map((c) => c.checked_on).sort().pop() };
+  }
+  const tally = {};
+  for (const qq of Object.keys(grid)) for (const cell of Object.values(grid[qq])) for (const name of (cell.latest && cell.latest.competitors) || []) tally[name] = (tally[name] || 0) + 1;
+  const competitors = Object.entries(tally).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([name, n]) => ({ name, n }));
+
+  let bl = null;
+  if (blDates[0]) {
+    const rows = await q(`SELECT report_date::text AS report_date, kind, name, visibility, mention_rate, share_of_voice, avg_position, citations, coverage_rate, cited_by FROM seo_ai_bl_rows WHERE report_date = $1 ORDER BY kind, visibility DESC NULLS LAST, citations DESC NULLS LAST, name`, [blDates[0].d]);
+    const prevSummary = blDates[1] ? (await q(`SELECT visibility, mention_rate, share_of_voice FROM seo_ai_bl_rows WHERE report_date = $1 AND kind = 'summary'`, [blDates[1].d]))[0] : null;
+    const by = (k) => rows.filter((r) => r.kind === k);
+    bl = { report_date: blDates[0].d, age_days: dayDiff(new Date().toISOString().slice(0, 10), blDates[0].d), summary: by('summary')[0] || null, previous_summary: prevSummary, platforms: by('platform'), prompts: by('prompt'), competitors: by('competitor'), sources: by('source') };
+  }
+  const lastCheck = checks.length ? checks[0].checked_on : null;
+  const u = usage[0] && usage[0].value;
+  return {
+    queries, grid, scoreboard, competitors, bl,
+    engines: ENGINES,
+    last_check: lastCheck,
+    days_since_check: lastCheck ? dayDiff(new Date().toISOString().slice(0, 10), lastCheck) : null,
+    due: !lastCheck || dayDiff(new Date().toISOString().slice(0, 10), lastCheck) > DUE_AFTER_DAYS,
+    last_auto: lastJob[0] || null,
+    usage: { month: new Date().toISOString().slice(0, 7), calls: u && u.month === new Date().toISOString().slice(0, 7) ? u.calls : 0, cap: 600 },
+    history: checks.slice(0, 40),
+  };
+}
+
+export async function aiAddCheck(b, actor) {
+  const query = String(b.query || '').trim();
+  const engine = String(b.engine || '');
+  const result = String(b.result || '');
+  if (query.length < 3) throw Object.assign(new Error('Enter the search that was checked'), { status: 400 });
+  if (!ENGINES[engine]) throw Object.assign(new Error('Choose an engine'), { status: 400 });
+  if (!['cited', 'named', 'not_named'].includes(result)) throw Object.assign(new Error('Choose cited, named or not named'), { status: 400 });
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(b.date || '')) ? b.date : new Date().toISOString().slice(0, 10);
+  const pos = Number.isInteger(Number(b.position)) && Number(b.position) > 0 ? Number(b.position) : null;
+  const competitors = String(b.competitors || '').split(/[;,]/).map((x) => x.trim()).filter(Boolean).slice(0, 15);
+  const r = await q(
+    `INSERT INTO seo_ai_checks (checked_on, query, engine, method, result, position, samples, hits_named, hits_cited, competitors, notes, created_by)
+     VALUES ($1,$2,$3,'manual',$4,$5,1,$6,$7,$8,$9,$10) RETURNING id`,
+    [date, query.slice(0, 200), engine, result, pos, result === 'not_named' ? 0 : 1, result === 'cited' ? 1 : 0, competitors, String(b.notes || '').slice(0, 500) || null, actor]);
+  await logSeo(actor, 'ai_check_added', `${ENGINES[engine]}: ${query} = ${result}`);
+  return { id: r[0].id };
+}
+
+export async function aiDeleteCheck(id, actor) {
+  const r = await q(`DELETE FROM seo_ai_checks WHERE id = $1 RETURNING id`, [id]);
+  if (!r[0]) throw Object.assign(new Error('Check not found'), { status: 404 });
+  await logSeo(actor, 'ai_check_deleted', `check ${id}`);
+  return { id };
+}
+
+export async function aiAddQuery(query, actor) {
+  query = String(query || '').trim().slice(0, 140);
+  if (query.length < 3) throw Object.assign(new Error('Enter the search'), { status: 400 });
+  const n = (await q(`SELECT count(*)::int AS n FROM seo_ai_queries WHERE active`))[0].n;
+  if (n >= MAX_AI_QUERIES) throw Object.assign(new Error(`You are tracking ${MAX_AI_QUERIES} searches already (the limit keeps checks affordable). Turn one off first.`), { status: 409 });
+  const r = await q(`INSERT INTO seo_ai_queries (query, source) VALUES ($1,'manual') ON CONFLICT (query) DO UPDATE SET active = true RETURNING id, query, active`, [query]);
+  await logSeo(actor, 'ai_query_added', query);
+  return r[0];
+}
+
+export async function aiToggleQuery(id, active, actor) {
+  if (active) {
+    const n = (await q(`SELECT count(*)::int AS n FROM seo_ai_queries WHERE active AND id <> $1`, [id]))[0].n;
+    if (n >= MAX_AI_QUERIES) throw Object.assign(new Error(`The limit is ${MAX_AI_QUERIES} tracked searches. Turn another off first.`), { status: 409 });
+  }
+  const r = await q(`UPDATE seo_ai_queries SET active = $2 WHERE id = $1 RETURNING id, query, active`, [id, !!active]);
+  if (!r[0]) throw Object.assign(new Error('Search not found'), { status: 404 });
+  await logSeo(actor, active ? 'ai_query_on' : 'ai_query_off', r[0].query);
+  return r[0];
+}
+
+export async function aiImportChecks(text, actor) {
+  const { rows, errors } = parseCheckImport(text);
+  if (rows.length > 300) throw Object.assign(new Error('Paste at most 300 lines at a time'), { status: 400 });
+  const date = new Date().toISOString().slice(0, 10);
+  for (const r of rows) {
+    await q(
+      `INSERT INTO seo_ai_checks (checked_on, query, engine, method, result, position, samples, hits_named, hits_cited, competitors, notes, created_by)
+       VALUES ($1,$2,$3,'manual',$4,$5,1,$6,$7,$8,$9,$10)`,
+      [date, r.query.slice(0, 200), r.engine, r.result, r.position, r.result === 'not_named' ? 0 : 1, r.result === 'cited' ? 1 : 0, r.competitors, r.notes, actor]);
+  }
+  await logSeo(actor, 'ai_checks_imported', `${rows.length} added, ${errors.length} skipped`);
+  return { added: rows.length, errors };
+}
+
+export async function aiImportBrightLocal(text, actor) {
+  let rep;
+  try { rep = parseBrightLocalReport(text); } catch (e) { throw Object.assign(new Error(e.message), { status: 400 }); }
+  const rows = reportRows(rep);
+  for (const r of rows) {
+    await q(
+      `INSERT INTO seo_ai_bl_rows (report_date, kind, name, visibility, mention_rate, share_of_voice, avg_position, citations, coverage_rate, cited_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+       ON CONFLICT (report_date, kind, name) DO UPDATE SET visibility=EXCLUDED.visibility, mention_rate=EXCLUDED.mention_rate, share_of_voice=EXCLUDED.share_of_voice,
+         avg_position=EXCLUDED.avg_position, citations=EXCLUDED.citations, coverage_rate=EXCLUDED.coverage_rate, cited_by=EXCLUDED.cited_by, imported_at=now()`,
+      [r.report_date, r.kind, r.name, r.visibility, r.mention_rate, r.share_of_voice, r.avg_position, r.citations, r.coverage_rate, r.cited_by]);
+  }
+  await logSeo(actor, 'brightlocal_imported', `report ${rep.report_date}: visibility ${rep.summary.visibility}, ${rep.prompts.length} prompts`);
+  return { report_date: rep.report_date, visibility: rep.summary.visibility, prompts: rep.prompts.length, competitors: rep.competitors.length, sources: rep.sources.length };
 }
