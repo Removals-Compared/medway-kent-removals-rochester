@@ -74,6 +74,12 @@ test('noindex pages listed in the sitemap are errors; pages missing from the sit
   assert.ok(types(analyse([orphan], ctxFor(['/storage']))).includes('not_in_sitemap'));
 });
 
+test('a page that points its canonical elsewhere is not asked to be in the sitemap', () => {
+  const dup = parsePage(page('/blog/posts/copy', { canonical: SITE + '/removal-costs-kent' }), SITE + '/blog/posts/copy');
+  const t = types(analyse([dup], ctxFor(['/storage'])));
+  assert.ok(t.includes('canonical_mismatch') && !t.includes('not_in_sitemap'));
+});
+
 test('canonical pointing at another page is flagged', () => {
   const p = parsePage(page('/blog/posts/a', { canonical: SITE + '/removal-costs-kent' }), SITE + '/blog/posts/a');
   assert.ok(types(analyse([p], ctxFor(['/blog/posts/a']))).includes('canonical_mismatch'));
