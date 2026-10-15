@@ -20,6 +20,7 @@
 //   POST save_revision  save an edit as a NEW version (needs approval again)
 //   POST acknowledge    owner confirms a flagged price or claim is true
 //   POST decide         approve / reject / request_changes on the CURRENT version
+//   POST decide_many    {items:[{article_id, revision_id}]} approve the listed CURRENT versions (max 25), each checked like decide
 //   POST archive        archive an article
 //   POST publish_now    start the publish workflow for an approved article
 //   GET  fixes          audit fix proposals (status/kind filters) with counts
@@ -38,7 +39,7 @@ import {
   tablesReady, overview, listPages, listIssues, setIssueStatus, listJobs, enqueueJob,
   listArticles, brightlocalBudget, dispatchWorkflow, logSeo, searchConsoleStatus,
   opportunityData, setQueryStatus, reportData,
-  getArticle, createDraftRequest, redraft, saveRevision, acknowledge, decide, archiveArticle,
+  getArticle, createDraftRequest, redraft, saveRevision, acknowledge, decide, decideMany, archiveArticle,
   fixesReady, listFixes, decideFixes, approvedFixCount, publishNow, aiReady, aiOverview, aiAddCheck, aiDeleteCheck, aiAddQuery, aiToggleQuery, aiImportChecks, aiImportBrightLocal,
 } from './_seo.mjs';
 import { buildOpportunities, TYPE_LABELS } from '../../seo/lib/seo-opportunities-lib.mjs';
@@ -150,6 +151,7 @@ export default async function handler(req, res) {
         save_revision: () => saveRevision(Number(body.article_id), body, actor),
         acknowledge: () => acknowledge(Number(body.article_id), String(body.key || ''), actor),
         decide: () => decide(Number(body.article_id), Number(body.revision_id), String(body.decision), body.reason, actor),
+        decide_many: () => decideMany(body.items, actor),
         archive: () => archiveArticle(Number(body.article_id), actor),
         publish_now: () => publishNow(Number(body.article_id), actor),
         fix_decide: () => decideFixes(body.ids, String(body.decision), actor),
