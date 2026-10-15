@@ -18,6 +18,11 @@ on:
         type: boolean
         required: false
         default: false
+      posts:
+        description: 'Redraft every imported LIVE post that is still its original short text'
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   draft:
@@ -37,6 +42,8 @@ jobs:
           SEO_MODEL: ${{ vars.SEO_MODEL }}
           JOB_ID: ${{ github.event.inputs.job_id }}
           QUEUED: ${{ github.event.inputs.queued }}
+          POSTS: ${{ github.event.inputs.posts }}
         run: |
-          if [ "$QUEUED" = "true" ]; then node scripts/seo-draft.mjs --queued
+          if [ "$POSTS" = "true" ]; then node scripts/seo-draft.mjs --posts
+          elif [ "$QUEUED" = "true" ]; then node scripts/seo-draft.mjs --queued
           else node scripts/seo-draft.mjs --job "$JOB_ID"; fi

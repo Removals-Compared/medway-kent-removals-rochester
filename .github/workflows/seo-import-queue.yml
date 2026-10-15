@@ -11,6 +11,11 @@ on:
         description: 'Only posts dated on or after this day (YYYY-MM-DD). Empty means today.'
         required: false
         default: ''
+      published:
+        description: 'Instead, bring thin LIVE posts (old bare format) into the approval queue'
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   import:
@@ -26,6 +31,8 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           FROM: ${{ github.event.inputs.from }}
+          PUBLISHED: ${{ github.event.inputs.published }}
         run: |
-          if [ -n "$FROM" ]; then node scripts/seo-import-queue.mjs --db --from "$FROM"
+          if [ "$PUBLISHED" = "true" ]; then node scripts/seo-import-published.mjs --db
+          elif [ -n "$FROM" ]; then node scripts/seo-import-queue.mjs --db --from "$FROM"
           else node scripts/seo-import-queue.mjs --db; fi

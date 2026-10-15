@@ -97,3 +97,10 @@ test('the research prompt carries the rules that stop invented facts', () => {
   const p = researchPrompt({ facts, pricing, pages, input });
   for (const s of ['Never use em dashes', 'Never invent prices', 'ONLY the facts supplied']) assert.ok(p.system.includes(s) || p.system.toLowerCase().includes(s.toLowerCase()), s);
 });
+
+test('when rewriting a live post, the researcher is shown the text that is already there', () => {
+  const withText = researchPrompt({ facts, pricing, pages, input: { ...input, existing_text: 'Old short text about completion day.' } });
+  assert.match(withText.user, /EXISTING ARTICLE TEXT/);
+  assert.match(withText.user, /Old short text about completion day\./);
+  assert.doesNotMatch(researchPrompt({ facts, pricing, pages, input }).user, /EXISTING ARTICLE TEXT/);
+});

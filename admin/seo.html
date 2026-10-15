@@ -99,7 +99,7 @@
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 const TABS = [
-  ['overview', 'Overview'], ['audit', 'Audit'], ['opportunities', 'Opportunities'],
+  ['overview', 'Overview'], ['audit', 'Audit'], ['fixes', 'Fixes'], ['opportunities', 'Opportunities'],
   ['content', 'Content'], ['report', 'Report'], ['ai', 'AI search'], ['settings', 'Settings'],
 ];
 const TYPE_LABEL = {
@@ -123,7 +123,7 @@ const jobSummary = (j) => {
 };
 const when = (d) => d ? new Date(d).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
 
-let status = null, ov = null, state = { sev: 'all', type: 'all', show: 'issues', opp: 'all' };
+let status = null, ov = null, state = { sev: 'all', type: 'all', show: 'issues', opp: 'all', fixStatus: 'proposed', fixKind: 'all', fixSel: new Set() };
 
 async function api(action, params = {}, body) {
   const qs = new URLSearchParams({ action, ...params }).toString();
@@ -522,7 +522,64 @@ async function viewSettings() {
       ${jobs.map((j) => `<tr><td>${j.id}</td><td>${esc(j.type)}</td><td><span class="tag">${esc(j.status)}</span></td><td>${esc(when(j.finished_at || j.created_at))}</td><td class="muted">${esc(jobSummary(j))}</td></tr>`).join('')}</table>` : '<div class="muted">No jobs yet.</div>'}</div>`;
 }
 
-const VIEWS = { overview: viewOverview, audit: viewAudit, opportunities: viewOpportunities, content: viewContent, report: viewReport, ai: viewAi, settings: viewSettings };
+const FIX_KIND = { title: 'Title tag', meta_description: 'Search description', sitemap_remove: 'Remove from sitemap', sitemap_add: 'Add to sitemap', related_link: 'Add a link' };
+const FIX_STATUS = { proposed: 'To review', approved: 'Approved', rejected: 'Rejected', applied: 'On preview branch', conflict: 'Skipped' };
+async function viewFixes() {
+  let d;
+  try { d = await api('fixes', { status: state.fixStatus, kind: state.fixKind }); }
+  catch (e) { if (e.message === 'tables') { $('view').innerHTML = empty('One more setup step', 'The Fixes table does not exist yet. In GitHub, open Actions, run "MKR SEO Migrate", then reload this page.'); return; } throw e; }
+  const tot = {}; d.counts.forEach((c) => { tot[c.status] = (tot[c.status] || 0) + c.n; });
+  const kinds = {}; d.counts.forEach((c) => { kinds[c.kind] = (kinds[c.kind] || 0) + c.n; });
+  const rows = d.fixes;
+  const detail = (f) => {
+    if (f.kind === 'title' || f.kind === 'meta_description') return `<div class="muted" style="text-decoration:line-through">${esc(f.before_text)}</div><div><b>${esc(f.after_text)}</b></div><div class="muted">${(f.before_text || '').length} → ${f.after_text.length} characters${f.source === 'ai' ? ' · written by AI, checked against the rules' : ''}</div>`;
+    if (f.kind === 'related_link') { const m = f.after_text.match(/href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/); return `<div>Adds a link to <b>${esc(m ? m[2].replace(/&amp;/g, '&') : '')}</b></div><div class="muted">${esc(m ? m[1] : '')}</div>`; }
+    return `<div><b>${f.kind === 'sitemap_remove' ? 'Remove' : 'Add'}</b> ${esc(f.path)} ${f.kind === 'sitemap_remove' ? 'from' : 'to'} sitemap.xml</div>`;
+  };
+  $('view').innerHTML = `
+    <div class="banner" style="background:#eff6ff;border-color:#bfdbfe;color:#1e3a8a"><b>Nothing here touches your live site.</b> You approve changes below. Pressing "Apply approved" puts them on a separate <b>preview branch</b> that you look at first; it only goes live when you ask for it to be merged. Busy pages (services, areas, home) are never proposed for editing, only blog posts.</div>
+    <div class="chips">${['proposed', 'approved', 'applied', 'rejected', 'conflict'].map((st) => `<button class="chip" data-fst="${st}" aria-pressed="${state.fixStatus === st}">${esc(FIX_STATUS[st])} (${tot[st] || 0})</button>`).join('')}
+      <span style="width:10px"></span>
+      ${['all', 'title', 'meta_description', 'sitemap_remove', 'sitemap_add', 'related_link'].map((k) => `<button class="chip" data-fk="${k}" aria-pressed="${state.fixKind === k}">${k === 'all' ? 'Everything' : esc(FIX_KIND[k]) + ' (' + (kinds[k] || 0) + ')'}</button>`).join('')}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+      <button class="btn small" id="fx-all">Select all shown</button>
+      <button class="btn small primary" data-fdo="approve">Approve selected</button>
+      <button class="btn small" data-fdo="reject">Reject selected</button>
+      <button class="btn small" data-fdo="reset">Back to review</button>
+      <span style="flex:1"></span>
+      <button class="btn" id="fx-propose">Look for more fixes</button>
+      <button class="btn primary" id="fx-apply" ${tot.approved ? '' : 'disabled'}>Apply ${tot.approved || 0} approved to a preview branch</button>
+    </div>
+    ${rows.length ? `<div class="card scroll"><table class="stack"><tr><th></th><th>Page</th><th>What</th><th>Change</th><th>Why</th><th>Status</th></tr>
+      ${rows.map((f) => `<tr><td><input type="checkbox" data-fsel="${f.id}" ${state.fixSel.has(f.id) ? 'checked' : ''} aria-label="Select"></td>
+        <td><a href="${esc(f.path)}" target="_blank" rel="noopener">${esc(f.path)}</a></td><td><span class="tag">${esc(FIX_KIND[f.kind])}</span></td>
+        <td>${detail(f)}</td><td class="muted">${esc(f.reason)}${f.note ? '<div style="color:var(--bad)">' + esc(f.note) + '</div>' : ''}</td>
+        <td><span class="tag">${esc(FIX_STATUS[f.status])}</span>${f.applied_branch ? '<div class="muted">' + esc(f.applied_branch) + '</div>' : ''}</td></tr>`).join('')}</table></div>`
+      : empty(tot.proposed || tot.approved || tot.applied ? 'Nothing in this view' : 'No proposals yet', tot.proposed || tot.approved || tot.applied ? 'Try another status or type above.' : 'Press "Look for more fixes". It reads your site and suggests tidy-ups for you to approve. It changes nothing.')}`;
+};
+document.addEventListener('change', (e) => { const c = e.target.closest('[data-fsel]'); if (c) { const id = Number(c.dataset.fsel); if (c.checked) state.fixSel.add(id); else state.fixSel.delete(id); } });
+document.addEventListener('click', async (e) => {
+  const t = e.target.closest('[data-fst],[data-fk],[data-fdo],#fx-all,#fx-propose,#fx-apply');
+  if (!t) return;
+  if (t.dataset.fst) { state.fixStatus = t.dataset.fst; state.fixSel.clear(); render(); }
+  else if (t.dataset.fk) { state.fixKind = t.dataset.fk; state.fixSel.clear(); render(); }
+  else if (t.id === 'fx-all') { document.querySelectorAll('[data-fsel]').forEach((c) => { c.checked = true; state.fixSel.add(Number(c.dataset.fsel)); }); }
+  else if (t.dataset.fdo) {
+    if (!state.fixSel.size) { alert('Tick the changes you want first (or use Select all shown).'); return; }
+    try { await api('fix_decide', {}, { ids: [...state.fixSel], decision: t.dataset.fdo }); state.fixSel.clear(); render(); } catch (err) { alert(err.message); }
+  } else if (t.id === 'fx-propose') {
+    t.disabled = true;
+    try { const r = await api('run_fixes_propose', {}, {}); $('sub').textContent = r.dispatched ? 'Looking for fixes. It takes a few minutes; reload to see them.' : r.created === false ? 'A search for fixes is already queued or running.' : 'Queued, but it could not be started automatically' + (r.reason ? ' (' + r.reason + ')' : '') + '.'; } catch (err) { alert(err.message); }
+    t.disabled = false;
+  } else if (t.id === 'fx-apply') {
+    if (!confirm('Put the approved changes on a preview branch? Nothing goes live until you ask for it to be merged.')) return;
+    t.disabled = true;
+    try { const r = await api('run_fixes_apply', {}, {}); $('sub').textContent = r.dispatched ? 'Applying to a preview branch. It takes about a minute; reload to see it marked. Then ask Claude to show you the preview.' : 'Queued, but it could not be started automatically' + (r.reason ? ' (' + r.reason + ')' : '') + '.'; } catch (err) { alert(err.message); }
+    t.disabled = false;
+  }
+});
+
+const VIEWS = { overview: viewOverview, audit: viewAudit, fixes: viewFixes, opportunities: viewOpportunities, content: viewContent, report: viewReport, ai: viewAi, settings: viewSettings };
 
 async function render() {
   const tab = tabs();

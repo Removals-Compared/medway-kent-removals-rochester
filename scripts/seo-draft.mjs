@@ -5,6 +5,7 @@
 //    node scripts/seo-draft.mjs --job 12     draft the request in seo_jobs row 12
 //    node scripts/seo-draft.mjs --queued     redraft every imported queue post that
 //                                            has not been redrafted yet (one by one)
+//    node scripts/seo-draft.mjs --posts      the same for imported LIVE posts (seo-import-published.mjs)
 //
 //  Needs DATABASE_URL and ANTHROPIC_API_KEY (SEO_MODEL optional).
 //  Run by .github/workflows/seo-draft.yml.
@@ -18,7 +19,8 @@ const args = process.argv.slice(2);
 const val = (n) => { const i = args.indexOf('--' + n); return i > -1 ? args[i + 1] : null; };
 const ROOT = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
 const jobArg = Number(val('job'));
-const queuedMode = args.includes('--queued');
+const queuedMode = args.includes('--queued') || args.includes('--posts');
+const postsMode = args.includes('--posts');
 if (!jobArg && !queuedMode) { console.error('Usage: node scripts/seo-draft.mjs --job <seo_jobs id>  |  --queued'); process.exit(2); }
 if (!process.env.DATABASE_URL) { console.error('DATABASE_URL is not set'); process.exit(2); }
 if (!process.env.ANTHROPIC_API_KEY) { console.error('ANTHROPIC_API_KEY is not set'); process.exit(2); }
@@ -51,7 +53,8 @@ async function buildContext(articleId) {
 }
 
 // Fields a later step (sync, publishing) needs from the first version of an imported post.
-const KEEP_META = ['source_file', 'scheduled_for', 'blog_meta_html', 'imported'];
+const KEEP_META = ['source_file', 'scheduled_for', 'blog_meta_html', 'imported', 'imported_published', 'original_date'];
+const plainText = (h) => String(h).replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
 
 async function draftOne(jobId) {
   let article;
@@ -63,10 +66,12 @@ async function draftOne(jobId) {
     article = (await q(`SELECT * FROM seo_articles WHERE id = $1`, [input.article_id]))[0];
     if (!article) throw new Error('The article for this job no longer exists');
 
-    const prev = (await q(`SELECT meta FROM seo_article_revisions WHERE article_id=$1 ORDER BY version DESC LIMIT 1`, [article.id]))[0];
+    const prev = (await q(`SELECT meta, content, created_by FROM seo_article_revisions WHERE article_id=$1 ORDER BY version DESC LIMIT 1`, [article.id]))[0];
     if (prev) input.keep_slug = (prev.meta && prev.meta.slug) || article.slug; // a redraft keeps the address it was scheduled under
+    if (prev && prev.meta && (prev.meta.imported || prev.meta.imported_published)) input.existing_text = plainText(prev.content).slice(0, 4000); // so the rewrite builds on what is already there
 
     const ctx = await buildContext(article.id);
+    if (input.keep_slug) ctx.existingSlugs.delete(input.keep_slug); // a redraft's own address is not a clash
     if (!ctx.pages.length) throw new Error('No pages in seo_pages. Run the site audit first so the draft can link to real pages.');
     const llm = makeClaude({ apiKey: process.env.ANTHROPIC_API_KEY, model: ctx.model });
     const setStatus = (s) => q(`UPDATE seo_articles SET status=$2 WHERE id=$1`, [article.id, s]);
@@ -110,14 +115,14 @@ if (jobArg) {
   // Every imported queue post that is still on its original, too-short text.
   const todo = await q(
     `SELECT a.id, a.title, a.slug, a.target_keyword FROM seo_articles a JOIN seo_article_revisions r ON r.id = a.current_revision_id
-      WHERE a.source = 'scheduled_queue' AND r.created_by = 'import' AND a.status IN ('needs_revision','awaiting_approval','planned','failed')
-      ORDER BY a.scheduled_for, a.id`);
-  console.log(`${todo.length} queued post(s) to redraft`);
+      WHERE a.source = $1 AND r.created_by = 'import' AND a.status IN ('needs_revision','awaiting_approval','planned','failed')
+      ORDER BY a.scheduled_for, a.id`, [postsMode ? 'bot' : 'scheduled_queue']);
+  console.log(`${todo.length} ${postsMode ? 'live' : 'queued'} post(s) to redraft`);
   for (const a of todo) {
     console.log(`\n== ${a.title}`);
     const job = (await q(
       `INSERT INTO seo_jobs (type, status, requested_by, payload) VALUES ('draft','queued','github-action',$1::jsonb) RETURNING id`,
-      [JSON.stringify({ article_id: a.id, keyword: a.target_keyword || a.title, kind: 'post', notes: 'Redraft of a short scheduled post: write a fuller, more useful article. Keep the same subject.' })]))[0];
+      [JSON.stringify({ article_id: a.id, keyword: a.target_keyword || a.title, kind: 'post', notes: postsMode ? 'Rewrite and expand this LIVE article into a fuller, genuinely useful version at the same address. Keep its subject and its good points. Keep the title if it already works.' : 'Redraft of a short scheduled post: write a fuller, more useful article. Keep the same subject.' })]))[0];
     if (!(await draftOne(job.id))) allOk = false;
   }
 }

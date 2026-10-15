@@ -44,6 +44,9 @@ const CLAIM_PATTERNS = [
   [/["“][^"”]{25,}["”]\s*[,\-–—]\s*[A-Z][a-z]+(?:\s[A-Z]\.?)?\b/, 'a quoted customer testimonial'],
 ];
 
+// Which kinds of unverified claim a piece of text makes (awards, accreditations, years, ...).
+export function claimHits(text) { return CLAIM_PATTERNS.filter(([re]) => re.test(text)).map(([, what]) => what); }
+
 export function checkDraft(draft, ctx = {}) {
   const { title = '', meta_description = '', slug = '', content = '', keyword = '', hasImage = false, claims_to_verify = [] } = draft;
   const allowed = ctx.allowedAmounts || new Set();

@@ -63,8 +63,12 @@ export function renderPost(article, opts) {
   return html;
 }
 
-// The "Published" date of an existing page, so an update keeps its original date.
+// The "Published" date of an existing page (ISO), so an update keeps its original date.
+// Pages carry it in different forms: "2026-09-22", "2026-09-22" with spaces, or "3 Jun 2025".
 export function publishedDateOf(html) {
-  const m = String(html).match(/"datePublished":"(\d{4}-\d{2}-\d{2})"/);
-  return m ? m[1] : null;
+  const iso = String(html).match(/"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})/);
+  if (iso) return iso[1];
+  const txt = String(html).match(/"datePublished"\s*:\s*"(\d{1,2})\s+([A-Za-z]{3})[a-z]*\s+(\d{4})"/) || String(html).match(/Published\s+(\d{1,2})\s+([A-Za-z]{3})[a-z]*\s+(\d{4})/);
+  if (txt) { const m = MONTHS.findIndex((x) => x.toLowerCase() === txt[2].toLowerCase()); if (m >= 0) return `${txt[3]}-${String(m + 1).padStart(2, '0')}-${String(txt[1]).padStart(2, '0')}`; }
+  return null;
 }

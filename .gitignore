@@ -7,3 +7,6 @@ __pycache__/
 # Sold-STC drop lists (private, generated)
 drop-lists/
 node_modules/
+
+# SEO fixes: temporary list of applied fixes
+.seo-fixes-applied.json

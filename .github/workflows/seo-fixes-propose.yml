@@ -1,0 +1,30 @@
+name: MKR SEO Propose Fixes
+
+# Looks at the site and writes fix PROPOSALS into the admin "Fixes" tab for you to
+# approve or reject. It changes nothing on the website.
+# Secrets: DATABASE_URL (required), ANTHROPIC_API_KEY (for AI-written titles and descriptions).
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: 'Started from the admin page (informational)'
+        required: false
+        default: ''
+
+jobs:
+  propose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - name: Propose fixes
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SEO_MODEL: ${{ vars.SEO_MODEL }}
+        run: node scripts/seo-fixes-propose.mjs

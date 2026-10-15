@@ -65,3 +65,11 @@ test('bad input is refused instead of producing a broken page', () => {
   assert.throws(() => renderPost(article({ content: '' }), opts()), /required/);
   assert.throws(() => renderPost(article({ title: '' }), opts()), /required/);
 });
+
+test('the original published date is found in every form your existing pages use', () => {
+  assert.equal(publishedDateOf('..."datePublished": "2026-09-22",...'), '2026-09-22');
+  assert.equal(publishedDateOf('..."datePublished":"2026-09-22T10:00:00Z"...'), '2026-09-22');
+  assert.equal(publishedDateOf('..."datePublished":"3 Jun 2025","url":"x"'), '2025-06-03');
+  assert.equal(publishedDateOf('<p class="post-meta">Published 20 May 2025 &nbsp;|&nbsp; 9 min read</p>'), '2025-05-20');
+  assert.equal(publishedDateOf('<p>nothing</p>'), null);
+});

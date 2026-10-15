@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseQueuedPost } from '../scripts/seo-queue-lib.mjs';
+import { parseQueuedPost, parseBarePost } from '../scripts/seo-queue-lib.mjs';
 
 const file = `<!DOCTYPE html><html><head><title>The Real Cost of DIY vs Professional Removal in Kent | Medway Kent Removals</title>
 <meta name="description" content="Hiring &amp; doing it yourself seems cheaper. But is it?"></head><body>
@@ -25,4 +25,14 @@ test('a queued post is split into title, description, body and the template part
 test('files that are not queue posts are refused clearly', () => {
   assert.throws(() => parseQueuedPost(file, 'about.html'), /Not a queue file name/);
   assert.throws(() => parseQueuedPost('<html><body>no article</body></html>', '2026-10-20-x.html'), /No <article>/);
+});
+
+test('a live post in the bare format is read with its slug, original date and body', () => {
+  const live = file.replace('<head>', '<head><script type="application/ld+json">{"@type":"BlogPosting","datePublished": "2026-09-22"}</script>');
+  const p = parseBarePost(live, 'the-real-cost-of-diy-vs-professional-removal-kent');
+  assert.equal(p.slug, 'the-real-cost-of-diy-vs-professional-removal-kent');
+  assert.equal(p.title, 'The Real Cost of DIY vs Professional Removal in Kent');
+  assert.equal(p.date, '2026-09-22');
+  assert.ok(p.content.startsWith('<p>First paragraph.</p>') && !/<h1|blog-meta/.test(p.content));
+  assert.throws(() => parseBarePost('<html><body><div class="post-body">x</div></body></html>', 'x'), /not in the bare post format/);
 });

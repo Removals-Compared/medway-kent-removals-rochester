@@ -109,7 +109,7 @@ export async function brightlocalBudget() {
   return { ...BRIGHTLOCAL_DEFAULT, ...v, remaining: Math.max(0, (v.limit ?? 1000) - (v.used ?? 0)) };
 }
 
-const WORKFLOWS = { audit: 'seo-audit.yml', gsc_import: 'seo-gsc-import.yml', draft: 'seo-draft.yml', ai_check: 'seo-ai-check.yml', publish: 'publish-scheduled-posts.yml' };
+const WORKFLOWS = { audit: 'seo-audit.yml', gsc_import: 'seo-gsc-import.yml', draft: 'seo-draft.yml', ai_check: 'seo-ai-check.yml', publish: 'publish-scheduled-posts.yml', fixes_propose: 'seo-fixes-propose.yml', fixes_apply: 'seo-fixes-apply.yml' };
 
 export async function dispatchWorkflow(type, jobId) {
   const file = WORKFLOWS[type];
@@ -212,7 +212,7 @@ function readRepo(file) {
   throw new Error(`Cannot read ${file} on the server`);
 }
 
-async function qualityContext(articleId) {
+async function qualityContext(articleId, ownSlugs = []) {
   const pricing = readRepo('pricing.md');
   const facts = JSON.parse(readRepo('seo/business-facts.json'));
   const [pages, slugs] = await Promise.all([
@@ -221,6 +221,7 @@ async function qualityContext(articleId) {
   ]);
   const existingSlugs = new Set(slugs.map((r) => r.slug));
   for (const p of pages) { const last = p.path.split('/').pop(); if (last) existingSlugs.add(last); }
+  ownSlugs.filter(Boolean).forEach((x) => existingSlugs.delete(x)); // the article's own live address is not a clash
   return { allowedAmounts: allowedAmountsFrom(pricing, facts.allowed_extra_amounts || []), sitePaths: new Set(pages.map((r) => r.path)), existingSlugs, corpus: [] };
 }
 
@@ -287,7 +288,7 @@ export async function saveRevision(articleId, { title, meta_description, content
   const rev = (await q(
     `INSERT INTO seo_article_revisions (article_id, version, title, meta_description, content, meta, created_by) VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7) RETURNING id, content_hash`,
     [articleId, version, title, meta_description, content, JSON.stringify(meta), actor]))[0];
-  const ctx = await qualityContext(articleId);
+  const ctx = await qualityContext(articleId, article.published_url ? [article.slug, prev && prev.meta && prev.meta.slug, slug] : []);
   const result = checkDraft({ title, meta_description, slug, content, keyword: meta.keyword || article.target_keyword || '', hasImage: !!meta.image_id, claims_to_verify: meta.claims_to_verify || [] }, ctx);
   const report = reportFor(result, rev, []);
   const slugFree = !ctx.existingSlugs.has(slug);
@@ -300,7 +301,7 @@ export async function saveRevision(articleId, { title, meta_description, content
 }
 
 async function recheck(article, revision, acknowledged) {
-  const ctx = await qualityContext(article.id);
+  const ctx = await qualityContext(article.id, article.published_url ? [article.slug, revision.meta && revision.meta.slug] : []);
   const meta = revision.meta || {};
   const ackKeys = new Set(acknowledged.filter((a) => a.content_hash === revision.content_hash).map((a) => a.key));
   const result = checkDraft({ title: revision.title, meta_description: revision.meta_description || '', slug: meta.slug || article.slug, content: revision.content, keyword: meta.keyword || article.target_keyword || '', hasImage: !!meta.image_id, claims_to_verify: meta.claims_to_verify || [] }, { ...ctx, acknowledged: ackKeys });
@@ -509,4 +510,38 @@ export async function publishNow(articleId, actor) {
   const today = new Date().toISOString().slice(0, 10);
   const holdUntil = a.source === 'scheduled_queue' && a.scheduled_for && a.scheduled_for > today ? a.scheduled_for : null;
   return { article_id: a.id, hold_until: holdUntil, ...dispatch };
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Fixes: proposals you review before anything changes
+// ═══════════════════════════════════════════════════════════
+export async function fixesReady() {
+  const r = await q(`SELECT to_regclass('public.seo_fixes') AS t`);
+  return !!(r[0] && r[0].t);
+}
+
+export async function listFixes({ status, kind } = {}) {
+  const where = [], params = [];
+  if (status && status !== 'all') { params.push(status); where.push(`status = $${params.length}`); }
+  if (kind && kind !== 'all') { params.push(kind); where.push(`kind = $${params.length}`); }
+  const rows = await q(
+    `SELECT id, batch, path, kind, before_text, after_text, reason, source, status, note, applied_branch, created_at
+       FROM seo_fixes ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+      ORDER BY CASE kind WHEN 'sitemap_remove' THEN 0 WHEN 'sitemap_add' THEN 1 WHEN 'title' THEN 2 WHEN 'meta_description' THEN 3 ELSE 4 END, path, id LIMIT 1500`, params);
+  const counts = await q(`SELECT status, kind, count(*)::int AS n FROM seo_fixes GROUP BY status, kind`);
+  return { fixes: rows, counts };
+}
+
+export async function decideFixes(ids, decision, actor) {
+  const next = { approve: 'approved', reject: 'rejected', reset: 'proposed' }[decision];
+  if (!next) throw Object.assign(new Error('decision must be approve, reject or reset'), { status: 400 });
+  const clean = (Array.isArray(ids) ? ids : []).map(Number).filter((n) => Number.isInteger(n) && n > 0).slice(0, 2000);
+  if (!clean.length) throw Object.assign(new Error('Choose at least one change'), { status: 400 });
+  const r = await q(`UPDATE seo_fixes SET status = $2, decided_at = now() WHERE id = ANY($1::bigint[]) AND status IN ('proposed','approved','rejected','conflict') RETURNING id`, [clean, next]);
+  await logSeo(actor, 'fixes_' + next, `${r.length} change(s)`);
+  return { updated: r.length };
+}
+
+export async function approvedFixCount() {
+  return (await q(`SELECT count(*)::int AS n FROM seo_fixes WHERE status = 'approved'`))[0].n;
 }

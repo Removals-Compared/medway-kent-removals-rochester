@@ -1,0 +1,62 @@
+name: MKR SEO Apply Fixes
+
+# Applies the fixes you APPROVED in the admin "Fixes" tab and pushes them to a NEW
+# preview branch (never to main). Look at the Vercel preview of that branch; it only
+# reaches the live site when you ask for the branch to be merged.
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: 'Started from the admin page (informational)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: seo-fixes-apply
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - name: Apply approved fixes to the files
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/seo-fixes-apply.mjs --edit
+      - name: Push to a preview branch
+        id: push
+        env:
+          BRANCH: seo-fixes-${{ github.run_id }}
+        run: |
+          if [ -n "$(git status --porcelain blog sitemap.xml)" ]; then
+            git config user.name "MKR SEO Fixes"
+            git config user.email "info@medwaykentremovals.co.uk"
+            git checkout -b "$BRANCH"
+            git add blog sitemap.xml
+            git commit -m "SEO fixes you approved (see the Fixes tab for the list)"
+            git push origin "$BRANCH"
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+            echo "Preview branch: $BRANCH"
+          else
+            echo "Nothing changed on disk (all approved fixes were already applied or skipped)."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Record what was applied
+        if: steps.push.outputs.pushed == 'true'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BRANCH: seo-fixes-${{ github.run_id }}
+        run: node scripts/seo-fixes-apply.mjs --mark

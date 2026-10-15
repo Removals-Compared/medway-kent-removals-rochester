@@ -22,6 +22,9 @@
 //   POST decide         approve / reject / request_changes on the CURRENT version
 //   POST archive        archive an article
 //   POST publish_now    start the publish workflow for an approved article
+//   GET  fixes          audit fix proposals (status/kind filters) with counts
+//   POST fix_decide     {ids, decision: approve|reject|reset}
+//   POST run_fixes_propose / run_fixes_apply   suggest more fixes / apply the approved ones to a PREVIEW branch
 //   GET  ai             AI search visibility: grid, scoreboard, BrightLocal report, history
 //   POST ai_check_add / ai_check_delete / ai_query_add / ai_query_toggle
 //   POST ai_import_checks   paste results (one per line)
@@ -36,7 +39,7 @@ import {
   listArticles, brightlocalBudget, dispatchWorkflow, logSeo, searchConsoleStatus,
   opportunityData, setQueryStatus, reportData,
   getArticle, createDraftRequest, redraft, saveRevision, acknowledge, decide, archiveArticle,
-  publishNow, aiReady, aiOverview, aiAddCheck, aiDeleteCheck, aiAddQuery, aiToggleQuery, aiImportChecks, aiImportBrightLocal,
+  fixesReady, listFixes, decideFixes, approvedFixCount, publishNow, aiReady, aiOverview, aiAddCheck, aiDeleteCheck, aiAddQuery, aiToggleQuery, aiImportChecks, aiImportBrightLocal,
 } from './_seo.mjs';
 import { buildOpportunities, TYPE_LABELS } from '../../seo/lib/seo-opportunities-lib.mjs';
 
@@ -73,6 +76,9 @@ export default async function handler(req, res) {
       return res.status(503).json({ error: 'seo_tables_missing', message: 'Run admin/SEO-SCHEMA.sql in the Neon SQL editor first.' });
     }
 
+    if (/^(fixes|fix_decide|run_fixes_.*)$/.test(action) && !(await fixesReady())) {
+      return res.status(503).json({ error: 'fixes_tables_missing', message: 'Run the "MKR SEO Migrate" workflow in GitHub Actions (it creates the Fixes table), then reload.' });
+    }
     if (/^(ai|ai_.*|run_ai_check)$/.test(action) && !(await aiReady())) {
       return res.status(503).json({ error: 'ai_tables_missing', message: 'Run the "MKR SEO Migrate" workflow in GitHub Actions (it creates the AI tables), then reload.' });
     }
@@ -94,6 +100,7 @@ export default async function handler(req, res) {
         case 'jobs': return res.status(200).json({ jobs: await listJobs() });
         case 'articles': return res.status(200).json({ articles: await listArticles() });
         case 'ai': return res.status(200).json(await aiOverview());
+        case 'fixes': return res.status(200).json(await listFixes({ status: req.query.status, kind: req.query.kind }));
         case 'article': {
           const a = await getArticle(Number(req.query.id));
           return a ? res.status(200).json(a) : res.status(404).json({ error: 'article not found' });
@@ -121,8 +128,9 @@ export default async function handler(req, res) {
         await logSeo(actor, 'query_' + row.status, row.query);
         return res.status(200).json({ keyword: row });
       }
-      if (action === 'run_audit' || action === 'run_import' || action === 'run_ai_check') {
-        const type = { run_audit: 'audit', run_import: 'gsc_import', run_ai_check: 'ai_check' }[action];
+      if (action === 'run_audit' || action === 'run_import' || action === 'run_ai_check' || action === 'run_fixes_propose' || action === 'run_fixes_apply') {
+        const type = { run_audit: 'audit', run_import: 'gsc_import', run_ai_check: 'ai_check', run_fixes_propose: 'fixes_propose', run_fixes_apply: 'fixes_apply' }[action];
+        if (type === 'fixes_apply' && !(await approvedFixCount())) return res.status(409).json({ error: 'nothing_approved', message: 'Approve at least one change first.' });
         const { job, created } = await enqueueJob(type, actor);
         let dispatch = { dispatched: false, reason: 'already queued' };
         // A job still waiting after 90 seconds never got started (the first start failed), so try again.
@@ -144,6 +152,7 @@ export default async function handler(req, res) {
         decide: () => decide(Number(body.article_id), Number(body.revision_id), String(body.decision), body.reason, actor),
         archive: () => archiveArticle(Number(body.article_id), actor),
         publish_now: () => publishNow(Number(body.article_id), actor),
+        fix_decide: () => decideFixes(body.ids, String(body.decision), actor),
         ai_check_add: () => aiAddCheck(body, actor),
         ai_check_delete: () => aiDeleteCheck(Number(body.id), actor),
         ai_query_add: () => aiAddQuery(body.query, actor),
