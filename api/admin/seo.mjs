@@ -124,11 +124,13 @@ export default async function handler(req, res) {
         const type = { run_audit: 'audit', run_import: 'gsc_import', run_ai_check: 'ai_check' }[action];
         const { job, created } = await enqueueJob(type, actor);
         let dispatch = { dispatched: false, reason: 'already queued' };
-        if (created) {
+        // A job still waiting after 90 seconds never got started (the first start failed), so try again.
+        const stuck = !created && job.status === 'queued' && job.age_s > 90;
+        if (created || stuck) {
           dispatch = await dispatchWorkflow(type, job.id);
-          await logSeo(actor, type + '_queued', `job ${job.id}${dispatch.dispatched ? ' (workflow started)' : ''}`);
+          await logSeo(actor, type + (stuck ? '_restarted' : '_queued'), `job ${job.id}${dispatch.dispatched ? ' (workflow started)' : ' (could not start: ' + dispatch.reason + ')'}`);
         }
-        return res.status(200).json({ job, created, ...dispatch });
+        return res.status(200).json({ job, created: created || (stuck && !dispatch.dispatched ? true : created), retried: stuck, ...dispatch });
       }
       const articleActions = {
         draft: async () => {

@@ -74,7 +74,7 @@ export async function listJobs(limit = 20) {
 
 // One job of each type at a time: a click while one is queued/running returns that job.
 export async function enqueueJob(type, actor) {
-  const existing = await q(`SELECT id, status FROM seo_jobs WHERE type=$1 AND status IN ('queued','running') AND created_at > now() - interval '2 hours' ORDER BY id DESC LIMIT 1`, [type]);
+  const existing = await q(`SELECT id, status, extract(epoch FROM now() - created_at)::int AS age_s FROM seo_jobs WHERE type=$1 AND status IN ('queued','running') AND created_at > now() - interval '2 hours' ORDER BY id DESC LIMIT 1`, [type]);
   if (existing[0]) return { job: existing[0], created: false };
   const r = await q(`INSERT INTO seo_jobs (type, status, requested_by) VALUES ($1,'queued',$2) RETURNING id, status`, [type, actor]);
   return { job: r[0], created: true };
@@ -115,16 +115,26 @@ export async function dispatchWorkflow(type, jobId) {
   const file = WORKFLOWS[type];
   if (!file) return { dispatched: false, reason: 'no workflow for this job type' };
   const token = process.env.GITHUB_DISPATCH_TOKEN;
-  if (!token) return { dispatched: false, reason: 'GITHUB_DISPATCH_TOKEN is not set' };
+  if (!token) return { dispatched: false, reason: 'GITHUB_DISPATCH_TOKEN is not set on this deployment' };
   const repo = process.env.GITHUB_REPO || 'Removals-Compared/medway-kent-removals-rochester';
   const ref = process.env.SEO_WORKFLOW_REF || 'main';
-  const r = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/${file}/dispatches`, {
-    method: 'POST',
-    headers: { authorization: `Bearer ${token}`, accept: 'application/vnd.github+json', 'content-type': 'application/json', 'user-agent': 'mkr-seo' },
-    body: JSON.stringify({ ref, inputs: { job_id: String(jobId) } }),
-  });
-  if (r.status === 204) return { dispatched: true };
-  return { dispatched: false, reason: `GitHub returned ${r.status}` };
+  try {
+    const r = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/${file}/dispatches`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, accept: 'application/vnd.github+json', 'x-github-api-version': '2022-11-28', 'content-type': 'application/json', 'user-agent': 'mkr-seo' },
+      body: JSON.stringify({ ref, inputs: { job_id: String(jobId) } }),
+    });
+    if (r.status === 204) return { dispatched: true };
+    let msg = '';
+    try { msg = (await r.json()).message || ''; } catch { /* no body */ }
+    const reason = `GitHub returned ${r.status}${msg ? ': ' + String(msg).slice(0, 160) : ''}`;
+    console.error('dispatch failed', file, reason);
+    return { dispatched: false, reason };
+  } catch (e) {
+    const reason = `could not reach GitHub: ${String(e.message).slice(0, 120)}`;
+    console.error('dispatch failed', file, reason);
+    return { dispatched: false, reason };
+  }
 }
 
 // ── Search Console data ─────────────────────────────────────

@@ -295,7 +295,7 @@ const SOURCE_LABEL = { manual: 'You asked', opportunity: 'From an opportunity', 
 
 async function newDraft(keyword, notes, evidence) {
   const r = await api('draft', {}, { keyword, notes, evidence });
-  $('sub').textContent = r.dispatched ? 'Writing started. It takes a few minutes; this page updates when you reload.' : 'Draft queued. It is written when the draft workflow runs (see Settings).';
+  $('sub').textContent = r.dispatched ? 'Writing started. It takes a few minutes; reload to see it.' : 'Draft queued, but it could not be started automatically' + (r.reason ? ' (' + r.reason + ')' : '') + '.';
   return r;
 }
 
@@ -493,7 +493,7 @@ async function viewAi() {
       ${d.history.map((h) => `<tr><td>${esc(h.checked_on)}</td><td>${esc(h.query)}</td><td>${esc(ENG_SHORT[h.engine] || h.engine)}</td><td><span class="tag res-${esc(h.result)}">${esc(RES_LABEL[h.result] || h.result)}${h.position ? ' #' + h.position : ''}</span>${h.competitors && h.competitors.length ? `<div class="muted">also: ${esc(h.competitors.join(', '))}</div>` : ''}</td><td>${esc(h.method)}${h.samples > 1 ? ` (${h.samples} answers)` : ''}</td><td><button class="btn small" data-adel="${h.id}">Delete</button></td></tr>`).join('')}</table>` : '<div class="muted">Nothing yet.</div>'}</div>`;
 
   const msg = (id, t) => { const el = $(id); if (el) el.textContent = t; };
-  $('ai-run').onclick = async () => { $('ai-run').disabled = true; try { const r = await api('run_ai_check', {}, {}); $('sub').textContent = r.dispatched ? 'AI check started. It takes several minutes; reload to see results.' : r.created === false ? 'A check is already queued or running.' : 'AI check queued. It runs on the 1st of the month, or start "MKR SEO AI Check" in GitHub Actions.'; } catch (e) { alert(e.message); } $('ai-run').disabled = false; };
+  $('ai-run').onclick = async () => { $('ai-run').disabled = true; try { const r = await api('run_ai_check', {}, {}); $('sub').textContent = r.dispatched ? 'AI check started. It takes several minutes; reload to see results.' : r.created === false ? 'A check is already queued or running.' : 'AI check queued, but it could not be started automatically' + (r.reason ? ' (' + r.reason + ')' : '') + '.'; } catch (e) { alert(e.message); } $('ai-run').disabled = false; };
   $('ac-go').onclick = async () => { try { await api('ai_check_add', {}, { query: $('ac-q').value, engine: $('ac-e').value, result: $('ac-r').value, position: $('ac-p').value, competitors: $('ac-c').value, notes: $('ac-n').value }); render(); } catch (e) { msg('ac-msg', e.message); } };
   $('pi-go').onclick = async () => { try { const r = await api('ai_import_checks', {}, { text: $('pi-t').value }); if (r.errors.length) msg('pi-msg', `${r.added} added. Skipped: ` + r.errors.map((x) => `line ${x.line} (${x.message})`).join('; ')); else render(); } catch (e) { msg('pi-msg', e.message); } };
   $('bl-go').onclick = async () => { $('bl-go').disabled = true; try { const r = await api('ai_import_bl', {}, { text: $('bl-t').value }); msg('bl-msg', `Read report from ${r.report_date}: score ${r.visibility}, ${r.prompts} questions, ${r.competitors} rivals, ${r.sources} sites.`); setTimeout(render, 900); } catch (e) { msg('bl-msg', e.message); $('bl-go').disabled = false; } };
@@ -571,7 +571,7 @@ async function runImport(btn) {
     const r = await api('run_import', {}, {});
     $('sub').textContent = r.dispatched ? 'Import started. It takes a minute or two, then reload.'
       : r.created === false ? 'An import is already queued or running.'
-      : 'Import queued. It runs on the next weekly check, or start it from GitHub Actions.';
+      : 'Import queued, but it could not be started automatically' + (r.reason ? ' (' + r.reason + ')' : '') + '. It will run on the next weekly check.';
   } catch (e) { $('sub').textContent = 'Could not queue the import: ' + e.message; }
   btn.textContent = 'Import now'; btn.disabled = false;
 }
@@ -584,7 +584,7 @@ $('runaudit').addEventListener('click', async () => {
     const r = await api('run_audit', {}, {});
     $('sub').textContent = r.dispatched ? 'Audit started. It takes about a minute, then reload.'
       : r.created === false ? 'An audit is already queued or running.'
-      : 'Audit queued. It will run on the next scheduled check or when started from GitHub Actions.';
+      : 'Audit queued, but it could not be started automatically' + (r.reason ? ' (' + r.reason + ')' : '') + '. It will run on the next Monday check.';
   } catch (e) { $('sub').textContent = 'Could not queue the audit: ' + e.message; }
   b.disabled = false; b.innerHTML = '&#8635; Run audit';
 });
