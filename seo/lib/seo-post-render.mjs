@@ -9,6 +9,9 @@ import { firstBlogImage } from './seo-images-lib.mjs';
 
 export const SITE = 'https://www.medwaykentremovals.co.uk';
 export const BRAND_SUFFIX = ' | Medway &amp; Kent Removals';
+const BRAND_LEN = ' | Medway & Kent Removals'.length;
+// Google cuts titles off at about 60 characters, so the brand name is only added when the whole title still fits.
+export const titleTag = (t) => esc(t) + (t.length + BRAND_LEN <= 60 ? BRAND_SUFFIX : '');
 const TEMPLATE = fs.readFileSync(new URL('../templates/post.html', import.meta.url), 'utf8');
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -48,7 +51,7 @@ export function renderPost(article, opts) {
   const img = firstBlogImage(body);
   const map = {
     OGIMAGE: img ? `<meta property="og:image" content="${SITE}${esc(img)}">` : '',
-    TITLE_TAG: esc(t) + BRAND_SUFFIX,
+    TITLE_TAG: titleTag(t),
     DESC: esc(cleanWriting(meta_description)),
     URL: `${SITE}/blog/posts/${slug}`,
     JSONLD: ldSafe(jsonLd({ title: t, meta_description: cleanWriting(meta_description), slug, faqs: article.faqs || [], date, modified, keyword: article.keyword, image: img })),

@@ -39,3 +39,10 @@ test('rendering writes the approved version into body, title, description, socia
   assert.throws(() => renderFile('<html></html>', rev), /no <article>/);
   assert.ok(renderInner(rev).startsWith('\n<h1>New &amp; better title</h1>'));
 });
+
+test('the brand name is only added to the page title when the whole title still fits in 60 characters', () => {
+  const base = { meta_description: 'd', content: '<h2>x</h2><p>y</p>', meta: {} };
+  const long = renderFile(file, { ...base, title: 'A rather long article title that is about fifty chars' });
+  assert.match(long, /<title>A rather long article title that is about fifty chars<\/title>/);
+  assert.match(renderFile(file, { ...base, title: 'Short title' }), /<title>Short title \| Medway Kent Removals<\/title>/);
+});

@@ -16,7 +16,9 @@ const opts = (over = {}) => ({ date: '2026-10-21', related: [{ path: '/house-rem
 test('a rendered page is a complete, valid page for the right address', () => {
   const html = renderPost(article(), opts());
   const p = parsePage(html, 'https://www.medwaykentremovals.co.uk/blog/posts/moving-house-in-gillingham-parking-and-access');
-  assert.equal(p.title, 'Moving house in Gillingham: parking and access | Medway & Kent Removals');
+  assert.equal(p.title, 'Moving house in Gillingham: parking and access', 'a long title keeps the whole 60 characters for itself');
+  const short = parsePage(renderPost(article({ title: 'Packing tips for a move' }), opts()), 'https://www.medwaykentremovals.co.uk/blog/posts/x');
+  assert.equal(short.title, 'Packing tips for a move | Medway & Kent Removals', 'a short title gets the brand name');
   assert.equal(p.meta_description, article().meta_description);
   assert.equal(p.canonical, 'https://www.medwaykentremovals.co.uk/blog/posts/moving-house-in-gillingham-parking-and-access');
   assert.equal(p.h1_count, 1);

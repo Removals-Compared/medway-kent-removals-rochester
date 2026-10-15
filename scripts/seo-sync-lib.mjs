@@ -30,7 +30,7 @@ export function renderFile(fileHtml, rev) {
   let html = String(fileHtml);
   if (articleInner(html) === null) throw new Error('The file has no <article> to replace');
   html = html.replace(/(<article\b[^>]*>)[\s\S]*(<\/article>)/i, (_, open, close) => open + renderInner(rev) + close);
-  const title = rev.title + TITLE_SUFFIX;
+  const title = rev.title + (rev.title.length + TITLE_SUFFIX.length <= 60 ? TITLE_SUFFIX : '');
   html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${esc(title)}</title>`);
   const d = esc(rev.meta_description || '');
   html = html.replace(/(<meta\s+name=["']description["']\s+content=["'])[\s\S]*?(["'])/i, `$1${d}$2`);
