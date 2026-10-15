@@ -42,8 +42,9 @@ for (const pg of pages) for (const t of pg.parsed.contextual_links) { if (!inbou
 const sitemapXml = fs.readFileSync(path.join(ROOT, 'sitemap.xml'), 'utf8');
 const inSitemap = new Set([...sitemapXml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => toPath(m[1])));
 
-// posts already handled by the approval queue (redrafts replace the whole page): leave them out
-const queued = new Set((await q(`SELECT slug FROM seo_articles WHERE source IN ('bot') OR published_url IS NOT NULL`)).map((r) => '/blog/posts/' + r.slug));
+// posts still waiting in the approval queue (an approved redraft replaces the whole page): leave them out.
+// Rewrites that are already published are ordinary posts again and can be fixed like any other.
+const queued = new Set((await q(`SELECT slug FROM seo_articles WHERE status IN ('planned','researching','drafting','quality_check','awaiting_approval','needs_revision','approved','publishing')`)).map((r) => '/blog/posts/' + r.slug));
 const posts = pages.filter((p) => isPost(p.path) && !queued.has(p.path));
 
 const proposals = [];
