@@ -19,7 +19,8 @@ import { allowedAmountsFrom } from '../seo/lib/seo-quality-lib.mjs';
 const ROOT = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
 const SITE = 'https://www.medwaykentremovals.co.uk';
 const today = process.env.PROPOSE_DATE || new Date().toISOString().slice(0, 10);
-const batch = process.env.BATCH || `auto-${today}`;
+// the time is part of the name so a repeat run on the same day can propose again (the database keeps one row per batch, page, kind and wording)
+const batch = process.env.BATCH || `auto-${today}-${new Date().toISOString().slice(11, 16).replace(':', '')}`;
 const useAi = !process.argv.includes('--no-ai') && !!process.env.ANTHROPIC_API_KEY;
 if (!process.env.DATABASE_URL) { console.error('DATABASE_URL is not set'); process.exit(2); }
 const { neon } = await import('@neondatabase/serverless');
@@ -105,11 +106,13 @@ if (useAi) {
 // ── Save (never duplicating something already proposed, rejected or applied) ──
 const counts = {};
 for (const f of proposals) {
-  // one live proposal per page and kind (AI wording differs run to run, so match on path+kind, not the new text);
+  // one open proposal per page and kind (AI wording differs run to run, so match on path+kind, not the new text).
+  // An applied fix does not count: a page still showing the problem was changed back (for example by a rewrite) and needs it again.
+  // A rejected or skipped proposal is not repeated with the same wording.
   // related links are the exception: several different links may be proposed for one page
   const dup = f.kind === 'related_link'
     ? await q(`SELECT 1 FROM seo_fixes WHERE path=$1 AND kind=$2 AND after_text=$3 LIMIT 1`, [f.path, f.kind, f.after])
-    : await q(`SELECT 1 FROM seo_fixes WHERE path=$1 AND kind=$2 AND (status IN ('proposed','approved','applied') OR after_text=$3) LIMIT 1`, [f.path, f.kind, f.after]);
+    : await q(`SELECT 1 FROM seo_fixes WHERE path=$1 AND kind=$2 AND (status IN ('proposed','approved') OR (status IN ('rejected','conflict') AND after_text=$3)) LIMIT 1`, [f.path, f.kind, f.after]);
   if (dup.length) { counts.duplicate = (counts.duplicate || 0) + 1; continue; }
   await q(`INSERT INTO seo_fixes (batch, path, kind, before_text, after_text, reason, source) VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT DO NOTHING`, [batch, f.path, f.kind, f.before, f.after, f.reason, f.source]);
   counts[f.kind] = (counts[f.kind] || 0) + 1;
