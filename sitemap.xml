@@ -499,12 +499,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.medwaykentremovals.co.uk/blog/posts/removal-costs-kent-2026-price-guide</loc>
-    <lastmod>2026-08-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://www.medwaykentremovals.co.uk/blog/posts/single-item-delivery-kent-cost</loc>
     <lastmod>2026-08-04</lastmod>
     <changefreq>monthly</changefreq>
@@ -617,5 +611,11 @@
     <lastmod>2026-10-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.medwaykentremovals.co.uk/privacy-policy</loc>
+    <lastmod>2026-10-15</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
   </url>
 </urlset>
