@@ -89,6 +89,10 @@ test('a too-short draft is automatically expanded; if expansion fails the gate s
   assert.equal(out3.revision.meta.slug, 'the-original-slug', 'a redraft keeps the address that was scheduled');
 });
 
+test('the research step has room to finish (a cut-off reply failed a real run)', () => {
+  assert.ok(researchPrompt({ facts, pricing, pages, input }).maxTokens >= 6000);
+});
+
 test('the research prompt carries the rules that stop invented facts', () => {
   const p = researchPrompt({ facts, pricing, pages, input });
   for (const s of ['Never use em dashes', 'Never invent prices', 'ONLY the facts supplied']) assert.ok(p.system.includes(s) || p.system.toLowerCase().includes(s.toLowerCase()), s);
