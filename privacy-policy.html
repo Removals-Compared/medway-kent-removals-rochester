@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en-GB">
 <head>
+<!-- consent-mode -->
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}(function(){var a=0;try{var c=JSON.parse(localStorage.getItem('mkr_consent_v1')||'null');if(c&&c.v===1&&c.ads&&c.analytics)a=1}catch(e){}var v=a?'granted':'denied';gtag('consent','default',{ad_storage:v,ad_user_data:v,ad_personalization:v,analytics_storage:v,functionality_storage:'granted',security_storage:'granted',wait_for_update:500});gtag('set','url_passthrough',true);gtag('set','ads_data_redaction',true)})();</script>
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -35,11 +37,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     };
     q.q = [];
     w.oaiq = q;
-    var js = d.createElement(s);
-    js.async = true;
-    js.src = u;
-    var f = d.getElementsByTagName(s)[0];
-    f.parentNode.insertBefore(js, f);
+    // Loads only after the visitor accepts cookies (see /consent.js).
+    w.__mkrLoadOaiq = function () {
+      if (w.__mkrOaiqLoaded) return;
+      w.__mkrOaiqLoaded = true;
+      var js = d.createElement(s);
+      js.async = true;
+      js.src = u;
+      var f = d.getElementsByTagName(s)[0];
+      f.parentNode.insertBefore(js, f);
+    };
   })(window, document, "script", "https://bzrcdn.openai.com/sdk/oaiq.min.js");
 
   oaiq("init", {
@@ -223,7 +230,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </ul>
 <p>At the end of each applicable retention period, personal data is securely deleted or anonymised. Anonymised data (from which no individual can be identified) may be retained indefinitely for statistical and business analysis purposes.</p>
 
-<h2>9. Our Use of Cookies</h2>
+<h2 id="cookies">9. Our Use of Cookies</h2>
 <p>Our website uses cookies and similar technologies. A cookie is a small text file that is placed on your computer, tablet or smartphone when you visit a website. Cookies help websites to function correctly and to remember your preferences, and they help website owners to understand how their website is being used.</p>
 
 <h3>9.1 Types of cookies we use</h3>
@@ -235,6 +242,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <h3>9.2 Managing your cookie preferences</h3>
 <p>When you first visit our website, you will be presented with a cookie consent notice. You can choose which categories of non-essential cookies you accept. You can also manage your cookie preferences through your browser settings. Most browsers allow you to refuse or delete cookies. Instructions for the most commonly used browsers are available at the following links: Google Chrome, Mozilla Firefox, Safari, Microsoft Edge, and Internet Explorer. Please note that refusing all cookies may affect the functionality of some parts of our website. For more general information about cookies and how to manage them, visit the Information Commissioner's Office website at ico.org.uk or allaboutcookies.org.</p>
+
+<h3>9.3 How the cookie choices on this site work</h3>
+<p>When you first visit, a banner asks you to accept or reject non-essential cookies. Until you choose, no analytics or advertising cookies are set. If you accept, Google Analytics, Google Ads measurement and our advertising pixel are switched on. If you reject, none of these set cookies and our advertising pixel does not load. We use Google Consent Mode, so Google's tags on our pages may still receive anonymous signals that contain no cookies or personal identifiers, which Google uses for aggregated reporting and modelling. We save your choice in your browser (this is strictly necessary, so it needs no consent). You can change your mind at any time with the "Cookie settings" link at the bottom of every page.</p>
 
 <h2>10. Your Rights Under UK GDPR</h2>
 <p>Under UK data protection law, you have the following rights in relation to your personal data. Some of these rights are absolute, while others are subject to certain limitations or can be overridden in specific circumstances.</p>
@@ -306,4 +316,5 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <p style="font-size:12px;color:rgba(255,255,255,0.95)">&copy; 2025 Medway &amp; Kent Removals. All rights reserved. Registered in England &amp; Wales. Knight Templar Way, Rochester, Kent, ME2 2ZE</p>
     <div style="display:flex;gap:18px"><a href="/privacy-policy" style="font-size:12px;color:rgba(255,255,255,0.95)">Privacy Policy</a><a href="/contact" style="font-size:12px;color:rgba(255,255,255,0.95)">Contact</a></div>
   </div>
-</footer><script src="/script.js"></script><!-- wa-float: WhatsApp button --><a id="wa-float" href="https://wa.me/447359917380?text=Hi%20Medway%20%26%20Kent%20Removals%2C%20I%27d%20like%20a%20removals%20quote." target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp" style="position:fixed;right:20px;bottom:20px;z-index:9999;display:flex;align-items:center;gap:9px;background:#25D366;color:#fff;text-decoration:none;padding:12px 18px 12px 14px;border-radius:50px;box-shadow:0 6px 20px rgba(0,0,0,.25);font-family:'DM Sans',-apple-system,Arial,sans-serif;font-weight:700;font-size:15px;line-height:1"><svg width="26" height="26" viewBox="0 0 32 32" fill="#fff" aria-hidden="true"><path d="M16 .5C7.4.5.5 7.4.5 16c0 2.8.7 5.4 2 7.8L.4 31.6l8-2.1c2.3 1.3 4.9 1.9 7.6 1.9 8.6 0 15.5-6.9 15.5-15.5S24.6.5 16 .5zm0 28.3c-2.4 0-4.7-.6-6.7-1.8l-.5-.3-4.8 1.3 1.3-4.6-.3-.5c-1.3-2.1-2-4.5-2-7C3 8.9 8.9 3 16 3s13 5.9 13 13-5.9 12.8-13 12.8zm7.1-9.6c-.4-.2-2.3-1.1-2.6-1.3-.4-.1-.6-.2-.9.2-.3.4-1 1.3-1.2 1.5-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3.1-1.9-1.1-1-1.9-2.3-2.1-2.7-.2-.4 0-.6.2-.8.2-.2.4-.4.6-.7.2-.2.3-.4.4-.7.1-.3 0-.5 0-.7-.1-.2-.9-2.1-1.2-2.9-.3-.8-.6-.7-.9-.7h-.8c-.3 0-.7.1-1 .5-.4.4-1.3 1.3-1.3 3.1s1.4 3.6 1.5 3.9c.2.3 2.7 4.1 6.5 5.8.9.4 1.6.6 2.2.8.9.3 1.7.2 2.4.1.7-.1 2.3-.9 2.6-1.8.3-.9.3-1.6.2-1.8-.1-.2-.3-.3-.7-.5z"/></svg><span>WhatsApp us</span></a><script src="/sticky-bar.js" defer></script></body></html>
+</footer><script src="/script.js"></script><!-- wa-float: WhatsApp button --><a id="wa-float" href="https://wa.me/447359917380?text=Hi%20Medway%20%26%20Kent%20Removals%2C%20I%27d%20like%20a%20removals%20quote." target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp" style="position:fixed;right:20px;bottom:20px;z-index:9999;display:flex;align-items:center;gap:9px;background:#25D366;color:#fff;text-decoration:none;padding:12px 18px 12px 14px;border-radius:50px;box-shadow:0 6px 20px rgba(0,0,0,.25);font-family:'DM Sans',-apple-system,Arial,sans-serif;font-weight:700;font-size:15px;line-height:1"><svg width="26" height="26" viewBox="0 0 32 32" fill="#fff" aria-hidden="true"><path d="M16 .5C7.4.5.5 7.4.5 16c0 2.8.7 5.4 2 7.8L.4 31.6l8-2.1c2.3 1.3 4.9 1.9 7.6 1.9 8.6 0 15.5-6.9 15.5-15.5S24.6.5 16 .5zm0 28.3c-2.4 0-4.7-.6-6.7-1.8l-.5-.3-4.8 1.3 1.3-4.6-.3-.5c-1.3-2.1-2-4.5-2-7C3 8.9 8.9 3 16 3s13 5.9 13 13-5.9 12.8-13 12.8zm7.1-9.6c-.4-.2-2.3-1.1-2.6-1.3-.4-.1-.6-.2-.9.2-.3.4-1 1.3-1.2 1.5-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3.1-1.9-1.1-1-1.9-2.3-2.1-2.7-.2-.4 0-.6.2-.8.2-.2.4-.4.6-.7.2-.2.3-.4.4-.7.1-.3 0-.5 0-.7-.1-.2-.9-2.1-1.2-2.9-.3-.8-.6-.7-.9-.7h-.8c-.3 0-.7.1-1 .5-.4.4-1.3 1.3-1.3 3.1s1.4 3.6 1.5 3.9c.2.3 2.7 4.1 6.5 5.8.9.4 1.6.6 2.2.8.9.3 1.7.2 2.4.1.7-.1 2.3-.9 2.6-1.8.3-.9.3-1.6.2-1.8-.1-.2-.3-.3-.7-.5z"/></svg><span>WhatsApp us</span></a><script src="/sticky-bar.js" defer></script><script src="/consent.js?v=1" defer></script>
+</body></html>

@@ -6,6 +6,7 @@
 import fs from 'node:fs';
 import { cleanWriting, countWords } from './seo-quality-lib.mjs';
 import { firstBlogImage } from './seo-images-lib.mjs';
+import { applyConsent } from './seo-consent-lib.mjs';
 
 export const SITE = 'https://www.medwaykentremovals.co.uk';
 export const BRAND_SUFFIX = ' | Medway &amp; Kent Removals';
@@ -67,7 +68,7 @@ export function renderPost(article, opts) {
   let html = TEMPLATE;
   for (const [k, v] of Object.entries(map)) html = html.split(`{{${k}}}`).join(v);
   if (/\{\{[A-Z0-9_]+\}\}/.test(html)) throw new Error('Template placeholder left unfilled');
-  return html;
+  return applyConsent(html);
 }
 
 // The "Published" date of an existing page (ISO), so an update keeps its original date.
