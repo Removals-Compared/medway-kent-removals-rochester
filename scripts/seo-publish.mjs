@@ -36,7 +36,7 @@ try {
 } catch (e) { console.log('Approval queue unreachable, nothing published: ' + String(e.message).slice(0, 80)); process.exit(0); }
 
 const relatedFor = (content, meta) => {
-  const paths = [...new Set([...(content.matchAll(/<a\s[^>]*href=["'](\/[^"'#?]*)["']/gi)).map((m) => m[1].replace(/\/+$/, '') || '/'), ...((meta.internal_links || []).map((l) => l.path))])];
+  const paths = [...new Set([...[...content.matchAll(/<a\s[^>]*href=["'](\/[^"'#?]*)["']/gi)].map((m) => m[1].replace(/\/+$/, '') || '/'), ...((meta.internal_links || []).map((l) => l.path))])];
   return paths.filter((p) => titles.has(p) && p !== '/').slice(0, 4).map((p) => ({ path: p, title: titles.get(p) }));
 };
 

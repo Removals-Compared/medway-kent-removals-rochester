@@ -6,7 +6,7 @@
   "scripts": {
     "generate": "node scripts/generate-post.js",
     "test": "DAY_OVERRIDE=1 node scripts/generate-post.js",
-    "test:seo": "node --test tests/seo-audit.test.mjs tests/seo-api.test.mjs tests/seo-opportunities.test.mjs tests/seo-gsc.test.mjs tests/seo-quality.test.mjs tests/seo-draft.test.mjs tests/seo-queue.test.mjs tests/seo-sync.test.mjs tests/seo-deploy.test.mjs tests/seo-ai.test.mjs tests/seo-dispatch.test.mjs tests/seo-post-render.test.mjs tests/seo-fixes.test.mjs tests/seo-images.test.mjs"
+    "test:seo": "node --test tests/seo-audit.test.mjs tests/seo-api.test.mjs tests/seo-opportunities.test.mjs tests/seo-gsc.test.mjs tests/seo-quality.test.mjs tests/seo-draft.test.mjs tests/seo-queue.test.mjs tests/seo-sync.test.mjs tests/seo-deploy.test.mjs tests/seo-ai.test.mjs tests/seo-dispatch.test.mjs tests/seo-post-render.test.mjs tests/seo-fixes.test.mjs tests/seo-images.test.mjs tests/seo-compat.test.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",
