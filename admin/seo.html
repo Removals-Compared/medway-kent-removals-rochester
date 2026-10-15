@@ -217,10 +217,9 @@ function evid(o) {
 }
 function connectSteps() {
   return `<div class="card"><h2>How to connect Search Console</h2><ol style="margin:0 0 0 18px;color:var(--ink2);line-height:1.6">
-    <li>In Google Cloud, create a service account and download its JSON key (read-only; it can only see what you share with it).</li>
-    <li>In Search Console, open Settings, Users and permissions, and add the service account's email as a user.</li>
-    <li>Add the key as the <code>GSC_SERVICE_ACCOUNT_JSON</code> secret in GitHub (for the importer) and as an environment variable in Vercel (so this page knows it's connected).</li>
-    <li>Press Import now. The first import reads the last 90 days.</li></ol></div>`;
+    <li>Run <code>node scripts/seo-gsc-auth.mjs</code> on your computer once and press Allow on Google's read-only screen.</li>
+    <li>Store the three results as GitHub secrets: <code>GSC_CLIENT_ID</code>, <code>GSC_CLIENT_SECRET</code>, <code>GSC_REFRESH_TOKEN</code>, plus <code>DATABASE_URL</code>.</li>
+    <li>Run the "MKR Search Console Import" workflow. The first import reads the last 90 days; after that it runs every Monday.</li></ol></div>`;
 }
 async function viewOpportunities() {
   const d = await api('opportunities');
@@ -305,7 +304,7 @@ async function viewSettings() {
   $('view').innerHTML = `
     <div class="card"><h2>Connections</h2><table>
       ${row('Database', status && status.tables_ready, status && status.tables_ready ? 'SEO tables are in place' : 'Run admin/SEO-SCHEMA.sql')}
-      ${row('Google Search Console', i.search_console, i.search_console ? 'Connected with a ' + i.search_console_mode : 'Needed for opportunities and reports. See the steps below.')}
+      ${row('Google Search Console', i.search_console, i.search_console ? (i.search_console_last_import ? 'Last import ' + when(i.search_console_last_import.finished_at) : 'Credentials found, no import yet') : 'Needed for opportunities and reports. See the steps below.')}
       ${row('BrightLocal', i.brightlocal, b ? `Development key: ${b.used} of ${b.limit} requests used, ${b.remaining} left (a reserve of ${b.reserve} is kept back)` : 'Local ranking checks (optional)')}
       ${row('Run-audit button starts the checker', i.audit_button_dispatch, i.audit_button_dispatch ? 'Clicking Run audit starts it straight away' : 'Without this, audits run each Monday or from the GitHub Actions tab')}
     </table></div>

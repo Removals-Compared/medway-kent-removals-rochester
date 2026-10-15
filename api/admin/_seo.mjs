@@ -87,6 +87,15 @@ export async function getSetting(key, fallback) {
 // The BrightLocal development key allows 1000 requests in total, then it is
 // disabled. Nothing may call BrightLocal unless this budget says there is room.
 export const BRIGHTLOCAL_DEFAULT = { limit: 1000, used: 0, reserve: 100 };
+// Search Console credentials live in GitHub (where the importer runs), not in
+// Vercel, so "connected" is judged by a successful import as well as by env vars.
+export async function searchConsoleStatus() {
+  const env = !!(process.env.GSC_SERVICE_ACCOUNT_JSON || (process.env.GSC_CLIENT_ID && process.env.GSC_CLIENT_SECRET && process.env.GSC_REFRESH_TOKEN));
+  const r = await q(`SELECT finished_at, result FROM seo_jobs WHERE type = 'gsc_import' AND status = 'succeeded' ORDER BY id DESC LIMIT 1`);
+  const last = r[0] || null;
+  return { connected: env || !!last, via_env: env, last_import: last ? { finished_at: last.finished_at, result: last.result } : null };
+}
+
 export async function brightlocalBudget() {
   const v = await getSetting('brightlocal_budget', BRIGHTLOCAL_DEFAULT);
   return { ...BRIGHTLOCAL_DEFAULT, ...v, remaining: Math.max(0, (v.limit ?? 1000) - (v.used ?? 0)) };

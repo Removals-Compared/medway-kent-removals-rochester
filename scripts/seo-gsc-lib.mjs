@@ -104,12 +104,19 @@ export async function fetchRows(token, site, { start, end, dimensions = ['date',
   return out;
 }
 
+// Search Console reports every address variant of a domain property
+// (http/https, www/non-www) as a separate page. Merge them onto the canonical
+// address so one real page is never counted twice.
+export const CANONICAL_HOST = 'www.medwaykentremovals.co.uk';
 export function normalisePage(u) {
   if (!u) return '';
   try {
     const x = new URL(u);
+    let host = x.host.toLowerCase();
+    if (host === CANONICAL_HOST.replace(/^www\./, '')) host = CANONICAL_HOST;
     const p = x.pathname.replace(/\/+$/, '') || '/';
-    return `${x.protocol}//${x.host}${p === '/' ? '/' : p}`;
+    const proto = host === CANONICAL_HOST ? 'https:' : x.protocol;
+    return `${proto}//${host}${p === '/' ? '/' : p}`;
   } catch { return String(u); }
 }
 

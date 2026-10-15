@@ -20,7 +20,7 @@
 import { requireAuth } from './_session.mjs';
 import {
   tablesReady, overview, listPages, listIssues, setIssueStatus, listJobs, enqueueJob,
-  listArticles, brightlocalBudget, dispatchWorkflow, logSeo,
+  listArticles, brightlocalBudget, dispatchWorkflow, logSeo, searchConsoleStatus,
   opportunityData, setQueryStatus, reportData,
 } from './_seo.mjs';
 import { buildOpportunities, TYPE_LABELS } from '../../scripts/seo-opportunities-lib.mjs';
@@ -39,12 +39,13 @@ export default async function handler(req, res) {
     if (req.method === 'GET' && action === 'status') {
       let ready = false;
       try { ready = await tablesReady(); } catch (e) { return res.status(200).json({ database: false, error: 'database not reachable' }); }
+      const gsc = ready ? await searchConsoleStatus() : { connected: false, last_import: null };
       return res.status(200).json({
         database: true,
         tables_ready: ready,
         integrations: {
-          search_console: !!(process.env.GSC_SERVICE_ACCOUNT_JSON || (process.env.GSC_CLIENT_ID && process.env.GSC_CLIENT_SECRET && process.env.GSC_REFRESH_TOKEN)),
-          search_console_mode: process.env.GSC_SERVICE_ACCOUNT_JSON ? 'service account' : process.env.GSC_REFRESH_TOKEN ? 'OAuth' : null,
+          search_console: gsc.connected,
+          search_console_last_import: gsc.last_import,
           brightlocal: !!process.env.BRIGHTLOCAL_API_KEY,
           audit_button_dispatch: !!process.env.GITHUB_DISPATCH_TOKEN,
         },
@@ -98,9 +99,6 @@ export default async function handler(req, res) {
       }
       if (action === 'run_audit' || action === 'run_import') {
         const type = action === 'run_audit' ? 'audit' : 'gsc_import';
-        if (type === 'gsc_import' && !(process.env.GSC_SERVICE_ACCOUNT_JSON || process.env.GSC_REFRESH_TOKEN)) {
-          return res.status(409).json({ error: 'search_console_not_connected', message: 'Connect Search Console first (see Settings).' });
-        }
         const { job, created } = await enqueueJob(type, actor);
         let dispatch = { dispatched: false, reason: 'already queued' };
         if (created) {

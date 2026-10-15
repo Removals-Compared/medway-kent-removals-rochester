@@ -68,9 +68,14 @@ test('rows are fetched page by page until a short page comes back', async () => 
 test('rows are normalised and duplicates merged with impression-weighted position', () => {
   assert.equal(normalisePage('https://www.medwaykentremovals.co.uk/storage/'), 'https://www.medwaykentremovals.co.uk/storage');
   assert.equal(normalisePage('https://www.medwaykentremovals.co.uk/'), 'https://www.medwaykentremovals.co.uk/');
+  // address variants of the same page merge onto the canonical https://www form
+  assert.equal(normalisePage('https://medwaykentremovals.co.uk/'), 'https://www.medwaykentremovals.co.uk/');
+  assert.equal(normalisePage('http://medwaykentremovals.co.uk/storage/'), 'https://www.medwaykentremovals.co.uk/storage');
+  assert.equal(normalisePage('http://www.medwaykentremovals.co.uk/storage'), 'https://www.medwaykentremovals.co.uk/storage');
+  assert.equal(normalisePage('https://other.example/x/'), 'https://other.example/x');
   const out = toMetricRows([
     { keys: ['2026-10-01', 'storage', 'https://www.medwaykentremovals.co.uk/storage/'], clicks: 1, impressions: 10, position: 4 },
-    { keys: ['2026-10-01', 'storage', 'https://www.medwaykentremovals.co.uk/storage'], clicks: 0, impressions: 30, position: 8 },
+    { keys: ['2026-10-01', 'storage', 'http://medwaykentremovals.co.uk/storage'], clicks: 0, impressions: 30, position: 8 },
   ]);
   assert.equal(out.length, 1);
   assert.deepEqual([out[0].clicks, out[0].impressions, out[0].position, out[0].ctr], [1, 40, 7, 0.025]);

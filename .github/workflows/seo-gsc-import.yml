@@ -5,8 +5,9 @@ name: MKR Search Console Import
 #
 # Repository secrets needed:
 #   DATABASE_URL               the same Neon connection string the site uses
-#   GSC_SERVICE_ACCOUNT_JSON   service account key (JSON text or base64), whose
-#                              email is added as a user on the Search Console property
+#   GSC_CLIENT_ID, GSC_CLIENT_SECRET, GSC_REFRESH_TOKEN
+#                              read-only sign-in made once with scripts/seo-gsc-auth.mjs
+#                              (or, instead, GSC_SERVICE_ACCOUNT_JSON for a service account)
 # Optional:
 #   GSC_SITE                   e.g. sc-domain:medwaykentremovals.co.uk (auto-detected if unset)
 
@@ -39,12 +40,15 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           GSC_SERVICE_ACCOUNT_JSON: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON }}
+          GSC_CLIENT_ID: ${{ secrets.GSC_CLIENT_ID }}
+          GSC_CLIENT_SECRET: ${{ secrets.GSC_CLIENT_SECRET }}
+          GSC_REFRESH_TOKEN: ${{ secrets.GSC_REFRESH_TOKEN }}
           GSC_SITE: ${{ secrets.GSC_SITE }}
           JOB_ID: ${{ github.event.inputs.job_id }}
           DAYS: ${{ github.event.inputs.days }}
         run: |
-          if [ -z "$GSC_SERVICE_ACCOUNT_JSON" ]; then
-            echo "Search Console is not connected yet (no GSC_SERVICE_ACCOUNT_JSON secret). Nothing to import."
+          if [ -z "$GSC_SERVICE_ACCOUNT_JSON" ] && [ -z "$GSC_REFRESH_TOKEN" ]; then
+            echo "Search Console is not connected yet (no GSC secrets). Nothing to import."
             exit 0
           fi
           ARGS="--db"
