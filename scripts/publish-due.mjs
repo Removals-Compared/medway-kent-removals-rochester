@@ -11,6 +11,7 @@
 // ════════════════════════════════════════════════════════════
 import fs from 'node:fs';
 import { matchesRevision } from './seo-sync-lib.mjs';
+import { applyConsent } from '../seo/lib/seo-consent-lib.mjs';
 import path from 'node:path';
 
 const ROOT = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
@@ -51,7 +52,9 @@ function cleanWriting(html) {
 
 function cleanFileInPlace(file) {
   const before = fs.readFileSync(file, 'utf8');
-  const after = cleanWriting(before);
+  let after = cleanWriting(before);
+  // Every page that loads Google tags or the ads pixel must carry the cookie-consent code (idempotent).
+  try { after = applyConsent(after); } catch (e) { changed.push('CONSENT NOT APPLIED to ' + path.relative(ROOT, file) + ': ' + e.message); }
   if (after !== before) {
     fs.writeFileSync(file, after);
     changed.push('cleaned ' + path.relative(ROOT, file));

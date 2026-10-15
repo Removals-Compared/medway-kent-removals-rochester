@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en-GB">
 <head>
+<!-- consent-mode -->
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}(function(){var a=0;try{var c=JSON.parse(localStorage.getItem('mkr_consent_v1')||'null');if(c&&c.v===1&&c.ads&&c.analytics)a=1}catch(e){}var v=a?'granted':'denied';gtag('consent','default',{ad_storage:v,ad_user_data:v,ad_personalization:v,analytics_storage:v,functionality_storage:'granted',security_storage:'granted',wait_for_update:500});gtag('set','url_passthrough',true);gtag('set','ads_data_redaction',true)})();</script>
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -53,11 +55,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     };
     q.q = [];
     w.oaiq = q;
-    var js = d.createElement(s);
-    js.async = true;
-    js.src = u;
-    var f = d.getElementsByTagName(s)[0];
-    f.parentNode.insertBefore(js, f);
+    // Loads only after the visitor accepts cookies (see /consent.js).
+    w.__mkrLoadOaiq = function () {
+      if (w.__mkrOaiqLoaded) return;
+      w.__mkrOaiqLoaded = true;
+      var js = d.createElement(s);
+      js.async = true;
+      js.src = u;
+      var f = d.getElementsByTagName(s)[0];
+      f.parentNode.insertBefore(js, f);
+    };
   })(window, document, "script", "https://bzrcdn.openai.com/sdk/oaiq.min.js");
 
   oaiq("init", {
@@ -451,4 +458,5 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   });
 })();
 </script>
+<script src="/consent.js?v=1" defer></script>
 </body></html>
