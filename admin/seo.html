@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0D1F3C">
+<title>SEO — Admin — Medway &amp; Kent Removals</title>
+<style>
+  :root{
+    --navy:#0d1f3c; --orange:#e04e1b; --bg:#f4f5f7; --line:#e3e6ec;
+    --ink:#1a2233; --ink2:#556; --ink3:#889; --good:#15803d; --warn:#b45309; --bad:#b91c1c; --card:#fff;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; background:var(--bg); color:var(--ink); }
+  .topbar{ background:var(--navy); color:#fff; padding:14px 24px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .topbar .brand{ font-weight:700; }
+  .topbar .crumb{ color:#ff9a75; font-size:14px; }
+  .topbar .spacer{ flex:1; }
+  .topbar a{ color:#cfd6e4; text-decoration:none; font-size:14px; }
+  .wrap{ max-width:1180px; margin:0 auto; padding:24px; }
+  .muted{ color:var(--ink3); font-size:13px; }
+  h1{ margin:0; font-size:22px; color:var(--navy); }
+  h2{ margin:0 0 8px; font-size:16px; color:var(--navy); }
+  .head{ display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+  .head .grow{ flex:1; }
+  .btn{ border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:9px; padding:9px 14px; font-size:14px; font-weight:600; cursor:pointer; }
+  .btn.primary{ background:var(--orange); border-color:var(--orange); color:#fff; }
+  .btn.small{ padding:5px 10px; font-size:12px; }
+  .btn:disabled{ opacity:.55; cursor:wait; }
+  .tabs{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; border-bottom:1px solid var(--line); padding-bottom:10px; }
+  .tab{ border:1px solid var(--line); background:var(--card); color:var(--ink2); border-radius:999px; padding:7px 14px; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; }
+  .tab[aria-current="page"]{ background:var(--navy); border-color:var(--navy); color:#fff; }
+  .kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:14px; }
+  .kpi{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+  .kpi .n{ font-size:26px; font-weight:800; color:var(--navy); font-variant-numeric:tabular-nums; }
+  .kpi .l{ font-size:12px; color:var(--ink3); text-transform:uppercase; letter-spacing:.04em; }
+  .kpi.bad .n{ color:var(--bad); } .kpi.warn .n{ color:var(--warn); }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:14px; }
+  .banner{ border-radius:12px; padding:14px 16px; margin-bottom:14px; background:#fff7ed; border:1px solid #fed7aa; color:#7c2d12; }
+  .banner b{ color:#431407; }
+  .banner code{ background:rgba(0,0,0,.07); padding:1px 5px; border-radius:4px; }
+  .empty{ text-align:center; padding:36px 16px; color:var(--ink2); }
+  .empty h2{ font-size:17px; }
+  .empty ul{ text-align:left; display:inline-block; margin:8px 0 0; color:var(--ink2); }
+  .chips{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; align-items:center; }
+  .chip{ border:1px solid var(--line); background:var(--card); border-radius:999px; padding:5px 12px; font-size:13px; cursor:pointer; color:var(--ink2); }
+  .chip[aria-pressed="true"]{ background:var(--navy); border-color:var(--navy); color:#fff; }
+  select{ border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:9px; padding:6px 10px; font-size:13px; }
+  table{ width:100%; border-collapse:collapse; font-size:14px; }
+  th{ text-align:left; font-size:12px; color:var(--ink3); text-transform:uppercase; letter-spacing:.04em; padding:8px 10px; border-bottom:1px solid var(--line); }
+  td{ padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  tr:last-child td{ border-bottom:0; }
+  td a{ color:var(--navy); text-decoration:none; font-weight:600; overflow-wrap:anywhere; }
+  .sev{ display:inline-block; font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px; text-transform:uppercase; letter-spacing:.04em; }
+  .sev.error{ background:#fee2e2; color:#991b1b; } .sev.warn{ background:#fef3c7; color:#92400e; } .sev.info{ background:#e0e7ff; color:#3730a3; }
+  .tag{ display:inline-block; font-size:12px; padding:2px 8px; border-radius:6px; background:#eef0f4; color:var(--ink2); }
+  .ok{ color:var(--good); font-weight:700; } .no{ color:var(--ink3); font-weight:700; }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .scroll{ overflow-x:auto; }
+  .row-ignored td{ opacity:.55; }
+  @media (max-width:700px){ table.stack tr:first-child{ display:none; } table.stack tr{ display:block; padding:10px 0; border-bottom:1px solid var(--line); } table.stack tr:last-child{ border-bottom:0; } table.stack td{ display:block; border:0; padding:2px 0; } }
+  @media (max-width:700px){ .wrap{ padding:14px 12px; } .grid2{ grid-template-columns:1fr; } .head .btn{ flex:1; } th:nth-child(n+4), td:nth-child(n+4){ } }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0e1422; --card:#18213a; --line:#293651; --ink:#dfe5f0; --ink2:#aab6cf; --ink3:#7c89a5; }
+    .topbar{ background:#0a1020; }
+    h1,h2,.kpi .n,td a{ color:#fff; }
+    .banner{ background:#3a2412; border-color:#6b3d1a; color:#fed7aa; } .banner b{ color:#fff; }
+    .sev.error{ background:#4c1d1d; color:#fca5a5; } .sev.warn{ background:#43310f; color:#fcd34d; } .sev.info{ background:#25295a; color:#c7d2fe; }
+    .tag{ background:#232e48; color:#aab6cf; }
+    .kpi.bad .n{ color:#f87171; } .kpi.warn .n{ color:#fbbf24; }
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="brand">Medway &amp; Kent Removals</span>
+    <span class="crumb">Admin / SEO</span>
+    <span class="spacer"></span>
+    <a href="/admin/dashboard">&larr; Leads</a>
+    <a href="/admin/insights">&#128200; Insights</a>
+    <a href="/admin/marketing">&#128236; Marketing</a>
+  </div>
+
+  <div class="wrap">
+    <div class="head">
+      <div class="grow"><h1>SEO</h1><div class="muted" id="sub">Loading…</div></div>
+      <button class="btn primary" id="runaudit">&#8635; Run audit</button>
+    </div>
+    <div class="tabs" id="tabs" role="tablist"></div>
+    <div id="setup"></div>
+    <div id="view"><div class="empty">Loading…</div></div>
+  </div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const TABS = [
+  ['overview', 'Overview'], ['audit', 'Audit'], ['opportunities', 'Opportunities'],
+  ['content', 'Content'], ['report', 'Report'], ['ai', 'AI search'], ['settings', 'Settings'],
+];
+const TYPE_LABEL = {
+  title_missing:'Missing title', title_long:'Title too long', title_short:'Title too short',
+  meta_missing:'Missing description', meta_long:'Description too long', meta_short:'Description too short',
+  canonical_missing:'Missing canonical', canonical_mismatch:'Canonical points elsewhere', noindex_in_sitemap:'Noindex page in sitemap',
+  h1_count:'H1 problem', thin_content:'Thin content', img_alt_missing:'Images without alt text', jsonld_invalid:'Broken structured data',
+  review_claim:'Review claim differs from real figures', weak_internal_links:'Few internal links in', not_in_sitemap:'Missing from sitemap',
+  broken_link:'Broken link', internal_redirect:'Link goes via a redirect', dup_title:'Duplicate title', dup_description:'Duplicate description',
+  near_duplicate:'Very similar wording', sitemap_nonhtml:'Non-page file in sitemap', sitemap_dead:'Sitemap URL not working',
+  robots_no_sitemap:'robots.txt has no sitemap', robots_blocks_all:'robots.txt blocks everything',
+};
+const label = (t) => TYPE_LABEL[t] || t;
+const short = (u) => String(u).replace(/^https?:\/\/[^/]+/, '') || '/';
+const when = (d) => d ? new Date(d).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
+
+let status = null, ov = null, state = { sev: 'all', type: 'all', show: 'issues' };
+
+async function api(action, params = {}, body) {
+  const qs = new URLSearchParams({ action, ...params }).toString();
+  const r = await fetch('/api/admin/seo?' + qs, body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : undefined);
+  if (r.status === 401) { window.location.href = '/admin'; throw new Error('signed out'); }
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 403) throw Object.assign(new Error('admin only'), { code: 403 });
+  if (r.status === 503) throw Object.assign(new Error('tables'), { code: 'tables' });
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+
+function tabs() {
+  const cur = location.hash.slice(1) || 'overview';
+  $('tabs').innerHTML = TABS.map(([k, n]) => `<a class="tab" href="#${k}" ${k === cur ? 'aria-current="page"' : ''}>${n}</a>`).join('');
+  return TABS.some(([k]) => k === cur) ? cur : 'overview';
+}
+
+function empty(title, body, bullets) {
+  return `<div class="card empty"><h2>${esc(title)}</h2><div>${esc(body)}</div>${bullets ? '<ul>' + bullets.map((b) => `<li>${esc(b)}</li>`).join('') + '</ul>' : ''}</div>`;
+}
+
+function setupBanner() {
+  if (!status) return '';
+  if (!status.database) return `<div class="banner"><b>Can't reach the database.</b> Check that DATABASE_URL is set for this deployment.</div>`;
+  if (!status.tables_ready) return `<div class="banner"><b>One-time setup needed.</b> Open the Neon SQL editor and run <code>admin/SEO-SCHEMA.sql</code> from the repository. It only adds new <code>seo_</code> tables and changes nothing that exists. Then reload this page.</div>`;
+  return '';
+}
+
+// ── Views ───────────────────────────────────────────────────
+async function viewOverview() {
+  ov = await api('overview');
+  const a = ov.last_audit;
+  const sev = ov.open_issues;
+  const issues = (await api('issues', { status: 'open' })).issues;
+  const byType = {};
+  issues.forEach((i) => { const k = i.type; (byType[k] = byType[k] || { n: 0, sev: i.severity }).n++; });
+  const top = Object.entries(byType).sort((x, y) => ({ error:0, warn:1, info:2 }[x[1].sev] - { error:0, warn:1, info:2 }[y[1].sev]) || y[1].n - x[1].n).slice(0, 8);
+  $('view').innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><div class="n">${ov.page_total}</div><div class="l">Pages tracked</div></div>
+      <div class="kpi bad"><div class="n">${sev.error}</div><div class="l">Errors</div></div>
+      <div class="kpi warn"><div class="n">${sev.warn}</div><div class="l">Warnings</div></div>
+      <div class="kpi"><div class="n">${sev.info}</div><div class="l">Notes</div></div>
+      <div class="kpi"><div class="n">${ov.articles.awaiting_approval || 0}</div><div class="l">Awaiting approval</div></div>
+    </div>
+    ${a ? '' : empty('Run your first audit', 'The audit reads every page on your live site and lists what to fix. It only reads, it never changes anything.')}
+    ${top.length ? `<div class="card"><h2>What needs attention</h2><div class="scroll"><table>
+      <tr><th>Issue</th><th>Level</th><th>Pages</th><th></th></tr>
+      ${top.map(([t, v]) => `<tr><td>${esc(label(t))}</td><td><span class="sev ${v.sev}">${v.sev === 'info' ? 'note' : v.sev}</span></td><td>${v.n}</td><td><a href="#audit" data-type="${esc(t)}">View</a></td></tr>`).join('')}
+    </table></div></div>` : ''}
+    <div class="grid2">
+      <div class="card"><h2>Pages by kind</h2>${ov.pages.length ? `<table><tr><th>Kind</th><th>Pages</th><th>Avg words</th></tr>${ov.pages.map((p) => `<tr><td>${esc(p.page_type)}</td><td>${p.n}</td><td>${p.avg_words}</td></tr>`).join('')}</table>` : '<div class="muted">No pages yet.</div>'}</div>
+      <div class="card"><h2>Last audit</h2>${a ? `<div>${esc(a.status)} · ${esc(when(a.finished_at || a.created_at))}</div><div class="muted">${a.result ? esc(a.result.pages + ' pages, ' + a.result.issues + ' findings') : esc(a.last_error || '')}</div>` : '<div class="muted">Not run yet.</div>'}</div>
+    </div>`;
+  $('sub').textContent = a ? `Last audit ${when(a.finished_at || a.created_at)}` : 'No audit yet';
+}
+
+async function viewAudit() {
+  const all = (await api('issues', { status: 'all' })).issues.filter((i) => i.status !== 'resolved');
+  const shown = all.filter((i) => (state.sev === 'all' || i.severity === state.sev) && (state.type === 'all' || i.type === state.type));
+  const types = [...new Set(all.map((i) => i.type))].sort((a, b) => label(a).localeCompare(label(b)));
+  let pagesHtml = '';
+  if (state.show === 'pages') {
+    const pages = (await api('pages')).pages;
+    pagesHtml = `<div class="card scroll"><table><tr><th>Page</th><th>Kind</th><th>Words</th><th>Links in</th><th>Errors</th><th>Warnings</th></tr>
+      ${pages.map((p) => `<tr><td><a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.path)}</a></td><td><span class="tag">${esc(p.page_type)}</span></td><td>${p.word_count}</td><td>${p.links_in}</td><td>${p.errors || ''}</td><td>${p.warnings || ''}</td></tr>`).join('')}</table></div>`;
+  }
+  $('view').innerHTML = `
+    <div class="chips">
+      ${['issues', 'pages'].map((s) => `<button class="chip" data-show="${s}" aria-pressed="${state.show === s}">${s === 'issues' ? 'Issues' : 'All pages'}</button>`).join('')}
+      <span style="width:12px"></span>
+      ${state.show === 'issues' ? ['all', 'error', 'warn', 'info'].map((s) => `<button class="chip" data-sev="${s}" aria-pressed="${state.sev === s}">${{ all:'All', error:'Errors', warn:'Warnings', info:'Notes' }[s]}</button>`).join('') + `
+      <select id="typesel"><option value="all">Every type</option>${types.map((t) => `<option value="${esc(t)}" ${state.type === t ? 'selected' : ''}>${esc(label(t))}</option>`).join('')}</select>` : ''}
+    </div>
+    ${state.show === 'pages' ? pagesHtml : shown.length ? `<div class="card scroll"><table class="stack">
+      <tr><th>Level</th><th>Page</th><th>What's wrong</th><th></th></tr>
+      ${shown.map((i) => `<tr class="${i.status === 'ignored' ? 'row-ignored' : ''}"><td><span class="sev ${i.severity}">${i.severity === 'info' ? 'note' : i.severity}</span></td>
+        <td><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(short(i.url))}</a><div class="muted">${esc(label(i.type))}</div></td>
+        <td>${esc(i.detail)}</td>
+        <td><button class="btn small" data-ign="${i.id}" data-to="${i.status === 'ignored' ? 'open' : 'ignored'}">${i.status === 'ignored' ? 'Restore' : 'Ignore'}</button></td></tr>`).join('')}</table></div>`
+      : empty(all.length ? 'Nothing matches this filter' : 'No open findings', all.length ? 'Try a different level or type.' : 'Run an audit to check your pages.')}`;
+}
+
+function viewOpportunities() {
+  $('view').innerHTML = empty('Opportunities need Search Console', 'This tab will list real search queries from Google that already show your site, with a clear action for each. It stays empty until Search Console is connected, because it never guesses.', [
+    'Queries on page 2 that could reach page 1', 'Pages that get seen a lot but rarely clicked', 'Two of your pages competing for the same search', 'Searches with no matching page yet',
+  ]);
+}
+async function viewContent() {
+  const arts = (await api('articles')).articles;
+  $('view').innerHTML = arts.length ? `<div class="card scroll"><table><tr><th>Title</th><th>Status</th><th>Source</th><th>Updated</th></tr>
+    ${arts.map((a) => `<tr><td>${esc(a.title)}<div class="muted">${esc(a.target_keyword || '')}</div></td><td><span class="tag">${esc(a.status.replace(/_/g, ' '))}</span></td><td>${esc(a.source)}</td><td>${esc(when(a.updated_at))}</td></tr>`).join('')}</table></div>`
+    : empty('No articles in the queue yet', 'Drafts and the approval queue arrive in the next step. Every article, including the posts already scheduled on the blog, will wait here for your approval before it can go live.', [
+      'Each draft is checked, then you approve one exact version', 'Editing after approval cancels the approval', 'Nothing publishes without your tick']);
+}
+function viewReport() {
+  $('view').innerHTML = empty('Reports need Search Console', 'Clicks, impressions, average position and organic quote enquiries will appear here once Search Console is connected. Your quote form already records how people say they found you.');
+}
+function viewAi() {
+  $('view').innerHTML = empty('AI search checks', 'The monthly check you already keep (Perplexity, ChatGPT, Bing) will be entered here by hand. Google AI Overviews cannot be checked automatically.');
+}
+async function viewSettings() {
+  const jobs = (await api('jobs')).jobs;
+  const i = (status && status.integrations) || {};
+  const b = status && status.brightlocal_budget;
+  const row = (name, ok, note) => `<tr><td>${esc(name)}</td><td class="${ok ? 'ok' : 'no'}">${ok ? 'Connected' : 'Not connected'}</td><td class="muted">${esc(note)}</td></tr>`;
+  $('view').innerHTML = `
+    <div class="card"><h2>Connections</h2><table>
+      ${row('Database', status && status.tables_ready, status && status.tables_ready ? 'SEO tables are in place' : 'Run admin/SEO-SCHEMA.sql')}
+      ${row('Google Search Console', i.search_console, 'Needed for opportunities and reports')}
+      ${row('BrightLocal', i.brightlocal, b ? `Development key: ${b.used} of ${b.limit} requests used, ${b.remaining} left (a reserve of ${b.reserve} is kept back)` : 'Local ranking checks (optional)')}
+      ${row('Run-audit button starts the checker', i.audit_button_dispatch, i.audit_button_dispatch ? 'Clicking Run audit starts it straight away' : 'Without this, audits run each Monday or from the GitHub Actions tab')}
+    </table></div>
+    <div class="card scroll"><h2>Recent background jobs</h2>${jobs.length ? `<table class="stack"><tr><th>#</th><th>Type</th><th>Status</th><th>When</th><th>Result</th></tr>
+      ${jobs.map((j) => `<tr><td>${j.id}</td><td>${esc(j.type)}</td><td><span class="tag">${esc(j.status)}</span></td><td>${esc(when(j.finished_at || j.created_at))}</td><td class="muted">${esc(j.last_error || (j.result ? j.result.pages + ' pages, ' + j.result.issues + ' findings' : ''))}</td></tr>`).join('')}</table>` : '<div class="muted">No jobs yet.</div>'}</div>`;
+}
+
+const VIEWS = { overview: viewOverview, audit: viewAudit, opportunities: viewOpportunities, content: viewContent, report: viewReport, ai: viewAi, settings: viewSettings };
+
+async function render() {
+  const tab = tabs();
+  if (status && status.tables_ready && !ov) { try { ov = await api('overview'); } catch {} }
+  if (status && status.tables_ready && ov) { const a = ov.last_audit; $('sub').textContent = a ? `Last audit ${when(a.finished_at || a.created_at)}` : 'No audit yet'; }
+  $('setup').innerHTML = setupBanner();
+  if (status && !status.tables_ready) $('sub').textContent = status.database ? 'Setup needed' : 'Database not reachable';
+  if (status && !status.tables_ready && tab !== 'settings') {
+    $('view').innerHTML = empty('Waiting for setup', 'Once the SEO tables exist this page fills in.');
+    return;
+  }
+  try { await VIEWS[tab](); }
+  catch (e) {
+    if (e.code === 403) $('view').innerHTML = empty('Admin only', 'The SEO area is only for the admin login.');
+    else if (e.code === 'tables') { status = await api('status'); $('setup').innerHTML = setupBanner(); $('view').innerHTML = empty('Waiting for setup', 'Once the SEO tables exist this page fills in.'); }
+    else $('view').innerHTML = empty('Something went wrong', e.message || 'Try again in a moment.');
+  }
+}
+
+document.addEventListener('click', async (e) => {
+  const t = e.target.closest('[data-show],[data-sev],[data-ign],[data-type]');
+  if (!t) return;
+  if (t.dataset.show) { state.show = t.dataset.show; render(); }
+  else if (t.dataset.sev) { state.sev = t.dataset.sev; render(); }
+  else if (t.dataset.type) { state.type = t.dataset.type; state.sev = 'all'; state.show = 'issues'; }
+  else if (t.dataset.ign) {
+    t.disabled = true;
+    try { await api('issue', {}, { id: Number(t.dataset.ign), status: t.dataset.to }); } catch (err) { alert(err.message); }
+    render();
+  }
+});
+document.addEventListener('change', (e) => { if (e.target.id === 'typesel') { state.type = e.target.value; render(); } });
+window.addEventListener('hashchange', render);
+
+$('runaudit').addEventListener('click', async () => {
+  const b = $('runaudit');
+  if (!status || !status.tables_ready) { alert('Run admin/SEO-SCHEMA.sql in Neon first.'); return; }
+  b.disabled = true; b.textContent = 'Queuing…';
+  try {
+    const r = await api('run_audit', {}, {});
+    $('sub').textContent = r.dispatched ? 'Audit started. It takes about a minute, then reload.'
+      : r.created === false ? 'An audit is already queued or running.'
+      : 'Audit queued. It will run on the next scheduled check or when started from GitHub Actions.';
+  } catch (e) { $('sub').textContent = 'Could not queue the audit: ' + e.message; }
+  b.disabled = false; b.innerHTML = '&#8635; Run audit';
+});
+
+(async () => {
+  try { status = await api('status'); } catch (e) { if (e.code === 403) { $('runaudit').style.display = 'none'; $('tabs').style.display = 'none'; $('view').innerHTML = empty('Admin only', 'The SEO area is only for the admin login.'); $('sub').textContent = ''; return; } }
+  render();
+})();
+</script>
+</body>
+</html>
