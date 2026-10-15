@@ -12,7 +12,7 @@ const good = () => ({
   meta_description: 'A practical, honest guide to planning a house move in Rochester, from booking a date to what to do on the day. Written by a local firm.',
   slug: 'moving-house-in-rochester-guide',
   keyword: 'moving house rochester',
-  content: `<h2>One</h2>${para(300, 'alpha')}<h2>Two</h2>${para(300, 'beta')}<h2>Three</h2>${para(300, 'gamma')}<p>See <a href="/house-removals">house removals</a> and our <a href="/removal-costs-kent">cost guide</a>. Moving house rochester is easier with a plan.</p>`,
+  content: `<h2>One</h2>${para(480, 'alpha')}<h2>Two</h2>${para(480, 'beta')}<h2>Three</h2>${para(480, 'gamma')}<p>See <a href="/house-removals">house removals</a> and our <a href="/removal-costs-kent">cost guide</a>. Moving house rochester is easier with a plan.</p>`,
 });
 const ctx = () => ({ allowedAmounts, sitePaths, existingSlugs: new Set(['storage']), corpus: [] });
 const codes = (r, sev) => r.findings.filter((f) => !sev || f.severity === sev).map((f) => f.code);
@@ -65,6 +65,7 @@ test('structure problems are critical: h1, scripts, placeholders, too short, bad
   t((d) => { d.content += '<p onclick="x()">hi</p>'; }, 'unsafe_markup');
   t((d) => { d.content += '<p>[insert price here]</p>'; }, 'placeholder_text');
   t((d) => { d.content = '<h2>a</h2><p>too short</p>'; }, 'too_short');
+  t((d) => { d.content = `<h2>a</h2>${para(700, 'x')}<h2>b</h2>${para(300, 'y')}<a href="/house-removals">a</a><a href="/removal-costs-kent">b</a>`; }, 'too_short'); // 1,000 words is still under the 1,200 floor
   t((d) => { d.slug = 'Bad Slug!'; }, 'slug_invalid');
   t((d) => { d.slug = 'storage'; }, 'slug_taken');
   t((d) => { d.meta_description = ''; }, 'meta_missing');
@@ -102,4 +103,13 @@ test('long dashes are cleaned and the owner is told what to check', () => {
   assert.ok(codes(r, 'info').includes('check_this'));
   assert.equal(keyOf('a', 'b'), keyOf('a', 'b'));
   assert.notEqual(keyOf('a', 'b'), keyOf('a', 'c'));
+});
+
+test('the 1,200-word floor: 1,199 fails, 1,200 passes, below the recommended length is only a warning', () => {
+  const at = (n) => { const d = good(); d.content = `<h2>a</h2>${para(Math.floor(n / 3), 'p')}<h2>b</h2>${para(Math.floor(n / 3), 'q')}<h2>c</h2>${para(n - 2 * Math.floor(n / 3), 'r')}<a href="/house-removals">a</a><a href="/removal-costs-kent">b</a>`; return checkDraft(d, ctx()); };
+  const short = at(1150), ok = at(1300);
+  assert.ok(codes(short, 'critical').includes('too_short'));
+  assert.ok(!codes(ok, 'critical').includes('too_short'));
+  assert.ok(codes(ok, 'warn').includes('short'), 'between 1,200 and 1,400 is only a warning');
+  assert.ok(!codes(at(1600)).includes('short'));
 });

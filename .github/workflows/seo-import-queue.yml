@@ -1,0 +1,31 @@
+name: MKR SEO Import Queue
+
+# One-off (safe to repeat): brings the old auto-publish queue (blog/scheduled)
+# under the approval queue. Nothing is approved or published by this.
+# Needs the DATABASE_URL secret and the admin/SEO-SCHEMA.sql tables.
+
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: 'Only posts dated on or after this day (YYYY-MM-DD). Empty means today.'
+        required: false
+        default: ''
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - name: Import queued posts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          FROM: ${{ github.event.inputs.from }}
+        run: |
+          if [ -n "$FROM" ]; then node scripts/seo-import-queue.mjs --db --from "$FROM"
+          else node scripts/seo-import-queue.mjs --db; fi

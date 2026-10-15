@@ -10,7 +10,7 @@ const pages = [{ path: '/house-removals', title: 'House removals' }, { path: '/r
 const ctx = () => ({ facts, pricing, pages, corpus: [], existingSlugs: new Set(), allowedAmounts: allowedAmountsFrom(pricing), sitePaths: new Set(pages.map((p) => p.path)), model: 'test-model' });
 const body = (n, seed) => Array.from({ length: n }, (_, i) => seed + (i % 250)).join(' ');
 const research = { intent: 'planning a move', audience: 'Chatham homeowners', angle: 'local access detail', outline: [{ h2: 'a', points: [] }, { h2: 'b', points: [] }, { h2: 'c', points: [] }], faq: [{ q: 'q?' }], internal_links: [{ path: '/house-removals', anchor: 'house removals' }], claims_to_verify: ['Check Chatham parking rules'], avoid: [] };
-const article = (extra = '') => ({ title: 'House removals in Chatham: what to plan — and when', meta_description: 'A practical guide to planning house removals in Chatham, covering booking, access, parking and moving day, from a local Medway firm.', slug: 'House Removals In Chatham!', content_html: `<h2>Start</h2><p>${body(300, 'alpha')}</p><h2>Middle</h2><p>${body(300, 'beta')}</p><h2>End</h2><p>${body(300, 'gamma')} house removals in chatham. <a href="/house-removals">House removals</a> and <a href="/removal-costs-kent">costs</a>.${extra}</p>`, faqs: [{ q: 'How early?', a: 'Four weeks.' }], image_suggestions: [{ description: 'boxes', alt: 'Boxes in a hallway' }], claims_to_verify: ['Confirm Saturday availability'] });
+const article = (extra = '') => ({ title: 'House removals in Chatham: what to plan — and when', meta_description: 'A practical guide to planning house removals in Chatham, covering booking, access, parking and moving day, from a local Medway firm.', slug: 'House Removals In Chatham!', content_html: `<h2>Start</h2><p>${body(440, 'alpha')}</p><h2>Middle</h2><p>${body(440, 'beta')}</p><h2>End</h2><p>${body(440, 'gamma')} house removals in chatham. <a href="/house-removals">House removals</a> and <a href="/removal-costs-kent">costs</a>.${extra}</p>`, faqs: [{ q: 'How early?', a: 'Four weeks.' }], image_suggestions: [{ description: 'boxes', alt: 'Boxes in a hallway' }], claims_to_verify: ['Confirm Saturday availability'] });
 const stub = (replies) => { const calls = []; const f = async (a) => { calls.push(a); const r = replies.shift(); if (r instanceof Error) throw r; return typeof r === 'string' ? r : JSON.stringify(r); }; f.calls = calls; return f; };
 const input = { keyword: 'house removals in chatham', kind: 'post', evidence: { impressions: 340 } };
 
@@ -71,6 +71,22 @@ test('the Claude client retries server errors and rate limits but not bad reques
   const f2 = mk([{ status: 400, body: { error: { message: 'bad model' } } }]);
   await assert.rejects(makeClaude({ apiKey: 'k', fetchFn: f2, sleep: async () => {} })({ system: 's', user: 'u' }), /Claude API 400: bad model/);
   assert.equal(f2.seen.length, 1);
+});
+
+test('a too-short draft is automatically expanded; if expansion fails the gate still blocks it', async () => {
+  const short = { ...article(), content_html: `<h2>Start</h2><p>${body(200, 'alpha')} house removals in chatham</p><h2>b</h2><p>${body(200, 'beta')}</p><h2>c</h2><p>${body(100, 'gamma')} <a href="/house-removals">a</a> <a href="/removal-costs-kent">b</a></p>` };
+  const llm = stub([research, short, { content_html: article().content_html }, { unsupported: [], verdict: 'ok' }]);
+  const out = await runDraft({ input, ctx: ctx(), llm });
+  assert.equal(llm.calls.length, 4);
+  assert.match(llm.calls[2].user, /too short/);
+  assert.ok(out.quality.stats.words >= 1200, 'expanded to ' + out.quality.stats.words);
+  assert.ok(!out.quality.findings.some((f) => f.code === 'too_short'));
+  const llm2 = stub([research, short, 'garbage', 'garbage', { unsupported: [], verdict: 'ok' }]);
+  const out2 = await runDraft({ input, ctx: ctx(), llm: llm2 });
+  assert.ok(out2.quality.findings.some((f) => f.code === 'too_short' && f.severity === 'critical'), 'a failed expansion leaves the draft blocked, not published short');
+  const llm3 = stub([research, { ...short, slug: 'something-else' }, { content_html: article().content_html }, { unsupported: [], verdict: 'ok' }]);
+  const out3 = await runDraft({ input: { ...input, keep_slug: 'the-original-slug' }, ctx: ctx(), llm: llm3 });
+  assert.equal(out3.revision.meta.slug, 'the-original-slug', 'a redraft keeps the address that was scheduled');
 });
 
 test('the research prompt carries the rules that stop invented facts', () => {

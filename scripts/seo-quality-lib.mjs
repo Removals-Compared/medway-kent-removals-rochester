@@ -10,7 +10,10 @@ import { jaccard } from './seo-audit-lib.mjs';
 export const ACKNOWLEDGEABLE = new Set(['unverified_price', 'unverified_claim']);
 
 const words = (t) => (t.match(/[A-Za-z0-9£][A-Za-z0-9£'’-]*/g) || []);
+export const MIN_WORDS = 1200;       // hard floor for a blog article
+export const RECOMMENDED_WORDS = 1400;
 const stripTags = (h) => h.replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
+export const countWords = (html) => words(stripTags(html)).length;
 export const keyOf = (code, detail = '') => `${code}:${crypto.createHash('sha1').update(String(detail)).digest('hex').slice(0, 10)}`;
 
 // Em dashes read as machine-written; the site replaces them (see scripts/publish-due.mjs).
@@ -70,8 +73,9 @@ export function checkDraft(draft, ctx = {}) {
     if (ctx.existingSlugs && ctx.existingSlugs.has(slug)) add('slug_taken', 'critical', 'A page or post with this URL already exists.', slug);
   }
 
-  if (wordCount < 500) add('too_short', 'critical', `Only ${wordCount} words. A useful article needs at least 500, ideally 900 or more.`);
-  else if (wordCount < 900) add('short', 'warn', `${wordCount} words. Aim for 900 or more unless the topic is genuinely small.`);
+  const minWords = ctx.minWords ?? MIN_WORDS;
+  if (wordCount < minWords) add('too_short', 'critical', `Only ${wordCount} words. Articles need at least ${minWords}, ideally ${RECOMMENDED_WORDS} or more.`);
+  else if (wordCount < RECOMMENDED_WORDS) add('short', 'warn', `${wordCount} words. Aim for ${RECOMMENDED_WORDS} or more.`);
   if ((content.match(/<h2[\s>]/gi) || []).length < 3) add('few_headings', 'warn', 'Use at least three H2 sections so the article is easy to scan.');
 
   if (keyword) {

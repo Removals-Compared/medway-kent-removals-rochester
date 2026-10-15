@@ -8,7 +8,7 @@
 //    3. review    → a second pass that lists claims the facts do not support
 //  then the deterministic quality gate (seo-quality-lib.mjs) scores the result.
 // ════════════════════════════════════════════════════════════
-import { checkDraft, cleanWriting } from './seo-quality-lib.mjs';
+import { checkDraft, cleanWriting, countWords, MIN_WORDS } from './seo-quality-lib.mjs';
 
 export const DEFAULT_MODEL = 'claude-sonnet-5-5';
 
@@ -98,13 +98,22 @@ export function validateResearch(j) {
 export function writePrompt({ facts, pricing, brief, input }) {
   return {
     system: `You are a careful copywriter for a UK removals company. You write useful, accurate articles that a local customer would be glad to have read.\n${RULES}\nReply with ONE JSON object and nothing else.`,
-    user: `BUSINESS FACTS (JSON):\n${JSON.stringify(facts)}\n\nPRICE LIST (the only prices that may be used):\n${pricing}\n\nBRIEF (follow it):\n${JSON.stringify(brief)}\n\nWrite the ${input.kind === 'page_rewrite' ? 'replacement body for ' + input.target_url : 'article'} for the search "${input.keyword}".\n\nFormat of content_html: an HTML fragment using only <h2>, <h3>, <p>, <ul>, <ol>, <li>, <strong>, <a href="/path">. NO <h1> (the template adds it from the title). 1000 to 1600 words. Open by answering the search directly. Include an H2 "Frequently asked questions" with each question as an <h3> and a short factual answer. Link to the internal pages in the brief naturally, using root-relative paths like /house-removals. Finish with a short call to action paragraph using the phone number and contact page from the facts.\n\nReturn JSON: {"title": string (60 characters or fewer, includes the search naturally), "meta_description": string (120 to 155 characters), "slug": string (lowercase, hyphens), "content_html": string, "faqs": [{"q": string, "a": string}], "image_suggestions": [{"description": string, "alt": string}], "claims_to_verify": [string]}`,
+    user: `BUSINESS FACTS (JSON):\n${JSON.stringify(facts)}\n\nPRICE LIST (the only prices that may be used):\n${pricing}\n\nBRIEF (follow it):\n${JSON.stringify(brief)}\n\nWrite the ${input.kind === 'page_rewrite' ? 'replacement body for ' + input.target_url : 'article'} for the search "${input.keyword}".\n\nFormat of content_html: an HTML fragment using only <h2>, <h3>, <p>, <ul>, <ol>, <li>, <strong>, <a href="/path">. NO <h1> (the template adds it from the title). 1400 to 1800 words (NEVER fewer than 1200: count them). Open by answering the search directly. Include an H2 "Frequently asked questions" with each question as an <h3> and a short factual answer. Link to the internal pages in the brief naturally, using root-relative paths like /house-removals. Finish with a short call to action paragraph using the phone number and contact page from the facts.\n\nReturn JSON: {"title": string (60 characters or fewer, includes the search naturally), "meta_description": string (120 to 155 characters), "slug": string (lowercase, hyphens), "content_html": string, "faqs": [{"q": string, "a": string}], "image_suggestions": [{"description": string, "alt": string}], "claims_to_verify": [string]}`,
     maxTokens: 8000,
   };
 }
 export function validateDraft(j) {
   need(j, 'title', 'string'); need(j, 'meta_description', 'string'); need(j, 'slug', 'string'); need(j, 'content_html', 'string'); needArr(j, 'faqs'); needArr(j, 'claims_to_verify');
 }
+
+export function expandPrompt({ facts, pricing, brief, draft, words, minWords }) {
+  return {
+    system: `You are a careful copywriter for a UK removals company. You lengthen an article that is too short by adding genuinely useful content, not padding.\n${RULES}\nReply with ONE JSON object and nothing else.`,
+    user: `BUSINESS FACTS (JSON):\n${JSON.stringify(facts)}\n\nPRICE LIST (the only prices that may be used):\n${pricing}\n\nBRIEF:\n${JSON.stringify(brief)}\n\nCURRENT ARTICLE (${words} words, which is too short; it must be at least ${minWords}, aim for ${minWords + 250}):\n${draft.content_html}\n\nRewrite the whole article so it is at least ${minWords + 150} words. Keep everything that is good. Add practical depth: extra sections from the brief outline, worked examples, checklists, common mistakes, questions people really ask. No filler, no repetition, no invented facts. Same HTML rules as before (h2, h3, p, ul, ol, li, strong, a with root-relative paths; no h1). Keep the FAQ section and the closing call to action.\n\nReturn JSON: {"content_html": string, "faqs": [{"q": string, "a": string}], "claims_to_verify": [string]}`,
+    maxTokens: 9000,
+  };
+}
+export function validateExpand(j) { need(j, 'content_html', 'string'); }
 
 export function reviewPrompt({ facts, pricing, draft }) {
   return {
@@ -122,6 +131,19 @@ export async function runDraft({ input, ctx, llm, onStep = () => {} }) {
   const brief = await askJson(llm, researchPrompt({ facts: ctx.facts, pricing: ctx.pricing, pages: ctx.pages, input }), validateResearch, 'Research');
   onStep('drafting');
   const written = await askJson(llm, writePrompt({ facts: ctx.facts, pricing: ctx.pricing, brief, input }), validateDraft, 'Writing');
+  // Too short? Ask for a fuller version (twice at most). The gate still has the final say.
+  const minWords = ctx.minWords ?? MIN_WORDS;
+  for (let i = 0; i < 2 && countWords(written.content_html) < minWords; i++) {
+    onStep('drafting');
+    try {
+      const more = await askJson(llm, expandPrompt({ facts: ctx.facts, pricing: ctx.pricing, brief, draft: written, words: countWords(written.content_html), minWords }), validateExpand, 'Expand');
+      if (countWords(more.content_html) > countWords(written.content_html)) {
+        written.content_html = more.content_html;
+        if (Array.isArray(more.faqs) && more.faqs.length) written.faqs = more.faqs;
+        if (Array.isArray(more.claims_to_verify)) written.claims_to_verify = [...written.claims_to_verify, ...more.claims_to_verify];
+      }
+    } catch { break; }
+  }
   onStep('quality_check');
   let review = { unsupported: [], verdict: 'ok' };
   try { review = await askJson(llm, reviewPrompt({ facts: ctx.facts, pricing: ctx.pricing, draft: written }), validateReview, 'Review'); }
@@ -130,7 +152,7 @@ export async function runDraft({ input, ctx, llm, onStep = () => {} }) {
   const content = cleanWriting(written.content_html.trim());
   const title = cleanWriting(written.title.trim());
   const meta_description = cleanWriting(written.meta_description.trim());
-  let slug = slugify(written.slug) || slugify(input.keyword);
+  const slug = input.keep_slug || slugify(written.slug) || slugify(input.keyword);
   const claims = [
     ...brief.claims_to_verify, ...written.claims_to_verify,
     ...review.unsupported.map((u) => `${u.claim} (${u.why})`),

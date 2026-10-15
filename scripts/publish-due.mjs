@@ -10,6 +10,7 @@
 //  Idempotent: safe to run any number of times.
 // ════════════════════════════════════════════════════════════
 import fs from 'node:fs';
+import { matchesRevision } from './seo-sync-lib.mjs';
 import path from 'node:path';
 
 const ROOT = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
@@ -135,13 +136,13 @@ function publishDateFor(slug) {
 
 // ── 1. Publish due scheduled posts (only if the owner has approved them) ──
 // Approval gate: a due file is published only when the approval queue holds an
-// APPROVED article for that slug whose approved version is still the original
-// file (not an edited one, which the publishing adapter handles). Anything
+// APPROVED article for that slug AND the file's text equals the approved version
+// (scripts/seo-sync-queue.mjs writes approved rewrites into the file first). Anything
 // else is HELD, and so is everything if the queue cannot be reached: failing
 // closed is deliberate. Set SEO_APPROVAL_GATE=off only to bypass in an emergency.
 const GATE_ON = process.env.SEO_APPROVAL_GATE !== 'off';
 let gateQuery = null;
-async function approvalState(slug) {
+async function approvalState(slug, fileHtml) {
   if (!gateQuery) {
     if (!process.env.DATABASE_URL) return { ok: false, why: 'no DATABASE_URL, so approval cannot be checked' };
     const { neon } = await import('@neondatabase/serverless');
@@ -151,12 +152,12 @@ async function approvalState(slug) {
   let rows;
   try {
     rows = await gateQuery(
-      `SELECT a.id, a.status, r.created_by FROM seo_articles a JOIN seo_article_revisions r ON r.id = a.current_revision_id WHERE a.slug = $1`, [slug]);
+      `SELECT a.id, a.status, r.title, r.content, r.meta FROM seo_articles a JOIN seo_article_revisions r ON r.id = a.current_revision_id WHERE a.slug = $1`, [slug]);
   } catch (e) { return { ok: false, why: 'approval queue unreachable (' + String(e.message).slice(0, 60) + ')' }; }
   if (!rows.length) return { ok: false, why: 'not in the approval queue' };
   const r = rows[0];
   if (!['approved', 'publishing', 'published'].includes(r.status)) return { ok: false, why: 'status is ' + r.status.replace(/_/g, ' ') };
-  if (r.created_by !== 'import') return { ok: false, why: 'approved after editing; the publishing adapter must write the edited version' };
+  if (!matchesRevision(fileHtml, r)) return { ok: false, why: 'the file does not match the approved version (the sync step has not written it yet)' };
   return { ok: true, id: r.id };
 }
 
@@ -167,7 +168,7 @@ for (const f of fs.readdirSync(SCHEDULED).sort()) {
   if (fs.existsSync(dest)) continue;
   let approvedId = null;
   if (GATE_ON) {
-    const st = await approvalState(m[2].replace(/\.html$/, ''));
+    const st = await approvalState(m[2].replace(/\.html$/, ''), fs.readFileSync(path.join(SCHEDULED, f), 'utf8'));
     if (!st.ok) { changed.push('HELD ' + m[2] + ' (scheduled ' + m[1] + '): ' + st.why); continue; }
     approvedId = st.id;
   }

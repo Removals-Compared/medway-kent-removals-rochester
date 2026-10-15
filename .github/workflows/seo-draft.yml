@@ -10,13 +10,19 @@ on:
   workflow_dispatch:
     inputs:
       job_id:
-        description: 'seo_jobs id created by the dashboard'
-        required: true
+        description: 'seo_jobs id created by the dashboard (leave empty when redrafting the queue)'
+        required: false
+        default: ''
+      queued:
+        description: 'Redraft every imported queue post that is still its original short text'
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   draft:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,4 +36,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SEO_MODEL: ${{ vars.SEO_MODEL }}
           JOB_ID: ${{ github.event.inputs.job_id }}
-        run: node scripts/seo-draft.mjs --job "$JOB_ID"
+          QUEUED: ${{ github.event.inputs.queued }}
+        run: |
+          if [ "$QUEUED" = "true" ]; then node scripts/seo-draft.mjs --queued
+          else node scripts/seo-draft.mjs --job "$JOB_ID"; fi

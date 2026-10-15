@@ -22,6 +22,13 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # Writes any approved rewrite of a queued post into its scheduled file,
+      # so the post that goes live is exactly the version you approved.
+      - name: Sync approved versions into the schedule
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/seo-sync-queue.mjs
+
       # Publishes due posts, keeps the writing clean (no em dashes),
       # and keeps blog.html + sitemap.xml in sync with blog/posts/.
       # A due post goes live ONLY if it has been approved in the admin SEO
