@@ -191,7 +191,9 @@ export function analyse(pages, ctx) {
     if (p.links_in <= 1 && p.path !== '/' && indexable(p)) {
       add(u, 'weak_internal_links', 'info', `Only ${p.links_in} other page(s) link to this one in their body text.`);
     }
-    if (indexable(p) && !inSitemap.has(p.path)) add(u, 'not_in_sitemap', 'warn', 'Indexable page is missing from sitemap.xml.');
+    // a page whose canonical is another page belongs outside the sitemap, so it is not asked to be in it
+    const selfCanonical = !p.canonical || toPath(p.canonical) === p.path;
+    if (indexable(p) && selfCanonical && !inSitemap.has(p.path)) add(u, 'not_in_sitemap', 'warn', 'Indexable page is missing from sitemap.xml.');
 
     for (const t of p.contextual_links) {
       const code = ctx.status[t];
