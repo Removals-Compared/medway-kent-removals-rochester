@@ -519,6 +519,29 @@ export async function aiImportBrightLocal(text, actor) {
 
 // Start the publish workflow now instead of waiting for the daily run. It still publishes
 // only what is approved; this just saves the wait.
+// Choose the day a new article goes live (or clear it). Articles from the old schedule keep the day in their
+// file name, and anything already publishing/published/archived cannot be re-timed. Not part of the approved
+// text, so it does not withdraw an approval; the publisher simply holds the article until that day.
+export const SCHEDULABLE = ['planned', 'researching', 'drafting', 'quality_check', 'awaiting_approval', 'needs_revision', 'approved'];
+export async function setSchedule(articleId, date, actor) {
+  const a = (await q(`SELECT id, title, status, source FROM seo_articles WHERE id = $1`, [articleId]))[0];
+  if (!a) throw Object.assign(new Error('Article not found'), { status: 404 });
+  if (a.source === 'scheduled_queue') throw Object.assign(new Error('This post keeps the day in its file name, so it cannot be re-timed here'), { status: 409 });
+  if (!SCHEDULABLE.includes(a.status)) throw Object.assign(new Error(`An article that is ${a.status.replace(/_/g, ' ')} cannot be re-timed`), { status: 409 });
+  let d = null;
+  if (date !== null && date !== undefined && String(date).trim() !== '') {
+    d = String(date).trim();
+    const t = Date.parse(d + 'T00:00:00Z');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || Number.isNaN(t) || new Date(t).toISOString().slice(0, 10) !== d) throw Object.assign(new Error('Choose a valid date'), { status: 400 });
+    const today = new Date().toISOString().slice(0, 10);
+    if (d < today) throw Object.assign(new Error('Choose today or a later day'), { status: 400 });
+    if (Date.parse(d + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z') > 366 * 864e5) throw Object.assign(new Error('Choose a day within the next year'), { status: 400 });
+  }
+  await q(`UPDATE seo_articles SET scheduled_for = $2::date WHERE id = $1`, [articleId, d]);
+  await logSeo(actor, d ? 'article_scheduled' : 'article_unscheduled', d ? `${a.title}: publish on ${d}` : a.title, articleId);
+  return { article_id: articleId, scheduled_for: d };
+}
+
 export async function publishNow(articleId, actor) {
   const a = (await q(`SELECT id, title, status, source, scheduled_for::text AS scheduled_for FROM seo_articles WHERE id = $1`, [articleId]))[0];
   if (!a) throw Object.assign(new Error('Article not found'), { status: 404 });
@@ -526,7 +549,7 @@ export async function publishNow(articleId, actor) {
   const dispatch = await dispatchWorkflow('publish', articleId);
   await logSeo(actor, 'publish_requested', `${a.title}${dispatch.dispatched ? '' : ' (could not start: ' + dispatch.reason + ')'}`, articleId);
   const today = new Date().toISOString().slice(0, 10);
-  const holdUntil = a.source === 'scheduled_queue' && a.scheduled_for && a.scheduled_for > today ? a.scheduled_for : null;
+  const holdUntil = a.scheduled_for && a.scheduled_for > today ? a.scheduled_for : null;
   return { article_id: a.id, hold_until: holdUntil, ...dispatch };
 }
 
