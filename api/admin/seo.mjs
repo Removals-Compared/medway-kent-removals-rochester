@@ -14,6 +14,13 @@
 //   POST query_status   {query, status: "new" | "targeted" | "ignored"}
 //   POST run_audit      queue a site audit (and start the GitHub workflow if configured)
 //   POST run_import     queue a Search Console import (same)
+//   GET  article        one article with every version and decision
+//   POST draft          queue an AI draft for a search or topic
+//   POST redraft        queue a fresh AI draft for an existing article
+//   POST save_revision  save an edit as a NEW version (needs approval again)
+//   POST acknowledge    owner confirms a flagged price or claim is true
+//   POST decide         approve / reject / request_changes on the CURRENT version
+//   POST archive        archive an article
 //
 //  Nothing here publishes, approves or edits website content.
 // ════════════════════════════════════════════════════════════
@@ -22,6 +29,7 @@ import {
   tablesReady, overview, listPages, listIssues, setIssueStatus, listJobs, enqueueJob,
   listArticles, brightlocalBudget, dispatchWorkflow, logSeo, searchConsoleStatus,
   opportunityData, setQueryStatus, reportData,
+  getArticle, createDraftRequest, redraft, saveRevision, acknowledge, decide, archiveArticle,
 } from './_seo.mjs';
 import { buildOpportunities, TYPE_LABELS } from '../../scripts/seo-opportunities-lib.mjs';
 
@@ -74,6 +82,10 @@ export default async function handler(req, res) {
         case 'report': return res.status(200).json(await reportData());
         case 'jobs': return res.status(200).json({ jobs: await listJobs() });
         case 'articles': return res.status(200).json({ articles: await listArticles() });
+        case 'article': {
+          const a = await getArticle(Number(req.query.id));
+          return a ? res.status(200).json(a) : res.status(404).json({ error: 'article not found' });
+        }
         default: return res.status(400).json({ error: 'unknown action' });
       }
     }
@@ -106,6 +118,21 @@ export default async function handler(req, res) {
           await logSeo(actor, type + '_queued', `job ${job.id}${dispatch.dispatched ? ' (workflow started)' : ''}`);
         }
         return res.status(200).json({ job, created, ...dispatch });
+      }
+      const articleActions = {
+        draft: async () => {
+          const r = await createDraftRequest({ keyword: body.keyword, notes: body.notes, evidence: body.evidence || null }, actor);
+          return { ...r, ...(await dispatchWorkflow('draft', r.job.id)) };
+        },
+        redraft: async () => { const r = await redraft(Number(body.article_id), actor); return { ...r, ...(await dispatchWorkflow('draft', r.job.id)) }; },
+        save_revision: () => saveRevision(Number(body.article_id), body, actor),
+        acknowledge: () => acknowledge(Number(body.article_id), String(body.key || ''), actor),
+        decide: () => decide(Number(body.article_id), Number(body.revision_id), String(body.decision), body.reason, actor),
+        archive: () => archiveArticle(Number(body.article_id), actor),
+      };
+      if (articleActions[action]) {
+        try { return res.status(200).json(await articleActions[action]()); }
+        catch (e) { if (e.status) return res.status(e.status).json({ error: e.message, findings: e.findings }); throw e; }
       }
       return res.status(400).json({ error: 'unknown action' });
     }

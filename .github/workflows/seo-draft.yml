@@ -1,0 +1,33 @@
+name: MKR SEO Draft
+
+# Writes one AI draft into the approval queue. It never approves or publishes.
+# Started from the admin SEO page ("Draft this") or by hand.
+#
+# Repository secrets needed: DATABASE_URL, ANTHROPIC_API_KEY
+# Optional repository variable: SEO_MODEL (defaults to claude-sonnet-5-5)
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: 'seo_jobs id created by the dashboard'
+        required: true
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm install
+      - name: Write the draft
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SEO_MODEL: ${{ vars.SEO_MODEL }}
+          JOB_ID: ${{ github.event.inputs.job_id }}
+        run: node scripts/seo-draft.mjs --job "$JOB_ID"

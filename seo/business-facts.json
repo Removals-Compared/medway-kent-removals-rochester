@@ -1,0 +1,52 @@
+{
+  "_note": "Facts the AI may rely on. Anything not here or in pricing.md must be confirmed by the owner before it can be approved. Prices are read from pricing.md at run time.",
+  "business": {
+    "name": "Medway & Kent Removals",
+    "founder": "Amos Osho",
+    "area": "Medway and Kent",
+    "base": "Rochester, Kent",
+    "phone_office": "01634 971005",
+    "phone_mobile_whatsapp": "07359 917380",
+    "email": "info@medwaykentremovals.co.uk",
+    "website": "https://www.medwaykentremovals.co.uk",
+    "response_time": "We respond to every enquiry within 60 minutes, 7 days a week"
+  },
+  "reviews": {
+    "rating": 5,
+    "minimum_google_reviews": 50,
+    "wording": "5 stars from 50+ Google reviews"
+  },
+  "claims_on_site_owner_to_confirm": [
+    "800+ moves completed"
+  ],
+  "services": [
+    "House removals", "Packing services", "Office removals", "Man and van",
+    "Storage", "Long distance removals", "Student removals"
+  ],
+  "includes_in_every_price": [
+    "Maxi loader Luton van and professional movers", "Loading, transport and unloading",
+    "Furniture blankets and protection", "Dismantling and reassembly of standard beds and flat pack furniture",
+    "Goods in transit insurance (full replacement value)", "Public liability insurance",
+    "Placement of items in the correct rooms"
+  ],
+  "terms": {
+    "deposit": "10% of the quote value on booking",
+    "balance": "90% on the move date",
+    "quote_validity": "14 days",
+    "cancellation": "Free, deposit refunded in full",
+    "vat": "Not applicable, the price quoted is the price paid"
+  },
+  "allowed_extra_amounts": [],
+  "never_claim_without_owner_confirmation": [
+    "years of experience or trading start dates", "awards, accreditations or trade body membership (BAR, Which? Trusted Trader, etc.)",
+    "named customer testimonials or quotes", "review counts or ratings other than the figures above",
+    "prices not in pricing.md", "'cheapest', 'best', '#1' or price-match guarantees",
+    "areas served that have no page on the site", "vehicle fleet size, staff numbers or staff vetting (e.g. DBS)"
+  ],
+  "style": {
+    "language": "UK English",
+    "no_em_dashes": true,
+    "tone": "plain, practical, honest, no hype",
+    "cta": "Call 01634 971005 or request a quote at https://www.medwaykentremovals.co.uk/contact"
+  }
+}

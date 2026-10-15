@@ -55,6 +55,7 @@
   .sev{ display:inline-block; font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px; text-transform:uppercase; letter-spacing:.04em; }
   .sev.error{ background:#fee2e2; color:#991b1b; } .sev.warn{ background:#fef3c7; color:#92400e; } .sev.info{ background:#e0e7ff; color:#3730a3; }
   .tag{ display:inline-block; font-size:12px; padding:2px 8px; border-radius:6px; background:#eef0f4; color:var(--ink2); }
+  .tag.st-awaiting_approval{ background:#fef3c7; color:#92400e; font-weight:700; } .tag.st-approved,.tag.st-published{ background:#dcfce7; color:#166534; font-weight:700; } .tag.st-needs_revision,.tag.st-failed,.tag.st-rejected{ background:#fee2e2; color:#991b1b; }
   .ok{ color:var(--good); font-weight:700; } .no{ color:var(--ink3); font-weight:700; }
   .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   .scroll{ overflow-x:auto; }
@@ -134,7 +135,7 @@ async function api(action, params = {}, body) {
 }
 
 function tabs() {
-  const cur = location.hash.slice(1) || 'overview';
+  const cur = (location.hash.slice(1) || 'overview').split('/')[0];
   $('tabs').innerHTML = TABS.map(([k, n]) => `<a class="tab" href="#${k}" ${k === cur ? 'aria-current="page"' : ''}>${n}</a>`).join('');
   return TABS.some(([k]) => k === cur) ? cur : 'overview';
 }
@@ -242,7 +243,7 @@ async function viewOpportunities() {
     ${shown.length ? `<div class="card scroll"><table class="stack"><tr><th>Opportunity</th><th>Evidence</th><th>What to do</th><th></th></tr>
       ${shown.slice(0, 100).map((o) => `<tr><td><b>${esc(o.title)}</b><div class="muted"><span class="tag">${esc(OPP_ICON[o.type] || o.type)}</span> <a href="${esc(o.page)}" target="_blank" rel="noopener">${esc(String(o.page).replace(/^https?:\/\/[^/]+/, '') || '/')}</a></div></td>
         <td>${esc(evid(o))}</td><td>${esc(o.action)}</td>
-        <td>${o.query ? `<button class="btn small" data-qs="${esc(o.query)}" data-to="targeted">Working on it</button> <button class="btn small" data-qs="${esc(o.query)}" data-to="ignored">Dismiss</button>` : ''}</td></tr>`).join('')}</table></div>`
+        <td>${o.query && ['striking_distance', 'low_ctr', 'place_gap'].includes(o.type) ? `<button class="btn small" data-draft="${esc(o.query)}" data-evid='${esc(JSON.stringify({ type: o.type, ...o.evidence }))}'>Draft a guide</button> ` : ''}${o.query ? `<button class="btn small" data-qs="${esc(o.query)}" data-to="targeted">Working on it</button> <button class="btn small" data-qs="${esc(o.query)}" data-to="ignored">Dismiss</button>` : ''}</td></tr>`).join('')}</table></div>`
       : empty('Nothing to flag', 'No searches match the opportunity rules right now. That is a fine result.')}`;
 }
 function bars(daily) {
@@ -286,12 +287,113 @@ async function viewReport() {
     ${leads ? `<div class="card"><h2>Enquiries in the last 28 days, by how people say they found you</h2>${leads.length ? `<table><tr><th>Answer</th><th>Enquiries</th></tr>${leads.map((x) => `<tr><td>${esc({ website: 'Google / search engine', lsa: 'Google Local Services ad', referral: 'Recommendation', other: 'Somewhere else' }[x.source] || x.source)}</td><td>${x.n}</td></tr>`).join('')}</table>` : '<div class="muted">No enquiries in this period.</div>'}
       <div class="muted" style="margin-top:8px">This is what customers tell you on the quote form, not a measured source. Search Console figures above exclude searches Google keeps private, so they can be lower than Google's own totals.</div></div>` : ''}`;
 }
-async function viewContent() {
+const STATUS_LABEL = { planned: 'Planned', researching: 'Researching', drafting: 'Drafting', quality_check: 'Checking', awaiting_approval: 'Needs your approval', approved: 'Approved', publishing: 'Publishing', published: 'Published', rejected: 'Rejected', needs_revision: 'Needs changes', failed: 'Failed', archived: 'Archived' };
+const stTag = (st) => `<span class="tag st-${esc(st)}">${esc(STATUS_LABEL[st] || st)}</span>`;
+const SOURCE_LABEL = { manual: 'You asked', opportunity: 'From an opportunity', bot: 'Blog bot', scheduled_queue: 'Old schedule' };
+
+async function newDraft(keyword, notes, evidence) {
+  const r = await api('draft', {}, { keyword, notes, evidence });
+  $('sub').textContent = r.dispatched ? 'Writing started. It takes a few minutes; this page updates when you reload.' : 'Draft queued. It is written when the draft workflow runs (see Settings).';
+  return r;
+}
+
+async function viewContent(id) {
+  if (id) return viewArticle(id);
   const arts = (await api('articles')).articles;
-  $('view').innerHTML = arts.length ? `<div class="card scroll"><table><tr><th>Title</th><th>Status</th><th>Source</th><th>Updated</th></tr>
-    ${arts.map((a) => `<tr><td>${esc(a.title)}<div class="muted">${esc(a.target_keyword || '')}</div></td><td><span class="tag">${esc(a.status.replace(/_/g, ' '))}</span></td><td>${esc(a.source)}</td><td>${esc(when(a.updated_at))}</td></tr>`).join('')}</table></div>`
-    : empty('No articles in the queue yet', 'Drafts and the approval queue arrive in the next step. Every article, including the posts already scheduled on the blog, will wait here for your approval before it can go live.', [
-      'Each draft is checked, then you approve one exact version', 'Editing after approval cancels the approval', 'Nothing publishes without your tick']);
+  const pending = arts.filter((a) => a.status === 'awaiting_approval').length;
+  const i = (status && status.integrations) || {};
+  $('view').innerHTML = `
+    <div class="card"><h2>Write a new draft</h2>
+      <div class="muted" style="margin-bottom:8px">Type the search or topic. The draft goes to the list below and waits for you; nothing is published without your approval.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="nd-kw" placeholder="e.g. moving house in Gillingham: parking and access" style="flex:2;min-width:220px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink)">
+      <input id="nd-notes" placeholder="Anything it should cover (optional)" style="flex:2;min-width:180px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink)">
+      <button class="btn primary" id="nd-go">Write draft</button></div></div>
+    ${pending ? `<div class="banner"><b>${pending} waiting for your approval.</b> Open one to read it, check the findings and decide.</div>` : ''}
+    ${arts.length ? `<div class="card scroll"><table class="stack"><tr><th>Article</th><th>Status</th><th>Checks</th><th>Source</th><th>Updated</th></tr>
+      ${arts.map((a) => `<tr><td><a href="#content/${a.id}">${esc(a.title)}</a><div class="muted">${esc(a.target_keyword || a.slug)}${a.scheduled_for ? ' · was due ' + esc(String(a.scheduled_for).slice(0, 10)) : ''}</div></td>
+        <td>${stTag(a.status)}${a.last_error ? `<div class="muted">${esc(a.last_error)}</div>` : ''}</td>
+        <td>${a.critical ? `<span class="sev error">${a.critical} to fix</span> ` : ''}${a.warnings ? `<span class="sev warn">${a.warnings} to check</span>` : ''}${!a.critical && !a.warnings && a.quality_score != null ? '<span class="ok">Clear</span>' : ''}</td>
+        <td>${esc(SOURCE_LABEL[a.source] || a.source)}</td><td>${esc(when(a.updated_at))}</td></tr>`).join('')}</table></div>`
+      : empty('No articles yet', 'Write a draft above, or use "Draft a guide" on a row in Opportunities. The posts that were scheduled to publish automatically will appear here once they are imported.')}`;
+  $('nd-go').onclick = async () => {
+    const kw = $('nd-kw').value.trim();
+    if (kw.length < 3) { $('nd-kw').focus(); return; }
+    $('nd-go').disabled = true;
+    try { await newDraft(kw, $('nd-notes').value.trim(), null); render(); } catch (e) { alert(e.message); $('nd-go').disabled = false; }
+  };
+}
+
+const FINDING_GROUPS = [['critical', 'Must be fixed or confirmed before approval'], ['warn', 'Worth checking'], ['info', 'Notes'], ['acknowledged', 'Confirmed by you']];
+function findingsHtml(q, canAck) {
+  const fs = (q && q.findings) || [];
+  return FINDING_GROUPS.map(([sev, label]) => {
+    const list = fs.filter((f) => f.severity === sev);
+    if (!list.length) return '';
+    return `<div style="margin-bottom:12px"><div class="muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em">${esc(label)} (${list.length})</div>
+      ${list.map((f) => `<div style="padding:7px 0;border-bottom:1px solid var(--line)"><span class="sev ${sev === 'critical' ? 'error' : sev === 'warn' ? 'warn' : 'info'}">${sev === 'acknowledged' ? 'confirmed' : sev === 'info' ? 'note' : sev === 'critical' ? 'fix' : 'check'}</span> ${esc(f.message)}
+        ${sev === 'critical' && canAck && (f.code === 'unverified_price' || f.code === 'unverified_claim') ? `<div><button class="btn small" data-ack="${esc(f.key)}">I have checked this and it is true</button></div>` : ''}</div>`).join('')}</div>`;
+  }).join('') || '<div class="muted">Nothing flagged.</div>';
+}
+
+async function viewArticle(id) {
+  const d = await api('article', { id });
+  const a = d.article, cur = d.revisions.find((r) => r.id === a.current_revision_id) || d.revisions[0];
+  const q = a.quality_report || {};
+  const meta = (cur && cur.meta) || {};
+  const approvedHere = d.approvals.find((x) => x.revision_id === a.current_revision_id && x.decision === 'approve');
+  const canDecide = a.status === 'awaiting_approval' && cur;
+  const slugNote = meta.slug || a.slug;
+  $('view').innerHTML = `
+    <div style="margin-bottom:10px"><a href="#content" style="color:var(--ink2)">&larr; All articles</a></div>
+    <div class="head"><div class="grow"><h1 style="font-size:19px">${esc(a.title)}</h1><div class="muted">${stTag(a.status)} version ${cur ? cur.version : '-'} · ${esc(SOURCE_LABEL[a.source] || a.source)}${a.scheduled_for ? ' · was scheduled for ' + esc(String(a.scheduled_for).slice(0, 10)) : ''}</div></div>
+      <button class="btn" id="a-redraft" title="Ask the AI to write a fresh version">Redraft with AI</button>
+      <button class="btn" id="a-archive">Archive</button></div>
+    ${a.last_error ? `<div class="banner"><b>Last error:</b> ${esc(a.last_error)}</div>` : ''}
+    ${approvedHere ? `<div class="banner" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46"><b>Approved</b> by ${esc(approvedHere.reviewer)} on ${esc(when(approvedHere.decided_at))}. Editing it creates a new version that needs approving again.</div>` : ''}
+    <div class="grid2" style="align-items:start">
+      <div class="card"><h2>Edit</h2>
+        <label class="muted">Title</label><input id="e-title" value="${esc(cur ? cur.title : a.title)}" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);margin-bottom:8px">
+        <label class="muted">Meta description <span id="e-mlen"></span></label><textarea id="e-meta" rows="3" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);margin-bottom:8px">${esc(cur ? cur.meta_description : '')}</textarea>
+        <label class="muted">Page address (/blog/posts/...)</label><input id="e-slug" value="${esc(slugNote)}" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);margin-bottom:8px">
+        <label class="muted">Text (HTML: h2, h3, p, ul, ol, li, strong, a)</label><textarea id="e-content" rows="22" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font-family:ui-monospace,Menlo,monospace;font-size:12.5px">${esc(cur ? cur.content : '')}</textarea>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button class="btn primary" id="e-save">Save as new version</button><span class="muted" id="e-state"></span></div>
+      </div>
+      <div>
+        <div class="card"><h2>Preview</h2><iframe id="prev" sandbox="" style="width:100%;height:340px;border:1px solid var(--line);border-radius:8px;background:#fff"></iframe></div>
+        <div class="card"><h2>Checks <span class="muted" style="font-weight:400">${q.score != null ? 'score ' + q.score + '/100 · ' + (q.stats ? q.stats.words + ' words' : '') : ''}</span></h2>${findingsHtml(q, true)}</div>
+        <div class="card"><h2>Your decision</h2>
+          <div class="muted" id="d-note" style="margin-bottom:8px">${canDecide ? (q.critical_count ? 'Fix or confirm the serious problems first.' : 'Approving applies to this exact version only.') : 'Only an article waiting for approval can be approved.'}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="d-approve" ${canDecide && !q.critical_count ? '' : 'disabled'}>Approve this version</button>
+          <button class="btn" id="d-changes" ${['awaiting_approval', 'needs_revision'].includes(a.status) ? '' : 'disabled'}>Ask for changes</button>
+          <button class="btn" id="d-reject" ${['awaiting_approval', 'needs_revision'].includes(a.status) ? '' : 'disabled'}>Reject</button></div></div>
+        <div class="card scroll"><h2>Versions and decisions</h2><table class="stack"><tr><th>Version</th><th>By</th><th>When</th><th>Decision</th></tr>
+          ${d.revisions.map((r) => { const ds = d.approvals.filter((x) => x.revision_id === r.id); return `<tr><td>v${r.version}${r.id === a.current_revision_id ? ' (current)' : ''}</td><td>${esc(r.created_by || '')}</td><td>${esc(when(r.created_at))}</td><td>${ds.length ? ds.map((x) => `${esc(x.decision.replace('_', ' '))} by ${esc(x.reviewer)}${x.reason ? ': ' + esc(x.reason) : ''}`).join('<br>') : '<span class="muted">none</span>'}</td></tr>`; }).join('')}</table></div>
+      </div>
+    </div>`;
+  const prev = $('prev'), ec = $('e-content');
+  const wrap = (h) => `<!doctype html><meta charset="utf-8"><body style="font:16px/1.65 Georgia,serif;max-width:640px;margin:16px auto;padding:0 14px;color:#1a2233"><h1 style="font-size:26px">${esc($('e-title').value)}</h1>${h.replace(/<(script|iframe|object|embed)[\s\S]*?<\/\1>|<(script|iframe|object|embed)[^>]*>/gi, '')}`;
+  prev.srcdoc = wrap(ec.value);
+  let dirty = false;
+  const markDirty = () => { dirty = true; $('e-state').textContent = 'Unsaved changes. Save before deciding.'; $('d-approve').disabled = true; prev.srcdoc = wrap(ec.value); };
+  ['e-title', 'e-meta', 'e-slug', 'e-content'].forEach((k) => $(k).addEventListener('input', markDirty));
+  $('e-meta').addEventListener('input', () => { $('e-mlen').textContent = `(${$('e-meta').value.length} characters)`; });
+  $('e-save').onclick = async () => {
+    $('e-save').disabled = true;
+    try { const r = await api('save_revision', {}, { article_id: a.id, title: $('e-title').value, meta_description: $('e-meta').value, slug: $('e-slug').value, content: ec.value }); $('sub').textContent = `Saved as version ${r.version}. Any earlier approval no longer applies.`; render(); }
+    catch (e) { alert(e.message); $('e-save').disabled = false; }
+  };
+  const decide = async (decision, askReason) => {
+    if (dirty) { alert('Save your edits first, then decide on the saved version.'); return; }
+    let reason = '';
+    if (askReason) { reason = prompt(decision === 'reject' ? 'Why are you rejecting this?' : 'What should change?') || ''; if (!reason.trim()) return; }
+    try { await api('decide', {}, { article_id: a.id, revision_id: cur.id, decision, reason }); render(); } catch (e) { alert(e.message); render(); }
+  };
+  $('d-approve').onclick = () => decide('approve', false);
+  $('d-changes').onclick = () => decide('request_changes', true);
+  $('d-reject').onclick = () => decide('reject', true);
+  $('a-redraft').onclick = async () => { if (!confirm('Ask the AI for a fresh version? It is added as a new version; nothing is lost.')) return; try { const r = await api('redraft', {}, { article_id: a.id }); $('sub').textContent = r.dispatched ? 'Redraft started.' : 'Redraft queued.'; } catch (e) { alert(e.message); } };
+  $('a-archive').onclick = async () => { if (!confirm('Archive this article?')) return; try { await api('archive', {}, { article_id: a.id }); location.hash = '#content'; } catch (e) { alert(e.message); } };
+  $('view').querySelectorAll('[data-ack]').forEach((b) => { b.onclick = async () => { b.disabled = true; try { await api('acknowledge', {}, { article_id: a.id, key: b.dataset.ack }); render(); } catch (e) { alert(e.message); b.disabled = false; } }; });
 }
 function viewAi() {
   $('view').innerHTML = empty('AI search checks', 'The monthly check you already keep (Perplexity, ChatGPT, Bing) will be entered here by hand. Google AI Overviews cannot be checked automatically.');
@@ -325,7 +427,7 @@ async function render() {
     $('view').innerHTML = empty('Waiting for setup', 'Once the SEO tables exist this page fills in.');
     return;
   }
-  try { await VIEWS[tab](); }
+  try { await VIEWS[tab]((location.hash.slice(1).split('/')[1]) || null); }
   catch (e) {
     if (e.code === 403) $('view').innerHTML = empty('Admin only', 'The SEO area is only for the admin login.');
     else if (e.code === 'tables') { status = await api('status'); $('setup').innerHTML = setupBanner(); $('view').innerHTML = empty('Waiting for setup', 'Once the SEO tables exist this page fills in.'); }
@@ -334,10 +436,15 @@ async function render() {
 }
 
 document.addEventListener('click', async (e) => {
-  const t = e.target.closest('[data-show],[data-sev],[data-ign],[data-type],[data-opp],[data-qs],#importnow');
+  const t = e.target.closest('[data-show],[data-sev],[data-ign],[data-type],[data-opp],[data-qs],[data-draft],#importnow');
   if (!t) return;
   if (t.id === 'importnow') { runImport(t); return; }
   if (t.dataset.opp) { state.opp = t.dataset.opp; render(); }
+  else if (t.dataset.draft) {
+    t.disabled = true;
+    try { await newDraft(t.dataset.draft, '', JSON.parse(t.dataset.evid || '{}')); t.textContent = 'Drafting started'; }
+    catch (err) { alert(err.message); t.disabled = false; }
+  }
   else if (t.dataset.qs) {
     t.disabled = true;
     try { await api('query_status', {}, { query: t.dataset.qs, status: t.dataset.to }); } catch (err) { alert(err.message); }

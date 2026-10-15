@@ -19,9 +19,16 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Install dependencies
+        run: npm install
+
       # Publishes due posts, keeps the writing clean (no em dashes),
       # and keeps blog.html + sitemap.xml in sync with blog/posts/.
+      # A due post goes live ONLY if it has been approved in the admin SEO
+      # queue; otherwise it is held (see the approval gate in publish-due.mjs).
       - name: Publish due posts and sync index + sitemap
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/publish-due.mjs
 
       - name: Commit and push if anything changed

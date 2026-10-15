@@ -1,8 +1,11 @@
 name: MKR Daily Blog + Social Post
 
+# RETIRED as an automatic publisher (owner decision, 2026-10-15): posts now go
+# through the approval queue in /admin/seo, and nothing publishes without the
+# owner's approval. The daily schedule is switched off. The workflow can still
+# be started by hand, but the script publishes unreviewed text, so only do that
+# deliberately. (It also called a retired model and was failing.)
 on:
-  schedule:
-    - cron: '0 5 * * *'
   workflow_dispatch:
     inputs:
       day_override:

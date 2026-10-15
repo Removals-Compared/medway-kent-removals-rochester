@@ -178,6 +178,10 @@
   "functions": {
     "api/admin/marketing.mjs": {
       "maxDuration": 300
+    },
+    "api/admin/seo.mjs": {
+      "includeFiles": "{pricing.md,seo/business-facts.json}",
+      "maxDuration": 30
     }
   }
 }
