@@ -1,0 +1,53 @@
+name: MKR Search Console Import
+
+# Pulls clicks, impressions and positions from Google Search Console into Neon
+# (read-only on the Google side). Weekly, or on demand from the dashboard.
+#
+# Repository secrets needed:
+#   DATABASE_URL               the same Neon connection string the site uses
+#   GSC_SERVICE_ACCOUNT_JSON   service account key (JSON text or base64), whose
+#                              email is added as a user on the Search Console property
+# Optional:
+#   GSC_SITE                   e.g. sc-domain:medwaykentremovals.co.uk (auto-detected if unset)
+
+on:
+  schedule:
+    - cron: '30 6 * * 1'   # Mondays 06:30 UTC
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: 'seo_jobs id queued from the dashboard (leave empty for a fresh run)'
+        required: false
+        default: ''
+      days:
+        description: 'Backfill this many days (leave empty for an incremental import)'
+        required: false
+        default: ''
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm install
+      - name: Import
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GSC_SERVICE_ACCOUNT_JSON: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON }}
+          GSC_SITE: ${{ secrets.GSC_SITE }}
+          JOB_ID: ${{ github.event.inputs.job_id }}
+          DAYS: ${{ github.event.inputs.days }}
+        run: |
+          if [ -z "$GSC_SERVICE_ACCOUNT_JSON" ]; then
+            echo "Search Console is not connected yet (no GSC_SERVICE_ACCOUNT_JSON secret). Nothing to import."
+            exit 0
+          fi
+          ARGS="--db"
+          if [ -n "$JOB_ID" ]; then ARGS="$ARGS --job $JOB_ID"; fi
+          if [ -n "$DAYS" ]; then ARGS="$ARGS --days $DAYS"; fi
+          node scripts/seo-gsc-import.mjs $ARGS

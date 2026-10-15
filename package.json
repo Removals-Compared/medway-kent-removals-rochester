@@ -6,7 +6,7 @@
   "scripts": {
     "generate": "node scripts/generate-post.js",
     "test": "DAY_OVERRIDE=1 node scripts/generate-post.js",
-    "test:seo": "node --test tests/seo-audit.test.mjs tests/seo-api.test.mjs"
+    "test:seo": "node --test tests/seo-audit.test.mjs tests/seo-api.test.mjs tests/seo-opportunities.test.mjs tests/seo-gsc.test.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",

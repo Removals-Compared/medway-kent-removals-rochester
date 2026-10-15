@@ -111,9 +111,16 @@ const TYPE_LABEL = {
 };
 const label = (t) => TYPE_LABEL[t] || t;
 const short = (u) => String(u).replace(/^https?:\/\/[^/]+/, '') || '/';
+const jobSummary = (j) => {
+  if (j.last_error) return j.last_error;
+  const r = j.result;
+  if (!r) return '';
+  if (j.type === 'gsc_import') return `${r.rows} rows, ${r.clicks} clicks (${r.start} to ${r.end})`;
+  return `${r.pages} pages, ${r.issues} findings`;
+};
 const when = (d) => d ? new Date(d).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
 
-let status = null, ov = null, state = { sev: 'all', type: 'all', show: 'issues' };
+let status = null, ov = null, state = { sev: 'all', type: 'all', show: 'issues', opp: 'all' };
 
 async function api(action, params = {}, body) {
   const qs = new URLSearchParams({ action, ...params }).toString();
@@ -198,10 +205,87 @@ async function viewAudit() {
       : empty(all.length ? 'Nothing matches this filter' : 'No open findings', all.length ? 'Try a different level or type.' : 'Run an audit to check your pages.')}`;
 }
 
-function viewOpportunities() {
-  $('view').innerHTML = empty('Opportunities need Search Console', 'This tab will list real search queries from Google that already show your site, with a clear action for each. It stays empty until Search Console is connected, because it never guesses.', [
-    'Queries on page 2 that could reach page 1', 'Pages that get seen a lot but rarely clicked', 'Two of your pages competing for the same search', 'Searches with no matching page yet',
-  ]);
+const OPP_ICON = { striking_distance: 'Close to page one', low_ctr: 'Seen but not clicked', cannibalisation: 'Pages compete', declining_page: 'Losing clicks', place_gap: 'Possible gap' };
+const nf = (n) => Number(n).toLocaleString('en-GB');
+function evid(o) {
+  const e = o.evidence || {};
+  if (o.type === 'striking_distance' || o.type === 'low_ctr') return `${nf(e.impressions)} views, ${nf(e.clicks)} clicks, position ${e.position}${o.potential_clicks ? ` · roughly +${nf(o.potential_clicks)} clicks if fixed` : ''}`;
+  if (o.type === 'cannibalisation') return (e.pages || []).map((p) => `${p.page} (pos ${p.position}, ${nf(p.impressions)} views)`).join(' · ');
+  if (o.type === 'declining_page') return `${nf(e.clicks_before)} → ${nf(e.clicks_now)} clicks (${e.change_pct}%)`;
+  if (o.type === 'place_gap') return `${nf(e.impressions)} views, best page ${e.best_page} at position ${e.best_position}`;
+  return '';
+}
+function connectSteps() {
+  return `<div class="card"><h2>How to connect Search Console</h2><ol style="margin:0 0 0 18px;color:var(--ink2);line-height:1.6">
+    <li>In Google Cloud, create a service account and download its JSON key (read-only; it can only see what you share with it).</li>
+    <li>In Search Console, open Settings, Users and permissions, and add the service account's email as a user.</li>
+    <li>Add the key as the <code>GSC_SERVICE_ACCOUNT_JSON</code> secret in GitHub (for the importer) and as an environment variable in Vercel (so this page knows it's connected).</li>
+    <li>Press Import now. The first import reads the last 90 days.</li></ol></div>`;
+}
+async function viewOpportunities() {
+  const d = await api('opportunities');
+  const i = (status && status.integrations) || {};
+  if (!d.has_data) {
+    $('view').innerHTML = i.search_console
+      ? empty('No Search Console data yet', 'Search Console is connected. Import your data to see what to improve. This tab only ever shows real searches.') + `<div style="text-align:center;margin-top:-6px"><button class="btn primary" id="importnow">Import now</button></div>`
+      : empty('Opportunities need Search Console', 'This tab lists real searches from Google with a clear action for each. It stays empty until Search Console is connected, because it never guesses.', [
+        'Searches on page 2 that could reach page 1', 'Pages that get seen a lot but rarely clicked', 'Two of your pages competing for the same search', 'Searches that name a town you have no page for']) + connectSteps();
+    return;
+  }
+  const all = d.opportunities;
+  const counts = {};
+  all.forEach((o) => { counts[o.type] = (counts[o.type] || 0) + 1; });
+  const shown = all.filter((o) => state.opp === 'all' || o.type === state.opp);
+  $('view').innerHTML = `
+    <div class="muted" style="margin-bottom:10px">Based on the 28 days to ${esc(d.window_end)}. Estimates use typical click rates by position and are not forecasts.</div>
+    <div class="chips"><button class="chip" data-opp="all" aria-pressed="${state.opp === 'all'}">All (${all.length})</button>
+      ${Object.keys(counts).map((t) => `<button class="chip" data-opp="${t}" aria-pressed="${state.opp === t}">${esc(OPP_ICON[t] || t)} (${counts[t]})</button>`).join('')}</div>
+    ${shown.length ? `<div class="card scroll"><table class="stack"><tr><th>Opportunity</th><th>Evidence</th><th>What to do</th><th></th></tr>
+      ${shown.slice(0, 100).map((o) => `<tr><td><b>${esc(o.title)}</b><div class="muted"><span class="tag">${esc(OPP_ICON[o.type] || o.type)}</span> <a href="${esc(o.page)}" target="_blank" rel="noopener">${esc(String(o.page).replace(/^https?:\/\/[^/]+/, '') || '/')}</a></div></td>
+        <td>${esc(evid(o))}</td><td>${esc(o.action)}</td>
+        <td>${o.query ? `<button class="btn small" data-qs="${esc(o.query)}" data-to="targeted">Working on it</button> <button class="btn small" data-qs="${esc(o.query)}" data-to="ignored">Dismiss</button>` : ''}</td></tr>`).join('')}</table></div>`
+      : empty('Nothing to flag', 'No searches match the opportunity rules right now. That is a fine result.')}`;
+}
+function bars(daily) {
+  if (!daily.length) return '';
+  const max = Math.max(1, ...daily.map((x) => x.clicks)), W = 560, H = 90, bw = W / daily.length;
+  return `<svg viewBox="0 0 ${W} ${H + 4}" width="100%" height="110" role="img" aria-label="Daily clicks, last 28 days" preserveAspectRatio="none">
+    ${daily.map((x, i) => { const h = Math.max(1, Math.round((x.clicks / max) * H)); return `<rect x="${(i * bw + 1).toFixed(1)}" y="${H - h + 2}" width="${(bw - 2).toFixed(1)}" height="${h}" rx="2" fill="var(--orange)"><title>${esc(x.date)}: ${x.clicks} clicks</title></rect>`; }).join('')}</svg>`;
+}
+function delta(cur, prev, { lowerIsBetter = false, suffix = '' } = {}) {
+  if (prev == null || cur == null || Number(prev) === 0) return '<div class="muted">no earlier period</div>';
+  const diff = Number(cur) - Number(prev), good = lowerIsBetter ? diff < 0 : diff > 0;
+  const txt = suffix === '%' ? `${(diff * 100 / Number(prev)).toFixed(0)}%` : `${diff > 0 ? '+' : ''}${diff.toFixed(1).replace(/\.0$/, '')}`;
+  return `<div class="muted" style="color:${diff === 0 ? 'inherit' : good ? 'var(--good)' : 'var(--bad)'}">${diff > 0 && suffix === '%' ? '+' : ''}${txt} vs previous 28 days</div>`;
+}
+async function viewReport() {
+  const r = await api('report');
+  if (!r.has_data) {
+    const i = (status && status.integrations) || {};
+    $('view').innerHTML = empty('Reports need Search Console', i.search_console ? 'Import your Search Console data to see clicks, impressions and positions.' : 'Clicks, impressions, average position and top searches will appear here once Search Console is connected.') +
+      (i.search_console ? `<div style="text-align:center;margin-top:-6px"><button class="btn primary" id="importnow">Import now</button></div>` : '');
+    return;
+  }
+  const c = r.current, p = r.previous;
+  const ctr = (x) => x.impressions ? (x.clicks / x.impressions) : null;
+  const leads = r.leads_by_source;
+  $('view').innerHTML = `
+    <div class="muted" style="margin-bottom:10px">28 days to ${esc(r.end)} (Google publishes with a delay of about two days). Data held since ${esc(r.since)}.</div>
+    <div class="kpis">
+      <div class="kpi"><div class="n">${nf(c.clicks)}</div><div class="l">Clicks</div>${delta(c.clicks, p.clicks, { suffix: '%' })}</div>
+      <div class="kpi"><div class="n">${nf(c.impressions)}</div><div class="l">Times shown</div>${delta(c.impressions, p.impressions, { suffix: '%' })}</div>
+      <div class="kpi"><div class="n">${ctr(c) == null ? '–' : (ctr(c) * 100).toFixed(1) + '%'}</div><div class="l">Click rate</div></div>
+      <div class="kpi"><div class="n">${c.position == null ? '–' : c.position}</div><div class="l">Average position</div>${delta(c.position, p.position, { lowerIsBetter: true })}</div>
+    </div>
+    <div class="card"><h2>Clicks per day</h2>${bars(r.daily)}</div>
+    <div class="grid2">
+      <div class="card scroll"><h2>Top searches</h2><table><tr><th>Search</th><th>Clicks</th><th>Shown</th><th>Pos</th></tr>
+        ${r.top_queries.map((x) => `<tr><td>${esc(x.query)}</td><td>${nf(x.clicks)}</td><td>${nf(x.impressions)}</td><td>${x.position}</td></tr>`).join('')}</table></div>
+      <div class="card scroll"><h2>Top pages</h2><table><tr><th>Page</th><th>Clicks</th><th>Shown</th><th>Pos</th></tr>
+        ${r.top_pages.map((x) => `<tr><td><a href="${esc(x.page)}" target="_blank" rel="noopener">${esc(String(x.page).replace(/^https?:\/\/[^/]+/, '') || '/')}</a></td><td>${nf(x.clicks)}</td><td>${nf(x.impressions)}</td><td>${x.position}</td></tr>`).join('')}</table></div>
+    </div>
+    ${leads ? `<div class="card"><h2>Enquiries in the last 28 days, by how people say they found you</h2>${leads.length ? `<table><tr><th>Answer</th><th>Enquiries</th></tr>${leads.map((x) => `<tr><td>${esc({ website: 'Google / search engine', lsa: 'Google Local Services ad', referral: 'Recommendation', other: 'Somewhere else' }[x.source] || x.source)}</td><td>${x.n}</td></tr>`).join('')}</table>` : '<div class="muted">No enquiries in this period.</div>'}
+      <div class="muted" style="margin-top:8px">This is what customers tell you on the quote form, not a measured source. Search Console figures above exclude searches Google keeps private, so they can be lower than Google's own totals.</div></div>` : ''}`;
 }
 async function viewContent() {
   const arts = (await api('articles')).articles;
@@ -209,9 +293,6 @@ async function viewContent() {
     ${arts.map((a) => `<tr><td>${esc(a.title)}<div class="muted">${esc(a.target_keyword || '')}</div></td><td><span class="tag">${esc(a.status.replace(/_/g, ' '))}</span></td><td>${esc(a.source)}</td><td>${esc(when(a.updated_at))}</td></tr>`).join('')}</table></div>`
     : empty('No articles in the queue yet', 'Drafts and the approval queue arrive in the next step. Every article, including the posts already scheduled on the blog, will wait here for your approval before it can go live.', [
       'Each draft is checked, then you approve one exact version', 'Editing after approval cancels the approval', 'Nothing publishes without your tick']);
-}
-function viewReport() {
-  $('view').innerHTML = empty('Reports need Search Console', 'Clicks, impressions, average position and organic quote enquiries will appear here once Search Console is connected. Your quote form already records how people say they found you.');
 }
 function viewAi() {
   $('view').innerHTML = empty('AI search checks', 'The monthly check you already keep (Perplexity, ChatGPT, Bing) will be entered here by hand. Google AI Overviews cannot be checked automatically.');
@@ -224,12 +305,13 @@ async function viewSettings() {
   $('view').innerHTML = `
     <div class="card"><h2>Connections</h2><table>
       ${row('Database', status && status.tables_ready, status && status.tables_ready ? 'SEO tables are in place' : 'Run admin/SEO-SCHEMA.sql')}
-      ${row('Google Search Console', i.search_console, 'Needed for opportunities and reports')}
+      ${row('Google Search Console', i.search_console, i.search_console ? 'Connected with a ' + i.search_console_mode : 'Needed for opportunities and reports. See the steps below.')}
       ${row('BrightLocal', i.brightlocal, b ? `Development key: ${b.used} of ${b.limit} requests used, ${b.remaining} left (a reserve of ${b.reserve} is kept back)` : 'Local ranking checks (optional)')}
       ${row('Run-audit button starts the checker', i.audit_button_dispatch, i.audit_button_dispatch ? 'Clicking Run audit starts it straight away' : 'Without this, audits run each Monday or from the GitHub Actions tab')}
     </table></div>
+    ${i.search_console ? `<div class="card"><h2>Search Console data</h2><div class="muted" style="margin-bottom:8px">Pulled automatically every Monday. You can also pull it now.</div><button class="btn primary" id="importnow">Import now</button></div>` : connectSteps()}
     <div class="card scroll"><h2>Recent background jobs</h2>${jobs.length ? `<table class="stack"><tr><th>#</th><th>Type</th><th>Status</th><th>When</th><th>Result</th></tr>
-      ${jobs.map((j) => `<tr><td>${j.id}</td><td>${esc(j.type)}</td><td><span class="tag">${esc(j.status)}</span></td><td>${esc(when(j.finished_at || j.created_at))}</td><td class="muted">${esc(j.last_error || (j.result ? j.result.pages + ' pages, ' + j.result.issues + ' findings' : ''))}</td></tr>`).join('')}</table>` : '<div class="muted">No jobs yet.</div>'}</div>`;
+      ${jobs.map((j) => `<tr><td>${j.id}</td><td>${esc(j.type)}</td><td><span class="tag">${esc(j.status)}</span></td><td>${esc(when(j.finished_at || j.created_at))}</td><td class="muted">${esc(jobSummary(j))}</td></tr>`).join('')}</table>` : '<div class="muted">No jobs yet.</div>'}</div>`;
 }
 
 const VIEWS = { overview: viewOverview, audit: viewAudit, opportunities: viewOpportunities, content: viewContent, report: viewReport, ai: viewAi, settings: viewSettings };
@@ -253,9 +335,16 @@ async function render() {
 }
 
 document.addEventListener('click', async (e) => {
-  const t = e.target.closest('[data-show],[data-sev],[data-ign],[data-type]');
+  const t = e.target.closest('[data-show],[data-sev],[data-ign],[data-type],[data-opp],[data-qs],#importnow');
   if (!t) return;
-  if (t.dataset.show) { state.show = t.dataset.show; render(); }
+  if (t.id === 'importnow') { runImport(t); return; }
+  if (t.dataset.opp) { state.opp = t.dataset.opp; render(); }
+  else if (t.dataset.qs) {
+    t.disabled = true;
+    try { await api('query_status', {}, { query: t.dataset.qs, status: t.dataset.to }); } catch (err) { alert(err.message); }
+    render();
+  }
+  else if (t.dataset.show) { state.show = t.dataset.show; render(); }
   else if (t.dataset.sev) { state.sev = t.dataset.sev; render(); }
   else if (t.dataset.type) { state.type = t.dataset.type; state.sev = 'all'; state.show = 'issues'; }
   else if (t.dataset.ign) {
@@ -266,6 +355,17 @@ document.addEventListener('click', async (e) => {
 });
 document.addEventListener('change', (e) => { if (e.target.id === 'typesel') { state.type = e.target.value; render(); } });
 window.addEventListener('hashchange', render);
+
+async function runImport(btn) {
+  btn.disabled = true; btn.textContent = 'Queuing…';
+  try {
+    const r = await api('run_import', {}, {});
+    $('sub').textContent = r.dispatched ? 'Import started. It takes a minute or two, then reload.'
+      : r.created === false ? 'An import is already queued or running.'
+      : 'Import queued. It runs on the next weekly check, or start it from GitHub Actions.';
+  } catch (e) { $('sub').textContent = 'Could not queue the import: ' + e.message; }
+  btn.textContent = 'Import now'; btn.disabled = false;
+}
 
 $('runaudit').addEventListener('click', async () => {
   const b = $('runaudit');

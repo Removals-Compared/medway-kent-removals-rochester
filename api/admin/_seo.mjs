@@ -67,11 +67,11 @@ export async function listJobs(limit = 20) {
   return q(`SELECT id, type, status, result, last_error, requested_by, created_at, started_at, finished_at FROM seo_jobs ORDER BY id DESC LIMIT $1`, [limit]);
 }
 
-// One audit at a time: a click while one is queued/running returns that job.
-export async function enqueueAudit(actor) {
-  const existing = await q(`SELECT id, status FROM seo_jobs WHERE type='audit' AND status IN ('queued','running') AND created_at > now() - interval '2 hours' ORDER BY id DESC LIMIT 1`);
+// One job of each type at a time: a click while one is queued/running returns that job.
+export async function enqueueJob(type, actor) {
+  const existing = await q(`SELECT id, status FROM seo_jobs WHERE type=$1 AND status IN ('queued','running') AND created_at > now() - interval '2 hours' ORDER BY id DESC LIMIT 1`, [type]);
   if (existing[0]) return { job: existing[0], created: false };
-  const r = await q(`INSERT INTO seo_jobs (type, status, requested_by) VALUES ('audit','queued',$1) RETURNING id, status`, [actor]);
+  const r = await q(`INSERT INTO seo_jobs (type, status, requested_by) VALUES ($1,'queued',$2) RETURNING id, status`, [type, actor]);
   return { job: r[0], created: true };
 }
 
@@ -92,16 +92,83 @@ export async function brightlocalBudget() {
   return { ...BRIGHTLOCAL_DEFAULT, ...v, remaining: Math.max(0, (v.limit ?? 1000) - (v.used ?? 0)) };
 }
 
-export async function dispatchAuditWorkflow(jobId) {
+const WORKFLOWS = { audit: 'seo-audit.yml', gsc_import: 'seo-gsc-import.yml' };
+
+export async function dispatchWorkflow(type, jobId) {
+  const file = WORKFLOWS[type];
+  if (!file) return { dispatched: false, reason: 'no workflow for this job type' };
   const token = process.env.GITHUB_DISPATCH_TOKEN;
   if (!token) return { dispatched: false, reason: 'GITHUB_DISPATCH_TOKEN is not set' };
   const repo = process.env.GITHUB_REPO || 'Removals-Compared/medway-kent-removals-rochester';
   const ref = process.env.SEO_WORKFLOW_REF || 'main';
-  const r = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/seo-audit.yml/dispatches`, {
+  const r = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/${file}/dispatches`, {
     method: 'POST',
     headers: { authorization: `Bearer ${token}`, accept: 'application/vnd.github+json', 'content-type': 'application/json', 'user-agent': 'mkr-seo' },
     body: JSON.stringify({ ref, inputs: { job_id: String(jobId) } }),
   });
   if (r.status === 204) return { dispatched: true };
   return { dispatched: false, reason: `GitHub returned ${r.status}` };
+}
+
+// ── Search Console data ─────────────────────────────────────
+// All windows end on the newest date we hold, so "last 28 days" never includes
+// days Google has not published yet.
+async function latestDate() {
+  const r = await q(`SELECT to_char(max(date), 'YYYY-MM-DD') AS d FROM seo_search_metrics`);
+  return r[0] && r[0].d ? r[0].d : null;
+}
+
+export async function opportunityData() {
+  const end = await latestDate();
+  if (!end) return null;
+  const [rows, cur, prev, sitePages, ignored] = await Promise.all([
+    q(`SELECT query, page, sum(clicks)::int AS clicks, sum(impressions)::int AS impressions,
+              round(sum(position * impressions) / nullif(sum(impressions), 0), 2) AS position
+         FROM seo_search_metrics WHERE date BETWEEN ($1::date - 27) AND $1::date
+        GROUP BY query, page HAVING sum(impressions) > 0`, [end]),
+    q(`SELECT page, sum(clicks)::int AS clicks FROM seo_search_metrics WHERE date BETWEEN ($1::date - 27) AND $1::date AND page <> '' GROUP BY page`, [end]),
+    q(`SELECT page, sum(clicks)::int AS clicks FROM seo_search_metrics WHERE date BETWEEN ($1::date - 55) AND ($1::date - 28) AND page <> '' GROUP BY page`, [end]),
+    q(`SELECT url, path, page_type, title FROM seo_pages`),
+    q(`SELECT lower(query) AS query FROM seo_keywords WHERE status = 'ignored'`),
+  ]);
+  return { end, rows, pageTotals: { cur, prev }, sitePages, ignored: new Set(ignored.map((r) => r.query)) };
+}
+
+export async function setQueryStatus(query, status) {
+  if (!['new', 'targeted', 'ignored'].includes(status)) throw new Error('bad status');
+  const r = await q(
+    `INSERT INTO seo_keywords (query, source, status) VALUES ($1, 'gsc', $2)
+     ON CONFLICT (query) DO UPDATE SET status = EXCLUDED.status, updated_at = now() RETURNING query, status`,
+    [String(query).trim().toLowerCase().slice(0, 300), status]);
+  return r[0];
+}
+
+export async function reportData() {
+  const end = await latestDate();
+  if (!end) return { has_data: false };
+  const totals = async (a, b) => (await q(
+    `SELECT coalesce(sum(clicks),0)::int AS clicks, coalesce(sum(impressions),0)::int AS impressions,
+            round(sum(position * impressions) / nullif(sum(impressions), 0), 1) AS position
+       FROM seo_search_metrics WHERE date BETWEEN ($1::date - $2::int) AND ($1::date - $3::int)`, [end, a, b]))[0];
+  const [cur, prev, daily, topQueries, topPages, first, lastJob] = await Promise.all([
+    totals(27, 0), totals(55, 28),
+    q(`SELECT to_char(date, 'YYYY-MM-DD') AS date, sum(clicks)::int AS clicks, sum(impressions)::int AS impressions
+         FROM seo_search_metrics WHERE date BETWEEN ($1::date - 27) AND $1::date GROUP BY date ORDER BY date`, [end]),
+    q(`SELECT query, sum(clicks)::int AS clicks, sum(impressions)::int AS impressions,
+              round(sum(position * impressions) / nullif(sum(impressions), 0), 1) AS position
+         FROM seo_search_metrics WHERE date BETWEEN ($1::date - 27) AND $1::date
+        GROUP BY query ORDER BY clicks DESC, impressions DESC LIMIT 10`, [end]),
+    q(`SELECT page, sum(clicks)::int AS clicks, sum(impressions)::int AS impressions,
+              round(sum(position * impressions) / nullif(sum(impressions), 0), 1) AS position
+         FROM seo_search_metrics WHERE date BETWEEN ($1::date - 27) AND $1::date AND page <> ''
+        GROUP BY page ORDER BY clicks DESC, impressions DESC LIMIT 10`, [end]),
+    q(`SELECT to_char(min(date), 'YYYY-MM-DD') AS d FROM seo_search_metrics`),
+    q(`SELECT id, status, result, finished_at FROM seo_jobs WHERE type = 'gsc_import' ORDER BY id DESC LIMIT 1`),
+  ]);
+  let leads = null;
+  try {
+    leads = await q(`SELECT coalesce(source, 'not answered') AS source, count(*)::int AS n FROM quote_requests
+                      WHERE created_at > now() - interval '28 days' AND status IS DISTINCT FROM 'deleted' GROUP BY 1 ORDER BY n DESC`);
+  } catch { /* source column not present */ }
+  return { has_data: true, end, since: first[0] && first[0].d, current: cur, previous: prev, daily, top_queries: topQueries, top_pages: topPages, leads_by_source: leads, last_import: lastJob[0] || null };
 }
