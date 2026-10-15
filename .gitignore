@@ -10,3 +10,6 @@ node_modules/
 
 # SEO fixes: temporary list of applied fixes
 .seo-fixes-applied.json
+
+# a symlinked node_modules is a file to git, so the directory pattern above does not match it
+node_modules

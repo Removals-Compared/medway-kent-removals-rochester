@@ -11,6 +11,9 @@
 //  Updates: an already-published article whose new version has been approved is
 //  re-rendered over its page, keeping its original published date.
 //
+//  A publish that failed is retried on the next run, but only while the current
+//  version still has its approval (the database gate enforces this too).
+//
 //  Run before publish-due.mjs, which adds the blog index card and sitemap entry.
 // ════════════════════════════════════════════════════════════
 import fs from 'node:fs';
@@ -28,7 +31,8 @@ try {
   rows = await q(
     `SELECT a.id, a.slug, a.published_url, a.target_keyword, r.id AS rev_id, r.title, r.meta_description, r.content, r.meta
        FROM seo_articles a JOIN seo_article_revisions r ON r.id = a.current_revision_id
-      WHERE a.status = 'approved' AND a.kind = 'post' AND a.source <> 'scheduled_queue'
+      WHERE (a.status = 'approved' OR (a.status = 'failed' AND coalesce(a.last_error, '') NOT LIKE 'A page with this address already exists%'))
+        AND a.kind = 'post' AND a.source <> 'scheduled_queue'
         AND (a.scheduled_for IS NULL OR a.scheduled_for <= $1::date)
         AND EXISTS (SELECT 1 FROM seo_approvals p WHERE p.revision_id = r.id AND p.decision = 'approve' AND p.content_hash = r.content_hash)
       ORDER BY a.id`, [today]);
@@ -45,7 +49,7 @@ for (const r of rows) {
   const meta = r.meta || {};
   const slug = meta.slug || r.slug;
   const dest = path.join(ROOT, 'blog', 'posts', slug + '.html');
-  const fail = async (why) => { console.log(`FAILED ${slug}: ${why}`); await q(`UPDATE seo_articles SET status='failed', last_error=$2 WHERE id=$1 AND status IN ('approved','publishing')`, [r.id, why.slice(0, 400)]); held++; };
+  const fail = async (why) => { console.log(`FAILED ${slug}: ${why}`); await q(`UPDATE seo_articles SET status='failed', last_error=$2 WHERE id=$1 AND status IN ('approved','publishing','failed')`, [r.id, why.slice(0, 400)]); held++; };
   try {
     const exists = fs.existsSync(dest);
     if (exists && !r.published_url) { await fail('A page with this address already exists, so it was not overwritten.'); continue; }
@@ -54,7 +58,7 @@ for (const r of rows) {
       { title: r.title, meta_description: r.meta_description, slug, content: r.content, faqs: meta.faqs || [], keyword: meta.keyword || r.target_keyword, category: meta.category },
       { date, modified: today, related: relatedFor(r.content, meta) });
     const url = `${SITE}/blog/posts/${slug}`;
-    const moved = await q(`UPDATE seo_articles SET status='publishing', published_url=$2, last_error=NULL WHERE id=$1 AND status='approved' RETURNING id`, [r.id, url]);
+    const moved = await q(`UPDATE seo_articles SET status='publishing', published_url=$2, last_error=NULL WHERE id=$1 AND status IN ('approved','failed') RETURNING id`, [r.id, url]);
     if (!moved.length) continue; // someone changed it meanwhile
     fs.writeFileSync(dest, html);
     console.log(`${exists ? 'updated' : 'published'} blog/posts/${slug}.html`);
