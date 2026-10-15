@@ -1,0 +1,21 @@
+name: MKR SEO Attach Images
+
+# Adds each queued article's featured picture as a new version awaiting your approval.
+# Approves nothing and publishes nothing. Start it from the Actions tab.
+on:
+  workflow_dispatch:
+
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - name: Attach pictures
+        run: node scripts/seo-attach-images.mjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

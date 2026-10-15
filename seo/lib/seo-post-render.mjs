@@ -5,6 +5,7 @@
 // ════════════════════════════════════════════════════════════
 import fs from 'node:fs';
 import { cleanWriting, countWords } from './seo-quality-lib.mjs';
+import { firstBlogImage } from './seo-images-lib.mjs';
 
 export const SITE = 'https://www.medwaykentremovals.co.uk';
 export const BRAND_SUFFIX = ' | Medway &amp; Kent Removals';
@@ -16,7 +17,7 @@ export const fmtDate = (iso) => { const [y, m, d] = String(iso).slice(0, 10).spl
 const shortTitle = (t) => (t.length <= 60 ? t : t.slice(0, 60).replace(/\s+\S*$/, ''));
 const ldSafe = (obj) => JSON.stringify(obj).replace(/</g, '\\u003c');
 
-export function jsonLd({ title, meta_description, slug, faqs = [], date, modified, keyword }) {
+export function jsonLd({ title, meta_description, slug, faqs = [], date, modified, keyword, image }) {
   const url = `${SITE}/blog/posts/${slug}`;
   const post = {
     '@type': 'BlogPosting', headline: title, description: meta_description,
@@ -24,6 +25,7 @@ export function jsonLd({ title, meta_description, slug, faqs = [], date, modifie
     publisher: { '@type': 'Organization', name: 'Medway & Kent Removals', url: SITE },
     datePublished: date, dateModified: modified || date, url, mainEntityOfPage: { '@type': 'WebPage', '@id': url },
     ...(keyword ? { keywords: keyword } : {}),
+    ...(image ? { image: SITE + image } : {}),
   };
   const good = faqs.filter((f) => f && f.q && f.a);
   if (!good.length) return { '@context': 'https://schema.org', ...post };
@@ -43,11 +45,13 @@ export function renderPost(article, opts) {
     ? `<div class="related-posts"><h3>You might also find useful</h3>${related.map((r) => `<a href="${esc(r.path)}" class="related-link">${esc(r.title)}</a>`).join('')}</div>`
     : '';
   const t = cleanWriting(title);
+  const img = firstBlogImage(body);
   const map = {
+    OGIMAGE: img ? `<meta property="og:image" content="${SITE}${esc(img)}">` : '',
     TITLE_TAG: esc(t) + BRAND_SUFFIX,
     DESC: esc(cleanWriting(meta_description)),
     URL: `${SITE}/blog/posts/${slug}`,
-    JSONLD: ldSafe(jsonLd({ title: t, meta_description: cleanWriting(meta_description), slug, faqs: article.faqs || [], date, modified, keyword: article.keyword })),
+    JSONLD: ldSafe(jsonLd({ title: t, meta_description: cleanWriting(meta_description), slug, faqs: article.faqs || [], date, modified, keyword: article.keyword, image: img })),
     CRUMB: esc(shortTitle(t)),
     TAG: esc(article.category || 'Moving Advice'),
     H1: esc(t),

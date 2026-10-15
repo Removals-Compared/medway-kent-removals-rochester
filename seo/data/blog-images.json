@@ -1,0 +1,110 @@
+{
+  "_note": "Featured images for blog articles. Each file is a 1600x900 WebP in images/blog/, taken from the owner's Unsplash library and checked to carry no 'Unsplash+' watermark. Descriptions say only what the photo shows; they never claim the photo is of the company's team or vehicles.",
+  "images": {
+    "5-signs-your-removal-company-is-a-rogue-trader": {
+      "file": "/images/blog/5-signs-your-removal-company-is-a-rogue-trader.webp",
+      "alt": "A person signing a document at a desk",
+      "width": 1600,
+      "height": 900,
+      "library": "mortgage-home-buying/mortgage-home-buying-007"
+    },
+    "best-kent-villages-to-move-to-in-2026": {
+      "file": "/images/blog/best-kent-villages-to-move-to-in-2026.webp",
+      "alt": "A family walking across open countryside at sunset",
+      "width": 1600,
+      "height": 900,
+      "library": "family-lifestyle/family-lifestyle-005"
+    },
+    "first-time-buyer-in-kent-what-happens-after-you-get-the-keys": {
+      "file": "/images/blog/first-time-buyer-in-kent-what-happens-after-you-get-the-keys.webp",
+      "alt": "A couple sitting on the floor among packing boxes in their new home, with a small model house beside them",
+      "width": 1600,
+      "height": 900,
+      "library": "professional-movers/professional-movers-022"
+    },
+    "how-to-move-a-home-office-without-losing-a-day-of-work": {
+      "file": "/images/blog/how-to-move-a-home-office-without-losing-a-day-of-work.webp",
+      "alt": "People working at computers in a bright open-plan office",
+      "width": 1600,
+      "height": 900,
+      "library": "office-teamwork/office-teamwork-017"
+    },
+    "how-to-move-house-in-december-without-the-stress": {
+      "file": "/images/blog/how-to-move-house-in-december-without-the-stress.webp",
+      "alt": "A family sitting together in front of a decorated Christmas tree, looking at a book",
+      "width": 1600,
+      "height": 900,
+      "library": "family-lifestyle/family-lifestyle-075"
+    },
+    "how-to-move-house-when-you-have-a-lot-of-stuff": {
+      "file": "/images/blog/how-to-move-house-when-you-have-a-lot-of-stuff.webp",
+      "alt": "A red van with its side door open, loaded with furniture and boxes",
+      "width": 1600,
+      "height": 900,
+      "library": "professional-movers/professional-movers-014"
+    },
+    "how-to-move-house-with-elderly-parents": {
+      "file": "/images/blog/how-to-move-house-with-elderly-parents.webp",
+      "alt": "An older couple sitting on a sofa reading papers together",
+      "width": 1600,
+      "height": 900,
+      "library": "mortgage-home-buying/mortgage-home-buying-067"
+    },
+    "moving-house-in-autumn-the-advantages-nobody-tells-you": {
+      "file": "/images/blog/moving-house-in-autumn-the-advantages-nobody-tells-you.webp",
+      "alt": "A family walking along a wooden boardwalk through tall autumn grass",
+      "width": 1600,
+      "height": 900,
+      "library": "family-lifestyle/family-lifestyle-063"
+    },
+    "moving-to-faversham-what-londoners-need-to-know": {
+      "file": "/images/blog/moving-to-faversham-what-londoners-need-to-know.webp",
+      "alt": "Tower Bridge over the River Thames in London",
+      "width": 1600,
+      "height": 900,
+      "library": "london-city/london-city-009"
+    },
+    "moving-to-herne-bay-is-it-worth-it-in-2026": {
+      "file": "/images/blog/moving-to-herne-bay-is-it-worth-it-in-2026.webp",
+      "alt": "A family holding hands as they walk along a beach at sunset",
+      "width": 1600,
+      "height": 900,
+      "library": "family-lifestyle/family-lifestyle-068"
+    },
+    "moving-to-margate-the-real-picture-in-2026": {
+      "file": "/images/blog/moving-to-margate-the-real-picture-in-2026.webp",
+      "alt": "A woman and a child hugging at the water's edge on a beach",
+      "width": 1600,
+      "height": 900,
+      "library": "family-lifestyle/family-lifestyle-011"
+    },
+    "moving-to-sevenoaks-the-honest-guide": {
+      "file": "/images/blog/moving-to-sevenoaks-the-honest-guide.webp",
+      "alt": "A bright living and dining room with a bay window and a wooden floor",
+      "width": 1600,
+      "height": 900,
+      "library": "real-estate-houses/real-estate-houses-094"
+    },
+    "new-year-new-home-why-january-is-a-great-time-to-move-in-kent": {
+      "file": "/images/blog/new-year-new-home-why-january-is-a-great-time-to-move-in-kent.webp",
+      "alt": "Two people unrolling a striped rug in a room with stacked moving boxes",
+      "width": 1600,
+      "height": 900,
+      "library": "professional-movers/professional-movers-109"
+    },
+    "what-actually-happens-on-completion-day": {
+      "file": "/images/blog/what-actually-happens-on-completion-day.webp",
+      "alt": "A hand holding up a set of house keys",
+      "width": 1600,
+      "height": 900,
+      "library": "real-estate-houses/real-estate-houses-082"
+    },
+    "what-removal-companies-wish-you-knew-before-moving-day": {
+      "file": "/images/blog/what-removal-companies-wish-you-knew-before-moving-day.webp",
+      "alt": "A woman lifting a cardboard box in a room full of moving boxes",
+      "width": 1600,
+      "height": 900,
+      "library": "professional-movers/professional-movers-111"
+    }
+  }
+}
