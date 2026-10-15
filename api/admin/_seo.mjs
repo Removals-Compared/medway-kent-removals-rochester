@@ -273,7 +273,7 @@ function reportFor(result, rev, acknowledged) {
 const statusFor = (critical) => (critical > 0 ? 'needs_revision' : 'awaiting_approval');
 
 // Saving an edit never changes an old revision: it adds a new one, which has to be approved again.
-export async function saveRevision(articleId, { title, meta_description, content, slug }, actor) {
+export async function saveRevision(articleId, { title, meta_description, content, slug, image }, actor) {
   const got = await getArticle(articleId);
   if (!got) throw Object.assign(new Error('Article not found'), { status: 404 });
   const { article, revisions } = got;
@@ -283,7 +283,7 @@ export async function saveRevision(articleId, { title, meta_description, content
   slug = slugify(slug || (prev && prev.meta && prev.meta.slug) || article.slug);
   if (!title || !content) throw Object.assign(new Error('Title and text are required'), { status: 400 });
   if (content.length > 200000) throw Object.assign(new Error('The text is too long'), { status: 400 });
-  const meta = { ...((prev && prev.meta) || {}), slug };
+  const meta = { ...((prev && prev.meta) || {}), slug, ...(image && image.file ? { image: { file: image.file, alt: image.alt }, image_id: image.file } : {}) };
   const version = (prev ? prev.version : 0) + 1;
   const rev = (await q(
     `INSERT INTO seo_article_revisions (article_id, version, title, meta_description, content, meta, created_by) VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7) RETURNING id, content_hash`,
