@@ -16,17 +16,22 @@
     "minimum_google_reviews": 50,
     "wording": "5 stars from 50+ Google reviews"
   },
-  "claims_on_site_owner_to_confirm": [
-    "800+ moves completed"
-  ],
   "services": [
-    "House removals", "Packing services", "Office removals", "Man and van",
-    "Storage", "Long distance removals", "Student removals"
+    "House removals",
+    "Packing services",
+    "Office removals",
+    "Man and van",
+    "Storage",
+    "Long distance removals",
+    "Student removals"
   ],
   "includes_in_every_price": [
-    "Maxi loader Luton van and professional movers", "Loading, transport and unloading",
-    "Furniture blankets and protection", "Dismantling and reassembly of standard beds and flat pack furniture",
-    "Goods in transit insurance (full replacement value)", "Public liability insurance",
+    "Maxi loader Luton van and professional movers",
+    "Loading, transport and unloading",
+    "Furniture blankets and protection",
+    "Dismantling and reassembly of standard beds and flat pack furniture",
+    "Goods in transit insurance (full replacement value)",
+    "Public liability insurance",
     "Placement of items in the correct rooms"
   ],
   "terms": {
@@ -38,15 +43,23 @@
   },
   "allowed_extra_amounts": [],
   "never_claim_without_owner_confirmation": [
-    "years of experience or trading start dates", "awards, accreditations or trade body membership (BAR, Which? Trusted Trader, etc.)",
-    "named customer testimonials or quotes", "review counts or ratings other than the figures above",
-    "prices not in pricing.md", "'cheapest', 'best', '#1' or price-match guarantees",
-    "areas served that have no page on the site", "vehicle fleet size, staff numbers or staff vetting (e.g. DBS)"
+    "years of experience or trading start dates",
+    "awards, accreditations or trade body membership (BAR, Which? Trusted Trader, etc.)",
+    "named customer testimonials or quotes",
+    "review counts or ratings other than the figures above",
+    "prices not in pricing.md",
+    "'cheapest', 'best', '#1' or price-match guarantees",
+    "areas served that have no page on the site",
+    "vehicle fleet size, staff numbers or staff vetting (e.g. DBS)"
   ],
   "style": {
     "language": "UK English",
     "no_em_dashes": true,
     "tone": "plain, practical, honest, no hype",
     "cta": "Call 01634 971005 or request a quote at https://www.medwaykentremovals.co.uk/contact"
+  },
+  "moves_completed": {
+    "wording": "800+ moves completed",
+    "confirmed_by_owner": "2026-10-15"
   }
 }
