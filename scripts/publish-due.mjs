@@ -115,6 +115,10 @@ function ensureIndexed(slug, dateIso) {
 function ensureSitemap(slug, dateIso) {
   let sm = fs.readFileSync(SITEMAP, 'utf8');
   if (sm.includes(`${SITE}/blog/posts/${slug}`)) return;
+  // A page whose canonical address is a different page does not belong in the sitemap
+  // (it was taken out on purpose; putting it back would undo that).
+  const own = fs.readFileSync(path.join(POSTS, slug + '.html'), 'utf8').match(/<link\s+rel=["']canonical["']\s+href=["']([^"']+)["']/i);
+  if (own && own[1].replace(/\/+$/, '') !== `${SITE}/blog/posts/${slug}`) return;
   const entry = `  <url>
     <loc>${SITE}/blog/posts/${slug}</loc>
     <lastmod>${dateIso}</lastmod>
