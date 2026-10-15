@@ -4,6 +4,16 @@ on:
   schedule:
     - cron: '0 6 * * *'
   workflow_dispatch:
+    inputs:
+      job_id:
+        description: 'Started from the admin page (article id; informational)'
+        required: false
+        default: ''
+
+# Two publish runs must never overlap (they edit the same files).
+concurrency:
+  group: publish-posts
+  cancel-in-progress: false
 
 jobs:
   publish:
@@ -29,6 +39,12 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/seo-sync-queue.mjs
 
+      # Writes APPROVED new articles as pages, from the version you approved.
+      - name: Publish approved new posts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/seo-publish.mjs
+
       # Publishes due posts, keeps the writing clean (no em dashes),
       # and keeps blog.html + sitemap.xml in sync with blog/posts/.
       # A due post goes live ONLY if it has been approved in the admin SEO
@@ -39,6 +55,7 @@ jobs:
         run: node scripts/publish-due.mjs
 
       - name: Commit and push if anything changed
+        id: push
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             git config user.name "MKR Blog Bot"
@@ -46,6 +63,18 @@ jobs:
             git add blog/posts blog/scheduled blog.html sitemap.xml
             git commit -m "Auto-publish blog post(s) for $(date +%Y-%m-%d) and sync index/sitemap"
             git push
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
           else
             echo "Nothing to publish today"
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
           fi
+
+      # Only after the deploy is live is an article marked "published".
+      - name: Wait for the deploy
+        if: steps.push.outputs.pushed == 'true'
+        run: sleep 150
+
+      - name: Verify live pages and mark them published
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/seo-verify-published.mjs

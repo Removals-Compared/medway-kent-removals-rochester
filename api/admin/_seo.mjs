@@ -109,7 +109,7 @@ export async function brightlocalBudget() {
   return { ...BRIGHTLOCAL_DEFAULT, ...v, remaining: Math.max(0, (v.limit ?? 1000) - (v.used ?? 0)) };
 }
 
-const WORKFLOWS = { audit: 'seo-audit.yml', gsc_import: 'seo-gsc-import.yml', draft: 'seo-draft.yml', ai_check: 'seo-ai-check.yml' };
+const WORKFLOWS = { audit: 'seo-audit.yml', gsc_import: 'seo-gsc-import.yml', draft: 'seo-draft.yml', ai_check: 'seo-ai-check.yml', publish: 'publish-scheduled-posts.yml' };
 
 export async function dispatchWorkflow(type, jobId) {
   const file = WORKFLOWS[type];
@@ -496,4 +496,17 @@ export async function aiImportBrightLocal(text, actor) {
   }
   await logSeo(actor, 'brightlocal_imported', `report ${rep.report_date}: visibility ${rep.summary.visibility}, ${rep.prompts.length} prompts`);
   return { report_date: rep.report_date, visibility: rep.summary.visibility, prompts: rep.prompts.length, competitors: rep.competitors.length, sources: rep.sources.length };
+}
+
+// Start the publish workflow now instead of waiting for the daily run. It still publishes
+// only what is approved; this just saves the wait.
+export async function publishNow(articleId, actor) {
+  const a = (await q(`SELECT id, title, status, source, scheduled_for::text AS scheduled_for FROM seo_articles WHERE id = $1`, [articleId]))[0];
+  if (!a) throw Object.assign(new Error('Article not found'), { status: 404 });
+  if (!['approved', 'publishing'].includes(a.status)) throw Object.assign(new Error(`Only an approved article can be published (this one is ${a.status.replace(/_/g, ' ')})`), { status: 409 });
+  const dispatch = await dispatchWorkflow('publish', articleId);
+  await logSeo(actor, 'publish_requested', `${a.title}${dispatch.dispatched ? '' : ' (could not start: ' + dispatch.reason + ')'}`, articleId);
+  const today = new Date().toISOString().slice(0, 10);
+  const holdUntil = a.source === 'scheduled_queue' && a.scheduled_for && a.scheduled_for > today ? a.scheduled_for : null;
+  return { article_id: a.id, hold_until: holdUntil, ...dispatch };
 }

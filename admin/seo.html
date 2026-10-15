@@ -352,6 +352,9 @@ async function viewArticle(id) {
       <button class="btn" id="a-archive">Archive</button></div>
     ${a.last_error ? `<div class="banner"><b>Last error:</b> ${esc(a.last_error)}</div>` : ''}
     ${approvedHere ? `<div class="banner" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46"><b>Approved</b> by ${esc(approvedHere.reviewer)} on ${esc(when(approvedHere.decided_at))}. Editing it creates a new version that needs approving again.</div>` : ''}
+    ${a.status === 'approved' ? `<div class="banner" style="background:#eff6ff;border-color:#bfdbfe;color:#1e3a8a"><b>Ready to publish.</b> ${a.source === 'scheduled_queue' && a.scheduled_for ? 'This post goes live on its scheduled day (' + esc(String(a.scheduled_for).slice(0, 10)) + ').' : 'It goes live at the next daily run (about 06:00 UK time), or press Publish now.'} <button class="btn small" id="a-publish">Publish now</button></div>` : ''}
+    ${a.status === 'publishing' ? `<div class="banner" style="background:#eff6ff;border-color:#bfdbfe;color:#1e3a8a"><b>Page written.</b> Waiting for the live site to show it. This usually takes a few minutes, and the page marks it as published only once it has checked the live page.</div>` : ''}
+    ${a.status === 'published' && a.published_url ? `<div class="banner" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46"><b>Live</b> since ${esc(when(a.published_at))}: <a href="${esc(a.published_url)}" target="_blank" rel="noopener">${esc(a.published_url.replace(/^https?:\/\/[^/]+/, ''))}</a>. Editing it creates a new version; once approved, it replaces the live page and keeps its original date.</div>` : ''}
     <div class="grid2" style="align-items:start">
       <div class="card"><h2>Edit</h2>
         <label class="muted">Title</label><input id="e-title" value="${esc(cur ? cur.title : a.title)}" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);margin-bottom:8px">
@@ -393,6 +396,7 @@ async function viewArticle(id) {
   $('d-approve').onclick = () => decide('approve', false);
   $('d-changes').onclick = () => decide('request_changes', true);
   $('d-reject').onclick = () => decide('reject', true);
+  if ($('a-publish')) $('a-publish').onclick = async () => { $('a-publish').disabled = true; try { const r = await api('publish_now', {}, { article_id: a.id }); $('sub').textContent = r.hold_until ? 'This post is held until its scheduled day (' + r.hold_until + ').' : r.dispatched ? 'Publishing started. It takes about five minutes; reload to see the status.' : 'Could not start publishing' + (r.reason ? ' (' + r.reason + ')' : '') + '. It will publish at the next daily run.'; } catch (e) { alert(e.message); } $('a-publish').disabled = false; };
   $('a-redraft').onclick = async () => { if (!confirm('Ask the AI for a fresh version? It is added as a new version; nothing is lost.')) return; try { const r = await api('redraft', {}, { article_id: a.id }); $('sub').textContent = r.dispatched ? 'Redraft started.' : 'Redraft queued.'; } catch (e) { alert(e.message); } };
   $('a-archive').onclick = async () => { if (!confirm('Archive this article?')) return; try { await api('archive', {}, { article_id: a.id }); location.hash = '#content'; } catch (e) { alert(e.message); } };
   $('view').querySelectorAll('[data-ack]').forEach((b) => { b.onclick = async () => { b.disabled = true; try { await api('acknowledge', {}, { article_id: a.id, key: b.dataset.ack }); render(); } catch (e) { alert(e.message); b.disabled = false; } }; });

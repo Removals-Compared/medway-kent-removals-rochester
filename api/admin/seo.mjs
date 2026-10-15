@@ -21,6 +21,7 @@
 //   POST acknowledge    owner confirms a flagged price or claim is true
 //   POST decide         approve / reject / request_changes on the CURRENT version
 //   POST archive        archive an article
+//   POST publish_now    start the publish workflow for an approved article
 //   GET  ai             AI search visibility: grid, scoreboard, BrightLocal report, history
 //   POST ai_check_add / ai_check_delete / ai_query_add / ai_query_toggle
 //   POST ai_import_checks   paste results (one per line)
@@ -35,7 +36,7 @@ import {
   listArticles, brightlocalBudget, dispatchWorkflow, logSeo, searchConsoleStatus,
   opportunityData, setQueryStatus, reportData,
   getArticle, createDraftRequest, redraft, saveRevision, acknowledge, decide, archiveArticle,
-  aiReady, aiOverview, aiAddCheck, aiDeleteCheck, aiAddQuery, aiToggleQuery, aiImportChecks, aiImportBrightLocal,
+  publishNow, aiReady, aiOverview, aiAddCheck, aiDeleteCheck, aiAddQuery, aiToggleQuery, aiImportChecks, aiImportBrightLocal,
 } from './_seo.mjs';
 import { buildOpportunities, TYPE_LABELS } from '../../seo/lib/seo-opportunities-lib.mjs';
 
@@ -142,6 +143,7 @@ export default async function handler(req, res) {
         acknowledge: () => acknowledge(Number(body.article_id), String(body.key || ''), actor),
         decide: () => decide(Number(body.article_id), Number(body.revision_id), String(body.decision), body.reason, actor),
         archive: () => archiveArticle(Number(body.article_id), actor),
+        publish_now: () => publishNow(Number(body.article_id), actor),
         ai_check_add: () => aiAddCheck(body, actor),
         ai_check_delete: () => aiDeleteCheck(Number(body.id), actor),
         ai_query_add: () => aiAddQuery(body.query, actor),
