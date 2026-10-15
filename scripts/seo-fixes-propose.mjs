@@ -76,6 +76,14 @@ if (useAi) {
       let got = [];
       try { got = parseJson(await llm({ system: `You write search-result snippets for a UK removals company.\n${RULES}\nReply with ONE JSON object and nothing else.`, user, maxTokens: 3000 })).items || []; } catch (e) { skipped.push(`${kind} batch failed: ${e.message}`); }
       for (const it of batchItems) {
+        // A page the model skipped in the batch is asked about on its own.
+        if (!got.find((x) => x.path === it.path)) {
+          const pg1 = pageOf(it.path);
+          try {
+            const one = parseJson(await llm({ system: `You write search-result snippets for a UK removals company.\n${RULES}\nReply with ONE JSON object and nothing else.`, user: `${spec}\n\nPATH: ${it.path}\nHEADING: ${pg1.parsed.h1}\nCURRENT ${kind === 'title' ? 'TITLE' : 'DESCRIPTION'}: ${it.before}\nPAGE TEXT (start): ${plain(pg1.html).slice(0, 1400)}`, maxTokens: 800 })).items || [];
+            got = got.concat(one.filter((x) => x && x.path === it.path));
+          } catch (e) { /* stays "no answer" */ }
+        }
         const g = got.find((x) => x.path === it.path); let val = g && (kind === 'title' ? g.title : g.description);
         const check = (v) => (!v ? 'no answer' : (kind === 'title' ? validateTitle(v, it.before) : validateDescription(v, it.before, allowed)));
         let bad = check(val);
