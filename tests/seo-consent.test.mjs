@@ -76,7 +76,8 @@ test('EVERY public page in the repository loads tracking only behind the consent
 });
 
 // ── the banner script, run against a tiny fake browser ──
-function browser({ saved = null } = {}) {
+function browser({ saved = null, cookies = [] } = {}) {
+  const jar = new Map(cookies.map((n) => [n, 'v']));
   const store = new Map(saved ? [['mkr_consent_v1', JSON.stringify(saved)]] : []);
   const log = { appended: [], removed: [], gtag: [], pixel: 0, reload: 0, listeners: {}, vars: {} };
   const els = {};
@@ -84,7 +85,10 @@ function browser({ saved = null } = {}) {
   const body = mk('body'), head = mk('head'), footer = mk('footer');
   const byId = {};
   const document = {
-    readyState: 'complete', body, head, cookie: '', documentElement: { style: { setProperty(k, v) { log.vars[k] = v; }, removeProperty(k) { delete log.vars[k]; } } },
+    readyState: 'complete', body, head,
+    get cookie() { return [...jar].map(([k, v]) => `${k}=${v}`).join('; '); },
+    set cookie(s) { const [kv, ...attrs] = String(s).split(';'); const [k, v] = kv.split('='); if (attrs.some((a) => /expires=Thu, 01 Jan 1970/.test(a))) jar.delete(k.trim()); else jar.set(k.trim(), v); },
+    documentElement: { style: { setProperty(k, v) { log.vars[k] = v; }, removeProperty(k) { delete log.vars[k]; } } },
     createElement: mk,
     getElementById(id) {
       if (byId[id]) return byId[id];
@@ -100,7 +104,7 @@ function browser({ saved = null } = {}) {
   window.gtag = function () { window.dataLayer.push(arguments); log.gtag.push([...arguments]); };
   const ctx = vm.createContext({ window, document, localStorage: { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) }, location: window.location, console });
   vm.runInContext(fs.readFileSync(path.join(ROOT, 'consent.js'), 'utf8'), ctx);
-  return { window, log, store, byId, footer, click: (id) => { document.getElementById(id); (log.listeners[id] || []).forEach((f) => f()); } };
+  return { window, log, store, byId, footer, jar, click: (id) => { document.getElementById(id); (log.listeners[id] || []).forEach((f) => f()); } };
 }
 const banner = (b) => b.log.appended.find((e) => e.id === 'mkr-consent');
 
@@ -137,6 +141,15 @@ test('reject: choice saved, Google told "denied", ads pixel never loads, no relo
 test('a returning visitor who accepted: no banner, ads pixel loads straight away', () => {
   const b = browser({ saved: { v: 1, analytics: true, ads: true } });
   assert.equal(banner(b), undefined); assert.equal(b.log.pixel, 1);
+});
+
+test('leftover tracking cookies are cleared when there is no saved "yes", but other cookies are kept', () => {
+  const fresh = browser({ cookies: ['_ga', '_ga_ABC123', '_gcl_au', 'other_site_cookie'] });
+  assert.deepEqual([...fresh.jar.keys()], ['other_site_cookie']);
+  const rejected = browser({ saved: { v: 1, analytics: false, ads: false }, cookies: ['_ga', '_gcl_au'] });
+  assert.deepEqual([...rejected.jar.keys()], []);
+  const accepted = browser({ saved: { v: 1, analytics: true, ads: true }, cookies: ['_ga', '_gcl_au'] });
+  assert.deepEqual([...accepted.jar.keys()].sort(), ['_ga', '_gcl_au'], 'a visitor who said yes keeps theirs');
 });
 
 test('a returning visitor who rejected: no banner, nothing loads', () => {

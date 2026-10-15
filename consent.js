@@ -141,6 +141,8 @@
   function start() {
     var c = read();
     if (c) { if (c.ads) loadAdPixel(); } else showBanner();
+    // Cookies left over from before the banner existed, or from a "no": remove them unless analytics was accepted.
+    if (!c || !c.analytics) clearTrackingCookies();
     addSettingsLink();
   }
 
