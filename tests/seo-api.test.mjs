@@ -35,6 +35,7 @@ test('staff sessions get 403 on every action, including writes', async () => {
     assert.equal((await call({ query: { action }, headers: { cookie: staff } })).code, 403, action);
   }
   assert.equal((await call({ method: 'POST', query: { action: 'run_audit' }, headers: { cookie: staff } })).code, 403);
+  assert.equal((await call({ method: 'POST', query: { action: 'decide_many' }, headers: { cookie: staff }, body: { items: [{ article_id: 1, revision_id: 1 }] } })).code, 403);
   assert.equal((await call({ method: 'POST', query: { action: 'issue' }, headers: { cookie: staff }, body: { id: 1, status: 'ignored' } })).code, 403);
 });
 

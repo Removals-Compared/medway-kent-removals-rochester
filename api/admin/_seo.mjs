@@ -81,7 +81,7 @@ export async function enqueueJob(type, actor) {
 }
 
 export async function listArticles() {
-  return q(`SELECT id, slug, title, kind, target_keyword, status, source, scheduled_for, quality_score, last_error,
+  return q(`SELECT id, slug, title, kind, target_keyword, status, source, scheduled_for, quality_score, last_error, current_revision_id,
                    coalesce((quality_report->>'critical_count')::int, 0) AS critical,
                    coalesce((quality_report->>'warn_count')::int, 0) AS warnings, updated_at
               FROM seo_articles ORDER BY CASE status WHEN 'awaiting_approval' THEN 0 WHEN 'needs_revision' THEN 1 ELSE 2 END, updated_at DESC LIMIT 200`);
@@ -353,6 +353,24 @@ export async function decide(articleId, revisionId, decision, reason, actor) {
   catch (e) { throw Object.assign(new Error(String(e.message).replace(/^.*?:\s*/, '')), { status: 409 }); }
   await logSeo(actor, `article_${next}`, `version ${cur.version}${reason ? ': ' + reason : ''}`, articleId);
   return { status: next, version: cur.version };
+}
+
+// Approve several articles in one go. Each item names the exact version (revision_id) the owner was shown;
+// every one still goes through decide(): it must be the CURRENT version, awaiting approval, with no critical
+// findings, and the database approval trigger is unchanged. A failure on one never blocks the others.
+export const MAX_BULK_APPROVE = 25;
+export async function decideMany(items, actor) {
+  const list = (Array.isArray(items) ? items : []).slice(0, MAX_BULK_APPROVE + 1);
+  if (!list.length) throw Object.assign(new Error('Choose at least one article'), { status: 400 });
+  if (list.length > MAX_BULK_APPROVE) throw Object.assign(new Error(`Approve at most ${MAX_BULK_APPROVE} articles at a time`), { status: 400 });
+  const results = [];
+  for (const it of list) {
+    const id = Number(it && it.article_id), rev = Number(it && it.revision_id);
+    if (!Number.isInteger(id) || !Number.isInteger(rev)) { results.push({ article_id: id, ok: false, error: 'Missing article or version' }); continue; }
+    try { const r = await decide(id, rev, 'approve', null, actor); results.push({ article_id: id, ok: true, version: r.version }); }
+    catch (e) { results.push({ article_id: id, ok: false, error: e.message }); }
+  }
+  return { approved: results.filter((r) => r.ok).length, failed: results.filter((r) => !r.ok).length, results };
 }
 
 export async function archiveArticle(articleId, actor) {

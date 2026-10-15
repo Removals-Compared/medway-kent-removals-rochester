@@ -311,12 +311,32 @@ async function viewContent(id) {
       <input id="nd-notes" placeholder="Anything it should cover (optional)" style="flex:2;min-width:180px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink)">
       <button class="btn primary" id="nd-go">Write draft</button></div></div>
     ${pending ? `<div class="banner"><b>${pending} waiting for your approval.</b> Open one to read it, check the findings and decide.</div>` : ''}
-    ${arts.length ? `<div class="card scroll"><table class="stack"><tr><th>Article</th><th>Status</th><th>Checks</th><th>Source</th><th>Updated</th></tr>
-      ${arts.map((a) => `<tr><td><a href="#content/${a.id}">${esc(a.title)}</a><div class="muted">${esc(a.target_keyword || a.slug)}${a.scheduled_for ? ' · was due ' + esc(String(a.scheduled_for).slice(0, 10)) : ''}</div></td>
+    ${pending ? `<div class="card" id="bulk-bar" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn primary" id="bulk-go" disabled>Approve selected (0)</button><button class="btn" id="bulk-all">Select all with no problems</button><button class="btn" id="bulk-none">Clear</button><span class="muted">Approves the exact version listed for each ticked article. Open an article first if you want to read it.</span></div>` : ''}
+    ${arts.length ? `<div class="card scroll"><table class="stack"><tr><th></th><th>Article</th><th>Status</th><th>Checks</th><th>Source</th><th>Updated</th></tr>
+      ${arts.map((a) => `<tr><td>${a.status === 'awaiting_approval' && !a.critical ? `<input type="checkbox" class="bulk-cb" data-id="${a.id}" data-rev="${a.current_revision_id}" aria-label="Select ${esc(a.title)}">` : ''}</td><td><a href="#content/${a.id}">${esc(a.title)}</a><div class="muted">${esc(a.target_keyword || a.slug)}${a.scheduled_for ? ' · was due ' + esc(String(a.scheduled_for).slice(0, 10)) : ''}</div></td>
         <td>${stTag(a.status)}${a.last_error ? `<div class="muted">${esc(a.last_error)}</div>` : ''}</td>
         <td>${a.critical ? `<span class="sev error">${a.critical} to fix</span> ` : ''}${a.warnings ? `<span class="sev warn">${a.warnings} to check</span>` : ''}${!a.critical && !a.warnings && a.quality_score != null ? '<span class="ok">Clear</span>' : ''}</td>
         <td>${esc(SOURCE_LABEL[a.source] || a.source)}</td><td>${esc(when(a.updated_at))}</td></tr>`).join('')}</table></div>`
       : empty('No articles yet', 'Write a draft above, or use "Draft a guide" on a row in Opportunities. The posts that were scheduled to publish automatically will appear here once they are imported.')}`;
+  if (pending) {
+    const boxes = () => [...document.querySelectorAll('.bulk-cb')];
+    const refresh = () => { const n = boxes().filter((b) => b.checked).length; $('bulk-go').textContent = `Approve selected (${n})`; $('bulk-go').disabled = !n; };
+    boxes().forEach((b) => { b.onchange = refresh; });
+    $('bulk-all').onclick = () => { boxes().forEach((b) => { b.checked = true; }); refresh(); };
+    $('bulk-none').onclick = () => { boxes().forEach((b) => { b.checked = false; }); refresh(); };
+    $('bulk-go').onclick = async () => {
+      const items = boxes().filter((b) => b.checked).map((b) => ({ article_id: Number(b.dataset.id), revision_id: Number(b.dataset.rev) }));
+      if (!items.length) return;
+      if (!confirm(`Approve the current version of ${items.length} article${items.length === 1 ? '' : 's'}?\n\nThis records your approval for exactly the version listed. Anything you edit later needs approving again.`)) return;
+      $('bulk-go').disabled = true; $('bulk-go').textContent = 'Approving...';
+      try {
+        const r = await api('decide_many', {}, { items });
+        const bad = r.results.filter((x) => !x.ok).map((x) => { const a = arts.find((y) => y.id === x.article_id); return `${a ? a.title : '#' + x.article_id}: ${x.error}`; });
+        alert(`${r.approved} approved.` + (bad.length ? `\n\n${bad.length} not approved:\n` + bad.join('\n') : ''));
+      } catch (e) { alert(e.message); }
+      render();
+    };
+  }
   $('nd-go').onclick = async () => {
     const kw = $('nd-kw').value.trim();
     if (kw.length < 3) { $('nd-kw').focus(); return; }
