@@ -419,43 +419,23 @@
           <p class="flash" id="flash-crew"></p>
         </div>
         <div class="card">
-          <h2>Book a survey</h2>
+          <h2>Book an appointment</h2>
+          <label>Type</label>
+          <select id="bk-type">
+            <option value="survey">Survey</option>
+            <option value="packing">Packing day</option>
+            <option value="move">Moving day</option>
+          </select>
+          <p class="muted" id="bk-hint" style="margin:6px 0;display:none">For 2 day jobs: crew packs on day one, move happens on the moving date.</p>
           <div class="inline">
-            <div><label>Date</label><input type="date" id="sv-date"></div>
-            <div><label>Time</label><input type="time" id="sv-time" value="10:00"></div>
+            <div><label>Date</label><input type="date" id="bk-date"></div>
+            <div><label>Time</label><input type="time" id="bk-time" value="10:00"></div>
           </div>
-          <label>Duration (mins)</label><input type="number" id="sv-dur" value="45">
-          <label>Address</label><input id="sv-addr" value="${esc(q.from_postcode||'')}">
-          <label>Notes</label><textarea id="sv-notes"></textarea>
-          <div class="btn-row"><button class="btn orange" id="book-survey">Book survey</button></div>
-          <p class="flash" id="flash-survey"></p>
-        </div>
-
-        <div class="card">
-          <h2>Book the packing day</h2>
-          <p class="muted" style="margin:-8px 0 6px">For 2 day jobs: crew packs on day one, move happens on the moving date below.</p>
-          <div class="inline">
-            <div><label>Date</label><input type="date" id="pk-date"></div>
-            <div><label>Time</label><input type="time" id="pk-time" value="09:00"></div>
-          </div>
-          <label>Duration (mins)</label><input type="number" id="pk-dur" value="240">
-          <label>Address</label><input id="pk-addr" value="${esc(q.from_postcode||'')}">
-          <label>Notes</label><textarea id="pk-notes" rows="5">Packing day plan: our crew will pack all rooms into boxes, wrap furniture and fragile items, and label every box by room so unloading is easy. Beds stay made and essentials stay out until moving day. Please keep aside your valuables, documents and anything you need overnight.</textarea>
-          <div class="btn-row"><button class="btn orange" id="book-packing">Book packing day</button></div>
-          <p class="flash" id="flash-packing"></p>
-        </div>
-
-        <div class="card">
-          <h2>Book the moving date</h2>
-          <div class="inline">
-            <div><label>Date</label><input type="date" id="mv-date" value="${q.move_date||''}"></div>
-            <div><label>Time</label><input type="time" id="mv-time" value="08:00"></div>
-          </div>
-          <label>Duration (mins)</label><input type="number" id="mv-dur" value="240">
-          <label>Address</label><input id="mv-addr" value="${esc(q.from_postcode||'')}">
-          <label>Notes</label><textarea id="mv-notes"></textarea>
-          <div class="btn-row"><button class="btn orange" id="book-move">Book move</button></div>
-          <p class="flash" id="flash-move"></p>
+          <label>Duration (mins)</label><input type="number" id="bk-dur" value="45">
+          <label>Address</label><input id="bk-addr" value="${esc(q.from_postcode||'')}">
+          <label>Notes</label><textarea id="bk-notes"></textarea>
+          <div class="btn-row"><button class="btn orange" id="bk-book">Book it</button></div>
+          <p class="flash" id="flash-book"></p>
         </div>
 
         <div class="card">
@@ -849,9 +829,27 @@
       } catch {}
     });
 
-    $('book-survey').addEventListener('click', () => book('survey', 'sv', 'survey_booked', 'flash-survey'));
-    $('book-move').addEventListener('click',   () => book('move',   'mv', 'move_booked',   'flash-move'));
-    $('book-packing').addEventListener('click', () => book('packing', 'pk', null,            'flash-packing'));
+    // One booking form for all three appointment types. Changing the type
+    // applies that type's usual defaults (same values the old separate
+    // cards carried); whatever the user then edits is kept as-is.
+    const BK_DEFAULTS = {
+      survey:  { time: '10:00', dur: 45,  date: '', notes: '' },
+      packing: { time: '09:00', dur: 240, date: '', notes: 'Packing day plan: our crew will pack all rooms into boxes, wrap furniture and fragile items, and label every box by room so unloading is easy. Beds stay made and essentials stay out until moving day. Please keep aside your valuables, documents and anything you need overnight.' },
+      move:    { time: '08:00', dur: 240, date: String(QUOTE.move_date || '').slice(0,10), notes: '' },
+    };
+    $('bk-type').addEventListener('change', () => {
+      const d = BK_DEFAULTS[$('bk-type').value];
+      $('bk-time').value = d.time;
+      $('bk-dur').value = d.dur;
+      $('bk-date').value = d.date;
+      $('bk-notes').value = d.notes;
+      $('bk-hint').style.display = $('bk-type').value === 'packing' ? '' : 'none';
+    });
+    $('bk-book').addEventListener('click', () => {
+      const type = $('bk-type').value;
+      const newStatus = { survey: 'survey_booked', move: 'move_booked' }[type] || null;
+      book(type, 'bk', newStatus, 'flash-book');
+    });
 
     $('set-reminder').addEventListener('click', async () => {
       const remind_on = $('rem-date').value;
