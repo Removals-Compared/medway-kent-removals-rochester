@@ -436,7 +436,9 @@
     document.getElementById('m-body').value = [
       'Hi ' + first + ',',
       '',
-      'Thank you for the opportunity to quote for ' + ph.what + ((fromS && toS) ? ' from ' + fromS + ' to ' + toS : '') + (dShort ? ' on ' + dShort : '') + '.',
+      'Thank you for the opportunity to quote for ' + ph.what
+        + ((fromS && toS) ? ' from ' + fromS + ' to ' + toS : (fromS ? ' at ' + fromS : ''))
+        + (dShort ? ' on ' + dShort : '') + '.',
       '',
       ph.move
         ? 'Please find your fixed, all-inclusive quote attached. It covers 1 maxi loader Luton van and 2 movers, with full protection and insurance, for ' + amt + ' with no hidden charges.'
