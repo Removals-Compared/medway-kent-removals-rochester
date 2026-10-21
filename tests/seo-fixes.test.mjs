@@ -123,3 +123,12 @@ test('sitemap edits remove exactly one entry or add one in the existing style', 
   assert.ok(added.ok && added.html.includes(`<loc>${SITE}/privacy-policy</loc>`) && added.html.trim().endsWith('</urlset>'));
   assert.equal(addSitemapEntry(added.html, '/privacy-policy', SITE, '2026-10-15').already, true);
 });
+
+test('a page with a canonical elsewhere is never proposed for the sitemap, a normal missing page is', () => {
+  const out = proposeSitemap([
+    { path: '/blog/posts/copy', canonical: '/removal-costs-kent', indexable: true, inSitemap: false },
+    { path: '/blog/posts/normal', canonical: '/blog/posts/normal', indexable: true, inSitemap: false },
+    { path: '/blog/posts/nocanon', canonical: '', indexable: true, inSitemap: false },
+  ], { today: '2026-10-21' });
+  assert.deepEqual(out.map((o) => o.path), ['/blog/posts/normal', '/blog/posts/nocanon']);
+});

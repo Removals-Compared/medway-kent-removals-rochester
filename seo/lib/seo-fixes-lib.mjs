@@ -105,7 +105,8 @@ export function proposeSitemap(pages, { today }) {
       out.push({ path: p.path, kind: 'sitemap_remove', before: null, after: '', source: 'rule',
         reason: `${p.path} tells Google its real version is ${p.canonical}, so it should not also be listed in the sitemap. Google already follows the canonical; this just tidies the list.` });
     }
-    if (!p.inSitemap && p.indexable && p.path !== '/thank-you') {
+    // a page whose canonical is another page is left out of the sitemap on purpose
+    if (!p.inSitemap && p.indexable && p.path !== '/thank-you' && (!p.canonical || p.canonical === p.path)) {
       out.push({ path: p.path, kind: 'sitemap_add', before: null, after: '', source: 'rule',
         reason: `${p.path} can be indexed but is missing from the sitemap. Adding it helps Google find it.`, lastmod: today });
     }
