@@ -12,7 +12,13 @@ export default async function handler(req, res) {
     try {
       const { id, crew } = req.body || {};
       if (!id || !Array.isArray(crew)) return res.status(400).json({ error: 'id and crew[] are required' });
-      const clean = crew.map((n) => String(n).trim()).filter(Boolean).slice(0, 20);
+      // Entries are {name, role}; plain-string names are accepted for
+      // backward compatibility and stored without a role.
+      const clean = crew.map((e) => {
+        const name = String((e && e.name) ?? e ?? '').trim().slice(0, 60);
+        const role = String((e && e.role) || '').trim().slice(0, 40);
+        return name ? { name, role } : null;
+      }).filter(Boolean).slice(0, 20);
       const appt = await updateAppointment(id, { crew: clean });
       if (!appt) return res.status(404).json({ error: 'appointment not found' });
       return res.status(200).json({ ok: true, appointment: appt });
