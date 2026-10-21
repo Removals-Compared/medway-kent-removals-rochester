@@ -35,6 +35,33 @@
   .pill.survey_booked{ background:#ede9fe; color:#6d28d9; } .pill.move_booked{ background:#dcfce7; color:#15803d; }
   .pill.won{ background:#16a34a; color:#fff; } .pill.lost{ background:#fee2e2; color:#b91c1c; }
   .pill.deleted{ background:#f3f4f6; color:#6b7280; }
+  /* ── Redesign: lead header, status stepper, action bar ── */
+  .lead-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:2px 0 12px; flex-wrap:wrap; }
+  .lead-head h1{ font-size:20px; margin:0; }
+  .stepper{ display:flex; flex-wrap:wrap; gap:4px; margin:0 0 6px; }
+  .step{ flex:1 1 auto; min-width:84px; text-align:center; font-size:12.5px; font-weight:700; padding:9px 6px; background:#fff;
+         border:1px solid var(--line); color:#7a8599; cursor:pointer; font-family:inherit; }
+  .step:first-child{ border-radius:10px 0 0 10px; } .step:last-child{ border-radius:0 10px 10px 0; }
+  .step.done{ background:#eaf6ef; color:#1b7a43; border-color:#bfe5cd; }
+  .step.now{ background:#0d1f3c; color:#fff; border-color:#0d1f3c; cursor:default; }
+  .steplost{ font-size:12.5px; color:#b3362a; text-decoration:underline; cursor:pointer; background:none; border:none; padding:0;
+             margin:0 2px 14px; font-weight:600; font-family:inherit; }
+  .steplost:disabled{ text-decoration:none; cursor:default; }
+  .actionbar{ display:flex; gap:10px; margin:0 0 6px; flex-wrap:wrap; }
+  .abtn{ position:relative; display:inline-block; }
+  .menu{ position:absolute; top:calc(100% + 5px); left:0; background:#fff; border:1px solid var(--line); border-radius:12px;
+         box-shadow:0 10px 28px rgba(13,31,60,.18); min-width:240px; padding:6px; z-index:30; display:none; }
+  .menu.open{ display:block; }
+  .menu button{ display:block; width:100%; text-align:left; background:none; border:none; padding:10px 12px; font-size:13.5px;
+                font-weight:600; border-radius:8px; cursor:pointer; color:#1a2233; font-family:inherit; }
+  .menu button:hover{ background:#f2f5fa; }
+  @media(max-width:560px){
+    .step{ border-radius:8px !important; flex:1 1 30%; }
+    .actionbar{ gap:8px; }
+    .abtn{ width:100%; }
+    .abtn > .btn, .actionbar > .btn{ width:100%; }
+    .menu{ right:0; min-width:0; }
+  }
   label{ display:block; font-size:13px; font-weight:600; margin:14px 0 5px; color:#445; }
   input,select,textarea{ width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px; font-family:inherit; }
   textarea{ min-height:70px; resize:vertical; }
@@ -120,6 +147,13 @@
     .crew-row label{ color:#dfe5f0; }
     .crew-row.on{ background:#0e2b1e; border-color:#1f6b45; }
     .group-label{ color:#7c89a5; }
+    .lead-head h1{ color:#fff; }
+    .step{ background:#121a2e; border-color:#2c3a58; color:#8a97b2; }
+    .step.done{ background:#0e2b1e; border-color:#1f6b45; color:#5ad08a; }
+    .step.now{ background:#30425f; border-color:#30425f; color:#fff; }
+    .menu{ background:#18213a; border-color:#293651; box-shadow:0 10px 28px rgba(0,0,0,.5); }
+    .menu button{ color:#dfe5f0; }
+    .menu button:hover{ background:#121a2e; }
   }
 </style>
 </head>
@@ -236,6 +270,23 @@
 
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const labelFor = (s) => ({ new:'New', accepted:'Accepted', contacted:'Contacted', quote_sent:'Quote Sent', prospecting:'Prospecting', survey_booked:'Survey booked', move_booked:'Move booked', won:'Completed', lost:'Lost', deleted:'In recycle bin' }[s] || s || 'New');
+
+  // ── Status stepper: one strip instead of a wall of buttons ──
+  // Clicking a stage patches the status through the same [data-status]
+  // handler the old buttons used (incl. the review offer on Completed).
+  const STAGES = [
+    ['new', 'New'], ['contacted', 'Contacted'], ['prospecting', 'Prospecting'],
+    ['quote_sent', 'Quote sent'], ['accepted', 'Accepted'],
+    ['survey_booked', 'Survey'], ['move_booked', 'Move booked'], ['won', 'Completed'],
+  ];
+  function stepperHtml(st){
+    const idx = STAGES.findIndex((s) => s[0] === st);
+    return '<div class="stepper">' + STAGES.map((s, i) => {
+      const cls = s[0] === st ? 'now' : (idx > -1 && i < idx ? 'done' : '');
+      return `<button type="button" class="step ${cls}" ${s[0] === st ? 'disabled' : `data-status="${s[0]}"`} title="Move to ${s[1]}">${s[1]}</button>`;
+    }).join('') + '</div>'
+    + `<button type="button" class="steplost" ${st === 'lost' ? 'disabled' : 'data-status="lost"'}>${st === 'lost' ? 'This lead is marked as lost' : 'Mark as lost…'}</button>`;
+  }
   function fmtDate(v){ if(!v) return '—'; try{ return new Date(v).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch{ return v; } }
   function fmtDT(v){ if(!v) return '—'; try{ return new Date(v).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); }catch{ return v; } }
 
@@ -270,12 +321,38 @@
     const waPhone = String(q.phone || '').replace(/[^\d]/g, '').replace(/^0/, '44');
     $('content').innerHTML = `
     ${dupes.length ? `<div class="dupe-banner">&#9888;&#65039; Possible duplicate — this customer also exists as ${dupes.map((d) => `<a href="/admin/quote/${esc(d.id)}">${esc(d.name || 'Unnamed')} (${labelFor(d.status)})</a>`).join(', ')}. Check before calling twice.</div>` : ''}
+    <div class="lead-head">
+      <h1>${esc(q.name || 'Unnamed')}${q.service ? ' — ' + esc(q.service) : ''}</h1>
+      <span class="pill ${st}">${labelFor(st)}</span>
+    </div>
+    ${stepperHtml(st)}
+    <div class="actionbar">
+      <span class="abtn staff-hide">
+        <button class="btn" id="menu-docs" type="button">&#128196; Documents &#9662;</button>
+        <div class="menu" id="docs-menu">
+          <button type="button" id="gen-quote">&#128196; Generate quote document</button>
+          <button type="button" id="gen-invoice">&#129534; Invoice</button>
+          <button type="button" id="gen-receipt">&#129534; Receipt</button>
+        </div>
+      </span>
+      <span class="abtn">
+        <button class="btn" id="menu-msg" type="button">&#128172; Message customer &#9662;</button>
+        <div class="menu" id="msg-menu">
+          <button type="button" id="send-followup">&#9203; Quote follow-up</button>
+          ${st === 'quote_sent' ? '<button type="button" id="send-expiry">&#8987; Price-hold reminder</button>' : ''}
+          ${st === 'lost' ? '<button type="button" id="send-winback">&#128260; Win-back email</button>' : ''}
+          <button type="button" id="send-review">&#11088; Review request</button>
+          <button type="button" id="review-received">&#10003; Mark review received</button>
+        </div>
+      </span>
+      <button class="btn green" id="send-deposit" type="button">&#128183; WhatsApp 10% deposit link</button>
+    </div>
+    <p class="flash" id="flash-left"></p>
     <div class="cols">
       <!-- LEFT -->
       <div>
         <div class="card">
           <h2>Customer details
-            <span class="pill ${st}" style="margin-left:8px">${labelFor(st)}</span>
             <button class="btn" id="edit-toggle" style="float:right;padding:6px 12px">Edit</button>
           </h2>
 
@@ -332,19 +409,16 @@
           </form>
 
           <hr class="staff-hide">
-          <div class="staff-hide">
-          <label>Job value (£)</label>
-          <div class="inline">
-            <div><input type="number" id="value" step="0.01" value="${q.value ?? ''}" placeholder="0.00"></div>
-            <button class="btn" id="save-value">Save</button>
-          </div>
+          <button class="btn red divider-btn staff-hide" id="delete-lead">Delete this quote</button>
+        </div>
 
-          <div class="group-label">Documents</div>
-          <div class="btn-row">
-            <button class="btn orange full" id="gen-quote">&#128196; Generate quote document</button>
-            <button class="btn" id="gen-invoice">&#129534; Invoice</button>
-            <button class="btn" id="gen-receipt" style="color:#15803d">&#129534; Receipt</button>
+        <div class="card staff-hide">
+          <h2>Money</h2>
+          <div class="inline">
+            <div><label>Job value (£)</label><input type="number" id="value" step="0.01" value="${q.value ?? ''}" placeholder="0.00"></div>
+            <div><label>Deposit (10%)</label><input id="dep-view" disabled value="${q.value ? '£' + Math.round(Number(q.value) * 0.10).toLocaleString('en-GB') : '—'}"></div>
           </div>
+          <div class="btn-row"><button class="btn" id="save-value">Save value</button></div>
 
           <div class="group-label">Job costs (crew, fuel, van, materials)</div>
           <div id="cost-rows">${(Array.isArray(q.costs) ? q.costs : []).map((c) => `
@@ -360,30 +434,6 @@
           </div>
           <div id="cost-summary"></div>
           <p class="flash" id="flash-costs"></p>
-          </div>
-
-          <div class="group-label">Status</div>
-          <div class="btn-row">
-            <button class="btn primary" data-status="contacted">Contacted</button>
-            <button class="btn" data-status="quote_sent" style="color:#4338ca">Quote sent</button>
-            <button class="btn" data-status="accepted" style="color:#047857">Accepted</button>
-            <button class="btn" data-status="prospecting" style="color:#0f766e">Prospecting</button>
-            <button class="btn green" data-status="won">Completed</button>
-            <button class="btn red full" data-status="lost">Mark lost</button>
-          </div>
-          <div class="group-label">Customer messages</div>
-          <div class="btn-row">
-            <button class="btn green full" id="send-deposit">&#128183; WhatsApp the 10% deposit link</button>
-            <button class="btn" id="send-followup" style="color:#4338ca">&#9203; Quote follow-up</button>
-            ${q.status === 'quote_sent' ? '<button class="btn" id="send-expiry" style="color:#b45309">&#8987; Price-hold reminder</button>' : ''}
-            ${q.status === 'lost' ? '<button class="btn full" id="send-winback" style="color:#0f766e">&#128260; Win-back email</button>' : ''}
-            <button class="btn" id="send-review" style="color:#92400e">&#11088; Review request</button>
-            <button class="btn full" id="review-received" style="color:#15803d">&#10003; Mark review received</button>
-          </div>
-          <p class="flash" id="flash-left"></p>
-
-          <hr>
-          <button class="btn red divider-btn staff-hide" id="delete-lead">Delete this quote</button>
         </div>
 
         <div class="card">
@@ -545,7 +595,26 @@
     } catch { el.innerHTML = 'Could not work out the distance &bull; ' + route; }
   }
 
+  // One document-level listener closes any open action-bar menu on an
+  // outside click; registered once, not per render.
+  if (!window.__menuCloser){
+    window.__menuCloser = true;
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.abtn')) document.querySelectorAll('.menu.open').forEach((m) => m.classList.remove('open'));
+    });
+  }
+
   function wire(){
+    [['menu-docs', 'docs-menu'], ['menu-msg', 'msg-menu']].forEach(([btnId, menuId]) => {
+      const b = $(btnId), m = $(menuId);
+      if (!b || !m) return;
+      b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.querySelectorAll('.menu.open').forEach((x) => { if (x !== m) x.classList.remove('open'); });
+        m.classList.toggle('open');
+      });
+      m.addEventListener('click', () => m.classList.remove('open'));
+    });
     calcDistance();
     // ── Edit customer details ──
     $('edit-toggle').addEventListener('click', () => {
@@ -622,7 +691,12 @@
           method:'PATCH', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ value: $('value').value }),
         });
-        flash('flash-left', r.ok ? 'Value saved.' : 'Could not save value.', r.ok);
+        if (r.ok){
+          QUOTE.value = $('value').value;
+          const v = Number($('value').value);
+          if ($('dep-view')) $('dep-view').value = v ? '£' + Math.round(v * 0.10).toLocaleString('en-GB') : '—';
+        }
+        flash('flash-costs', r.ok ? 'Value saved.' : 'Could not save value.', r.ok);
       } catch {}
     });
 
