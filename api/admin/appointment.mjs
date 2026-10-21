@@ -3,33 +3,13 @@ import { getQuote, createAppointment, updateAppointment, fetchMovesOnDate } from
 import { createEvent } from './_gcal.mjs';
 import { sendSurveyConfirmation, sendMoveConfirmation, sendPackingConfirmation } from './_email.mjs';
 
-// Crew names as stored on an appointment: trimmed, non-empty, capped.
-const cleanCrew = (crew) =>
-  Array.isArray(crew) ? crew.map((n) => String(n).trim()).filter(Boolean).slice(0, 20) : [];
-
 export default async function handler(req, res) {
   if (!requireAuth(req, res)) return;
-
-  // PATCH: reassign the crew on an existing booking. Crew is internal only —
-  // it never reaches the customer confirmation emails.
-  if (req.method === 'PATCH') {
-    try {
-      const { id, crew } = req.body || {};
-      if (!id || !Array.isArray(crew)) return res.status(400).json({ error: 'id and crew[] are required' });
-      const appt = await updateAppointment(id, { crew: cleanCrew(crew) });
-      if (!appt) return res.status(404).json({ error: 'appointment not found' });
-      return res.status(200).json({ ok: true, appointment: appt });
-    } catch (e) {
-      console.error('appointment.js PATCH', e);
-      return res.status(500).json({ ok: false, error: String(e.message || e) });
-    }
-  }
-
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
 
   const errors = [];
   try {
-    const { lead_id, type, scheduled_for, duration_minutes, address, notes, crew, send_email } = req.body || {};
+    const { lead_id, type, scheduled_for, duration_minutes, address, notes } = req.body || {};
     if (!lead_id || !type || !scheduled_for) {
       return res.status(400).json({ error: 'lead_id, type and scheduled_for are required' });
     }
@@ -63,7 +43,6 @@ export default async function handler(req, res) {
       duration_minutes: duration,
       address: address || null,
       notes: notes || null,
-      crew: cleanCrew(crew),
     });
 
     // 2. Google Calendar — tolerate failure.
@@ -74,13 +53,9 @@ export default async function handler(req, res) {
       errors.push({ step: 'gcal', message: String(e.message || e) });
     }
 
-    // 3. Customer confirmation email — only with the booker's permission
-    //    (the form's checkbox), and tolerate failure. The templates carry
-    //    date/time/address/service only; crew names are never included.
+    // 3. Customer confirmation email — tolerate failure.
     try {
-      if (send_email === false) {
-        // Staff chose not to email the customer; email_sent stays false.
-      } else if (quote && quote.email) {
+      if (quote && quote.email) {
         if (type === 'survey') await sendSurveyConfirmation(quote, appt);
         else if (type === 'packing') await sendPackingConfirmation(quote, appt);
         else await sendMoveConfirmation(quote, appt);
