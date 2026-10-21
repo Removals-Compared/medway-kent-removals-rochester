@@ -272,8 +272,26 @@
       </select>
 
       <div class="grid2">
-        <div><label>Moving from</label><input name="from_postcode" placeholder="e.g. Rochester ME1"></div>
-        <div><label>Moving to</label><input name="to_postcode" placeholder="e.g. Maidstone ME14"></div>
+        <div>
+          <label>Moving from</label>
+          <input name="from_postcode" id="addFromPostcode" placeholder="Full address (or use finder below)">
+          <div class="addr-row">
+            <input type="text" class="addr-pc" data-target="addFromPostcode" placeholder="Postcode" maxlength="8" autocomplete="off">
+            <button type="button" class="addr-find" data-target="addFromPostcode">Find address</button>
+          </div>
+          <select class="addr-select" data-target="addFromPostcode" hidden></select>
+          <p class="addr-note" data-target="addFromPostcode" hidden></p>
+        </div>
+        <div>
+          <label>Moving to</label>
+          <input name="to_postcode" id="addToPostcode" placeholder="Full address (or use finder below)">
+          <div class="addr-row">
+            <input type="text" class="addr-pc" data-target="addToPostcode" placeholder="Postcode" maxlength="8" autocomplete="off">
+            <button type="button" class="addr-find" data-target="addToPostcode">Find address</button>
+          </div>
+          <select class="addr-select" data-target="addToPostcode" hidden></select>
+          <p class="addr-note" data-target="addToPostcode" hidden></p>
+        </div>
       </div>
 
       <div class="grid2">
@@ -647,5 +665,6 @@
 
   load();
 </script>
+<script src="/admin/postcode-picker.js" defer></script>
 </body>
 </html>

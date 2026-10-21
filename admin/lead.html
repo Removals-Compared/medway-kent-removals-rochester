@@ -396,8 +396,26 @@
               <option value="other" ${q.source==='other'?'selected':''}>Other</option>
             </select>
             <div class="inline">
-              <div><label>Moving from</label><input id="e-from" value="${esc(q.from_postcode||'')}"></div>
-              <div><label>Moving to</label><input id="e-to" value="${esc(q.to_postcode||'')}"></div>
+              <div>
+                <label>Moving from</label>
+                <input id="e-from" value="${esc(q.from_postcode||'')}">
+                <div class="addr-row">
+                  <input type="text" class="addr-pc" data-target="e-from" placeholder="Postcode" maxlength="8" autocomplete="off">
+                  <button type="button" class="addr-find" data-target="e-from">Find address</button>
+                </div>
+                <select class="addr-select" data-target="e-from" hidden></select>
+                <p class="addr-note" data-target="e-from" hidden></p>
+              </div>
+              <div>
+                <label>Moving to</label>
+                <input id="e-to" value="${esc(q.to_postcode||'')}">
+                <div class="addr-row">
+                  <input type="text" class="addr-pc" data-target="e-to" placeholder="Postcode" maxlength="8" autocomplete="off">
+                  <button type="button" class="addr-find" data-target="e-to">Find address</button>
+                </div>
+                <select class="addr-select" data-target="e-to" hidden></select>
+                <p class="addr-note" data-target="e-to" hidden></p>
+              </div>
             </div>
             <div class="inline">
               <div><label>Property</label><select id="e-property">${propertyOptions(q.property_size)}</select></div>
@@ -1089,5 +1107,6 @@
 
   load();
 </script>
+<script src="/admin/postcode-picker.js" defer></script>
 </body>
 </html>
