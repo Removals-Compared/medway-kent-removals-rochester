@@ -372,7 +372,7 @@
         <div class="card">
           <h2>Completed revenue per month</h2>
           <p class="sub">Value of completed moves, last 6 months</p>
-          ${barChart(months.map(m => ({ lab: m.lab, v: revBy[m.key] })), true)}
+          ${barChart(months.map(m => ({ lab: m.lab, v: revBy[m.key] })), true, true)}
         </div>`}
       </div>
 
@@ -507,15 +507,15 @@
     }).join('') + '</div>';
   }
 
-  // Single-series column chart. Values show on hover; the peak and the latest
-  // month are labeled permanently so the chart reads without interaction.
-  function barChart(data, isMoney){
+  // Single-series column chart. By default values show on hover with the
+  // peak and latest month labeled permanently; showAll labels every bar.
+  function barChart(data, isMoney, showAll){
     const max = Math.max(1, ...data.map(d => d.v));
     const peak = data.reduce((bi, d, i, a) => d.v > a[bi].v ? i : bi, 0);
     return '<div class="chart">' + data.map((d, i) => {
       const h = Math.round(d.v / max * 100);
       const label = isMoney ? money(d.v) : String(d.v);
-      const always = (i === peak && d.v > 0) || i === data.length - 1;
+      const always = showAll || (i === peak && d.v > 0) || i === data.length - 1;
       return `<div class="col" title="${d.lab}: ${label}">
         <span class="val ${always ? 'show' : ''}">${label}</span>
         <div class="bar ${isMoney ? 'accent' : ''}" style="height:${Math.max(2, h)}%"></div>
