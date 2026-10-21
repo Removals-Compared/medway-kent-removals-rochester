@@ -414,6 +414,10 @@
     if (t.indexOf('storage') > -1)     return { what: 'your storage booking',       subject: 'Your storage quote',             job: 'the booking', move: false };
     if (t.indexOf('long distance') > -1)
                                        return { what: 'your long distance move',    subject: 'Your long distance removal quote', job: 'your move', move: true };
+    if (t.indexOf('luxury') > -1)      return { what: 'your luxury move',           subject: 'Your luxury removal quote',      job: 'your move', move: true };
+    if (t.indexOf('same day') > -1)    return { what: 'your same day move',         subject: 'Your same day removal quote',    job: 'your move', move: true };
+    if (t.indexOf('international') > -1)
+                                       return { what: 'your international move',    subject: 'Your international removal quote', job: 'your move', move: true };
     if (t.indexOf('flat') > -1)        return { what: 'your flat move',             subject: 'Your flat removal quote',        job: 'your move', move: true };
     return { what: 'your upcoming house move', subject: 'Your removal quote', job: 'your move', move: true };
   }
