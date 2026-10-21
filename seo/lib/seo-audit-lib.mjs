@@ -61,10 +61,11 @@ export function internalPath(href, fromPath = '/') {
 
 export function parsePage(html, url) {
   const path = toPath(url);
-  const grab = (re) => { const m = html.match(re); return m ? decode(m[1]).trim() : ''; };
+  const grab = (re, g = 1) => { const m = html.match(re); return m ? decode(m[g]).trim() : ''; };
   const title = grab(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  const meta = grab(/<meta[^>]+name=["']description["'][^>]*content=["']([\s\S]*?)["']/i)
-    || grab(/<meta[^>]+content=["']([\s\S]*?)["'][^>]*name=["']description["']/i);
+  // The value ends at the SAME kind of quote it started with, so an apostrophe inside "Kent's" does not cut it short.
+  const meta = grab(/<meta[^>]+name=["']description["'][^>]*content=(["'])([\s\S]*?)\1/i, 2)
+    || grab(/<meta[^>]+content=(["'])([\s\S]*?)\1[^>]*name=["']description["']/i, 2);
   const canonical = grab(/<link[^>]+rel=["']canonical["'][^>]*href=["']([^"']*)["']/i);
   const robots = grab(/<meta[^>]+name=["']robots["'][^>]*content=["']([^"']*)["']/i);
   const h1s = [...html.matchAll(/<h1[\s>][\s\S]*?<\/h1>/gi)].map((m) => decode(m[0].replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim());

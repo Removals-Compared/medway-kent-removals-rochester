@@ -56,6 +56,14 @@ test('a healthy page raises no errors or warnings', () => {
   assert.deepEqual(issues.filter((i) => i.severity !== 'info'), []);
 });
 
+test('a description containing an apostrophe is read in full, not cut at the apostrophe', () => {
+  const d = "Moving to Canterbury: what to expect in Kent's cathedral city, with expert moving advice from our Rochester team and a free quote.";
+  const p = parsePage(`<html><head><title>t</title><meta name="description" content="${d}"></head><body></body></html>`, SITE + '/x');
+  assert.equal(p.meta_description, d);
+  const q = parsePage(`<html><head><meta content='He said "hello" to Kent' name='description'></head></html>`, SITE + '/y');
+  assert.equal(q.meta_description, 'He said "hello" to Kent');
+});
+
 test('missing and badly sized metadata is flagged', () => {
   const html = '<html><head></head><body><h1>a</h1><h1>b</h1><p>hi</p></body></html>';
   const issues = analyse([parsePage(html, SITE + '/blog/posts/p')], ctxFor(['/blog/posts/p']));
