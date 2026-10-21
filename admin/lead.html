@@ -502,23 +502,52 @@
   // ── Service and property choices for the edit form. A lead whose saved
   //    value is not in the list keeps it as an extra option, so editing
   //    an old lead never silently changes what was recorded. ──
-  const SERVICES = [
-    'House Removals', 'Flat Removals', 'House Clearance Service', 'Furniture Disposal',
-    'Office Removals', 'Single Item Collection', 'Man and Van', 'Packing Service',
-    'Storage', 'Long Distance Move', 'Luxury Removals', 'Same Day Move', 'International Removal',
+  // Grouped like the Relokates admin: [group label, [[value, shown text]]].
+  // Values stay as MKR's existing service names so saved leads and the
+  // service-aware quote wording keep matching.
+  const SERVICE_GROUPS = [
+    ['Residential moves', [
+      ['House Removals', 'House Removals (house to house)'],
+      ['Flat Removals', 'Flat Removals (lift, stairs, parking)'],
+      ['Man and Van', 'Man and Van (small / short)'],
+      ['Single Item Collection', 'Single Item Collection'],
+      ['Student Removals', 'Student Removals'],
+    ]],
+    ['Clearance & disposal', [
+      ['House Clearance Service', 'House Clearance (full property)'],
+      ['Furniture Disposal', 'Furniture Disposal'],
+    ]],
+    ['Commercial', [['Office Removals', 'Office Removals']]],
+    ['Add-ons', [['Packing Service', 'Packing Services'], ['Storage', 'Secure Storage']]],
+    ['Specialist', [
+      ['Luxury Removals', 'Luxury Removals'],
+      ['Same Day Move', 'Same Day Removals'],
+      ['Long Distance Move', 'Long Distance Move'],
+    ]],
+    ['International', [['International Removal', 'International Removal']]],
+    ['Other', [['Other', 'Other']]],
   ];
   const PROPERTY_SIZES = [
-    'Single room move', 'Studio flat', '1 bedroom', '2 bedroom', '3 bedroom',
-    '4 bedroom', '5+ bedroom', 'Office / commercial',
+    'Single room / single item', 'Studio / 1-bed flat', '2-bed flat', '3-bed flat',
+    '2-bed house', '3-bed house', '4-bed house', '5+ bed house',
+    'Office', 'Storage unit', 'Other',
   ];
-  function choiceOptions(list, cur){
-    const items = [...list];
+  function serviceOptions(cur){
+    const known = new Set(SERVICE_GROUPS.flatMap(([, items]) => items.map(([v]) => v)));
+    let html = `<option value="" ${!cur ? 'selected' : ''}>Choose a service</option>`;
+    html += SERVICE_GROUPS.map(([lab, items]) =>
+      `<optgroup label="${esc(lab)}">`
+      + items.map(([v, t]) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(t)}</option>`).join('')
+      + '</optgroup>').join('');
+    if (cur && !known.has(cur)) html += `<optgroup label="Saved value"><option selected>${esc(cur)}</option></optgroup>`;
+    return html;
+  }
+  function propertyOptions(cur){
+    const items = [...PROPERTY_SIZES];
     if (cur && !items.includes(cur)) items.push(cur);
-    return `<option value="" ${!cur ? 'selected' : ''}>Not set</option>`
+    return `<option value="" ${!cur ? 'selected' : ''}>Choose property type</option>`
       + items.map((v) => `<option ${v === cur ? 'selected' : ''}>${esc(v)}</option>`).join('');
   }
-  const serviceOptions = (cur) => choiceOptions(SERVICES, cur);
-  const propertyOptions = (cur) => choiceOptions(PROPERTY_SIZES, cur);
 
   // Saved crew entries are {name, role}; older rows may be plain names.
   const ROLES = ['Mover', 'Driver', 'Packer', 'Team leader', 'Foreman', 'Office'];

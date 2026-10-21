@@ -230,19 +230,35 @@
       <label>Service</label>
       <select name="service">
         <option value="">Choose a service</option>
-        <option>House Removals</option>
-        <option>Flat Removals</option>
-        <option>House Clearance Service</option>
-        <option>Furniture Disposal</option>
-        <option>Office Removals</option>
-        <option>Single Item Collection</option>
-        <option>Man and Van</option>
-        <option>Packing Service</option>
-        <option>Storage</option>
-        <option>Long Distance Move</option>
-        <option>Luxury Removals</option>
-        <option>Same Day Move</option>
-        <option>International Removal</option>
+        <optgroup label="Residential moves">
+          <option value="House Removals">House Removals (house to house)</option>
+          <option value="Flat Removals">Flat Removals (lift, stairs, parking)</option>
+          <option value="Man and Van">Man and Van (small / short)</option>
+          <option value="Single Item Collection">Single Item Collection</option>
+          <option value="Student Removals">Student Removals</option>
+        </optgroup>
+        <optgroup label="Clearance &amp; disposal">
+          <option value="House Clearance Service">House Clearance (full property)</option>
+          <option value="Furniture Disposal">Furniture Disposal</option>
+        </optgroup>
+        <optgroup label="Commercial">
+          <option value="Office Removals">Office Removals</option>
+        </optgroup>
+        <optgroup label="Add-ons">
+          <option value="Packing Service">Packing Services</option>
+          <option value="Storage">Secure Storage</option>
+        </optgroup>
+        <optgroup label="Specialist">
+          <option value="Luxury Removals">Luxury Removals</option>
+          <option value="Same Day Move">Same Day Removals</option>
+          <option value="Long Distance Move">Long Distance Move</option>
+        </optgroup>
+        <optgroup label="International">
+          <option value="International Removal">International Removal</option>
+        </optgroup>
+        <optgroup label="Other">
+          <option value="Other">Other</option>
+        </optgroup>
       </select>
 
       <label>Lead source</label>
@@ -266,14 +282,17 @@
           <label>Property type</label>
           <select name="property_size">
             <option value="">Choose</option>
-            <option>Single room move</option>
-            <option>Studio flat</option>
-            <option>1 bedroom</option>
-            <option>2 bedroom</option>
-            <option>3 bedroom</option>
-            <option>4 bedroom</option>
-            <option>5+ bedroom</option>
-            <option>Office / commercial</option>
+            <option>Single room / single item</option>
+            <option>Studio / 1-bed flat</option>
+            <option>2-bed flat</option>
+            <option>3-bed flat</option>
+            <option>2-bed house</option>
+            <option>3-bed house</option>
+            <option>4-bed house</option>
+            <option>5+ bed house</option>
+            <option>Office</option>
+            <option>Storage unit</option>
+            <option>Other</option>
           </select>
         </div>
       </div>
