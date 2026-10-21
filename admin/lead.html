@@ -118,6 +118,12 @@
   .crew-row input[type=checkbox]{ width:17px; height:17px; accent-color:#16a34a; cursor:pointer; }
   .crew-wa{ background:#1EBE57; color:#fff; font-size:12px; font-weight:700; padding:6px 12px; border-radius:14px; text-decoration:none; white-space:nowrap;
             box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 2px 0 #128a3e, 0 3px 8px rgba(30,190,87,.3); }
+  .crew-pick{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 6px; }
+  .crew-pick label{ display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:14px; padding:5px 11px; font-size:13px; cursor:pointer; margin:0; color:#1a2233; transition:background .15s, border-color .15s; }
+  .crew-pick label.on{ background:#ecfdf5; border-color:#86efac; }
+  .crew-pick input[type=checkbox]{ width:15px; height:15px; accent-color:#16a34a; cursor:pointer; margin:0; }
+  .appt-wa{ background:#1EBE57; color:#fff; font-size:12px; font-weight:700; padding:6px 12px; border-radius:14px; text-decoration:none; white-space:nowrap; display:inline-block; margin:4px 6px 0 0;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 2px 0 #128a3e, 0 3px 8px rgba(30,190,87,.3); }
 
   /* ── Dark mode: follows the phone/computer setting ── */
   @media (prefers-color-scheme: dark){
@@ -146,6 +152,8 @@
     .crew-row{ border-color:#293651; }
     .crew-row label{ color:#dfe5f0; }
     .crew-row.on{ background:#0e2b1e; border-color:#1f6b45; }
+    .crew-pick label{ border-color:#293651; color:#dfe5f0; }
+    .crew-pick label.on{ background:#0e2b1e; border-color:#1f6b45; }
     .group-label{ color:#7c89a5; }
     .lead-head h1{ color:#fff; }
     .step{ background:#121a2e; border-color:#2c3a58; color:#8a97b2; }
@@ -203,22 +211,14 @@
     { name: 'Francis',  wa: '447400085295' },
     { name: 'Tonna',    wa: '447349864448' },
   ];
-  // The current crew is whatever the latest "Crew assigned:" note says,
-  // so assignments live in the lead's own history with no schema change.
-  function currentCrew(){
-    const notes = (QUOTE && Array.isArray(QUOTE.admin_notes)) ? QUOTE.admin_notes : [];
-    for (let i = notes.length - 1; i >= 0; i--){
-      const t = String((notes[i] && notes[i].text) || '');
-      if (t.startsWith('Crew cleared')) return [];
-      const m = t.match(/^Crew assigned: (.+)$/);
-      if (m) return m[1].split(',').map((x) => x.trim()).filter(Boolean);
-    }
-    return [];
-  }
-  function crewJobMessage(member){
+  // Crew lives on each booking (appointments.crew). This builds the
+  // WhatsApp message for one crew member about one specific booking.
+  function crewJobMessage(member, appt){
     const q = QUOTE || {};
-    const bits = ['Hi ' + member + ', you are on the move for ' + (q.name || 'a customer')];
-    if (q.move_date) bits.push('on ' + fmtDate(q.move_date));
+    const job = appt ? (appt.type === 'survey' ? 'survey' : appt.type === 'packing' ? 'packing day' : 'move') : 'move';
+    const bits = ['Hi ' + member + ', you are on the ' + job + ' for ' + (q.name || 'a customer')];
+    if (appt && appt.scheduled_for) bits.push('on ' + fmtDT(appt.scheduled_for));
+    else if (q.move_date) bits.push('on ' + fmtDate(q.move_date));
     if (q.from_postcode || q.to_postcode) bits.push('from ' + (q.from_postcode || '?') + ' to ' + (q.to_postcode || '?'));
     return bits.join(' ') + '. Please confirm you are available. Thanks, Medway and Kent Removals.';
   }
@@ -489,19 +489,6 @@
           <p class="muted" style="font-size:12px;margin-top:8px">Adds a “Call” event to Google Calendar and alerts you at that time.</p>
         </div>
 
-        <div class="card">
-          <h2>Crew for this job</h2>
-          <div id="crew-list">${CREW.map((c) => {
-            const on = currentCrew().includes(c.name);
-            return `
-            <div class="crew-row ${on ? 'on' : ''}" data-name="${c.name}">
-              <label><input type="checkbox" class="crew-cb" data-name="${c.name}" ${on ? 'checked' : ''}> <strong>${c.name}</strong></label>
-              <a class="crew-wa" href="https://wa.me/${c.wa}?text=${encodeURIComponent(crewJobMessage(c.name))}" target="_blank" rel="noopener">&#128172; WhatsApp</a>
-            </div>`; }).join('')}
-          </div>
-          <div class="btn-row"><button class="btn primary" id="save-crew">Save crew</button></div>
-          <p class="flash" id="flash-crew"></p>
-        </div>
       </div>
     </div>`;
 
@@ -511,13 +498,50 @@
 
   function renderAppts(){
     if (!APPTS.length) return '<p class="muted">No appointments booked yet.</p>';
-    return APPTS.map((a) => `
+    return APPTS.map((a) => {
+      const crew = Array.isArray(a.crew) ? a.crew : [];
+      return `
       <div class="appt" data-appt="${esc(a.id)}">
         <div class="tag">${a.type==='survey'?'Survey':a.type==='packing'?'Packing day':'Moving day'}</div>
         <div class="when">${fmtDT(a.scheduled_for)}</div>
         <div class="meta">${a.duration_minutes||60} mins${a.address?' · '+esc(a.address):''}
           · Calendar: ${a.gcal_event_id?'✓':'—'} · Email: ${a.email_sent?'✓ sent':'not sent'}</div>
-      </div>`).join('');
+        <div class="crew-pick">${CREW.map((c) => `
+          <label class="${crew.includes(c.name) ? 'on' : ''}"><input type="checkbox" class="appt-crew-cb" data-appt-id="${esc(a.id)}" data-name="${c.name}" ${crew.includes(c.name) ? 'checked' : ''}> ${c.name}</label>`).join('')}
+        </div>
+        <div class="btn-row"><button type="button" class="btn appt-crew-save" data-appt-id="${esc(a.id)}" style="display:none;padding:7px 14px">Save crew</button></div>
+        ${crew.length ? `<div>${crew.map((n) => {
+          const m = CREW.find((c) => c.name === n);
+          return m ? `<a class="appt-wa" href="https://wa.me/${m.wa}?text=${encodeURIComponent(crewJobMessage(n, a))}" target="_blank" rel="noopener">&#128172; WhatsApp ${esc(n)}</a>` : '';
+        }).join('')}</div>` : ''}
+      </div>`; }).join('');
+  }
+
+  // Ticking crew on a booking reveals its Save crew button; saving PATCHes
+  // the booking, and the WhatsApp links then appear for the saved members.
+  function wireApptCrew(){
+    document.querySelectorAll('.appt-crew-cb').forEach((cb) => cb.addEventListener('change', () => {
+      cb.parentElement.classList.toggle('on', cb.checked);
+      const btn = document.querySelector('.appt-crew-save[data-appt-id="' + cb.dataset.apptId + '"]');
+      if (btn) btn.style.display = '';
+    }));
+    document.querySelectorAll('.appt-crew-save').forEach((btn) => btn.addEventListener('click', async () => {
+      const id = btn.dataset.apptId;
+      const picked = Array.from(document.querySelectorAll('.appt-crew-cb[data-appt-id="' + id + '"]:checked')).map((c) => c.dataset.name);
+      btn.disabled = true;
+      try {
+        const r = await api('/api/admin/appointment', {
+          method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, crew: picked }),
+        });
+        if (r.ok){
+          const data = await r.json();
+          const i = APPTS.findIndex((a) => String(a.id) === String(id));
+          if (i > -1 && data.appointment) APPTS[i] = data.appointment;
+        }
+      } catch {}
+      $('appt-list').innerHTML = renderAppts();
+      wireApptCrew();
+    }));
   }
 
   function renderReminders(){
@@ -757,19 +781,7 @@
     });
     costSummary();
 
-    $('save-crew').addEventListener('click', async () => {
-      const picked = Array.from(document.querySelectorAll('.crew-cb:checked')).map((c) => c.dataset.name);
-      const text = picked.length ? 'Crew assigned: ' + picked.join(', ') : 'Crew cleared';
-      const b = $('save-crew'); b.disabled = true;
-      try {
-        const r = await api('/api/admin/quote/' + LEAD_ID + '/note', {
-          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text }),
-        });
-        if (r.ok){ QUOTE = (await r.json()).quote; flash('flash-crew', picked.length ? 'Crew saved: ' + picked.join(', ') + '.' : 'Crew cleared.', true); render(); }
-        else flash('flash-crew', 'Could not save crew.', false);
-      } catch(e){ if (String(e.message) !== 'unauth') flash('flash-crew', 'Could not save crew.', false); }
-      b.disabled = false;
-    });
+    wireApptCrew();
     $('send-deposit').addEventListener('click', async () => {
       if (!QUOTE || !QUOTE.phone){ flash('flash-left', 'No phone number on this lead.', false); return; }
       const waNum = String(QUOTE.phone).replace(/[^\d]/g, '').replace(/^0/, '44');

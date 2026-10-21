@@ -5,6 +5,23 @@ import { sendSurveyConfirmation, sendMoveConfirmation, sendPackingConfirmation }
 
 export default async function handler(req, res) {
   if (!requireAuth(req, res)) return;
+
+  // PATCH: save the crew assigned to an existing booking. Crew is internal
+  // only — it never reaches the customer confirmation emails.
+  if (req.method === 'PATCH') {
+    try {
+      const { id, crew } = req.body || {};
+      if (!id || !Array.isArray(crew)) return res.status(400).json({ error: 'id and crew[] are required' });
+      const clean = crew.map((n) => String(n).trim()).filter(Boolean).slice(0, 20);
+      const appt = await updateAppointment(id, { crew: clean });
+      if (!appt) return res.status(404).json({ error: 'appointment not found' });
+      return res.status(200).json({ ok: true, appointment: appt });
+    } catch (e) {
+      console.error('appointment.js PATCH', e);
+      return res.status(500).json({ ok: false, error: String(e.message || e) });
+    }
+  }
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
 
   const errors = [];
