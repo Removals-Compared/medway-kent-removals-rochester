@@ -406,19 +406,6 @@
       <!-- RIGHT -->
       <div>
         <div class="card">
-          <h2>Crew for this job</h2>
-          <div id="crew-list">${CREW.map((c) => {
-            const on = currentCrew().includes(c.name);
-            return `
-            <div class="crew-row ${on ? 'on' : ''}" data-name="${c.name}">
-              <label><input type="checkbox" class="crew-cb" data-name="${c.name}" ${on ? 'checked' : ''}> <strong>${c.name}</strong></label>
-              <a class="crew-wa" href="https://wa.me/${c.wa}?text=${encodeURIComponent(crewJobMessage(c.name))}" target="_blank" rel="noopener">&#128172; WhatsApp</a>
-            </div>`; }).join('')}
-          </div>
-          <div class="btn-row"><button class="btn primary" id="save-crew">Save crew</button></div>
-          <p class="flash" id="flash-crew"></p>
-        </div>
-        <div class="card">
           <h2>Book an appointment</h2>
           <label>Type</label>
           <select id="bk-type">
@@ -450,6 +437,20 @@
           <div class="btn-row"><button class="btn orange" id="set-reminder">Set reminder</button></div>
           <p class="flash" id="flash-rem"></p>
           <p class="muted" style="font-size:12px;margin-top:8px">Adds a “Call” event to Google Calendar and alerts you at that time.</p>
+        </div>
+
+        <div class="card">
+          <h2>Crew for this job</h2>
+          <div id="crew-list">${CREW.map((c) => {
+            const on = currentCrew().includes(c.name);
+            return `
+            <div class="crew-row ${on ? 'on' : ''}" data-name="${c.name}">
+              <label><input type="checkbox" class="crew-cb" data-name="${c.name}" ${on ? 'checked' : ''}> <strong>${c.name}</strong></label>
+              <a class="crew-wa" href="https://wa.me/${c.wa}?text=${encodeURIComponent(crewJobMessage(c.name))}" target="_blank" rel="noopener">&#128172; WhatsApp</a>
+            </div>`; }).join('')}
+          </div>
+          <div class="btn-row"><button class="btn primary" id="save-crew">Save crew</button></div>
+          <p class="flash" id="flash-crew"></p>
         </div>
       </div>
     </div>`;
