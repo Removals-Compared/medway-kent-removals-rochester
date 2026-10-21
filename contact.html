@@ -149,12 +149,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <option>House Removal</option><option>Flat Removal</option><option>Office or Commercial Removal</option>
                 <option>Packing Service Only</option><option>Man and Van</option><option>Single Item Pickup</option>
                 <option>Storage</option><option>Long Distance Move</option>
+                <option>Luxury Removal</option><option>Same Day Move</option><option>International Removal</option>
                 <option>House Removal with Packing</option><option>Not sure, please advise</option>
               </select>
             </div>
             <div class="form-row">
-              <div class="fg"><label for="cf-from">Current postcode (moving from) *</label><input type="text" id="cf-from" placeholder="ME1 1AA" required></div>
-              <div class="fg"><label for="cf-to">Destination postcode (moving to) *</label><input type="text" id="cf-to" placeholder="ME4 5BB" required></div>
+              <div class="fg"><label for="cf-from">Current postcode (moving from) *</label><input type="text" id="cf-from" placeholder="ME1 1AA" required autocomplete="postal-code">
+                <select id="cf-from-addr" style="display:none;margin-top:8px" aria-label="Select the address you are moving from"></select>
+                <input type="text" id="cf-from-addr-manual" style="display:none;margin-top:8px" placeholder="House number and street (optional)" aria-label="Address you are moving from">
+              </div>
+              <div class="fg"><label for="cf-to">Destination postcode (moving to) *</label><input type="text" id="cf-to" placeholder="ME4 5BB" required autocomplete="postal-code">
+                <select id="cf-to-addr" style="display:none;margin-top:8px" aria-label="Select the address you are moving to"></select>
+                <input type="text" id="cf-to-addr-manual" style="display:none;margin-top:8px" placeholder="House number and street (optional)" aria-label="Address you are moving to">
+              </div>
             </div>
             <div class="fg"><label for="cf-property">Property size</label>
               <select id="cf-property"><option value="">Select your property size...</option>
@@ -456,6 +463,47 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       show(go);
     });
   });
+
+  // ── Postcode → address picker ──
+  // After a full postcode is typed, offer the household addresses for it.
+  // If the lookup is unavailable, a plain optional address box appears
+  // instead, and the form works exactly as before either way.
+  function wireAddr(pcId, baseId){
+    var pc = document.getElementById(pcId);
+    var sel = document.getElementById(baseId);
+    var man = document.getElementById(baseId + '-manual');
+    if (!pc || !sel || !man) return;
+    var last = '';
+    function lookup(){
+      var v = (pc.value || '').trim();
+      if (!/^[A-Za-z]{1,2}\d[A-Za-z0-9]?\s*\d[A-Za-z]{2}$/.test(v)){ return; }
+      if (v.toUpperCase() === last) return;
+      last = v.toUpperCase();
+      fetch('/api/quote?postcode=' + encodeURIComponent(v))
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d && d.ok && d.addresses && d.addresses.length){
+            sel.innerHTML = '<option value="">Select your address (optional)...</option>'
+              + d.addresses.map(function(a){
+                  var t = String(a).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+                  return '<option>' + t + '</option>';
+                }).join('')
+              + '<option value="__manual">My address is not listed</option>';
+            sel.style.display = ''; man.style.display = 'none';
+          } else {
+            sel.style.display = 'none'; man.style.display = '';
+          }
+        })
+        .catch(function(){ sel.style.display = 'none'; man.style.display = ''; });
+    }
+    pc.addEventListener('blur', lookup);
+    pc.addEventListener('change', lookup);
+    sel.addEventListener('change', function(){
+      if (sel.value === '__manual'){ sel.style.display = 'none'; man.style.display = ''; sel.value = ''; man.focus(); }
+    });
+  }
+  wireAddr('cf-from', 'cf-from-addr');
+  wireAddr('cf-to', 'cf-to-addr');
 })();
 </script>
 <script src="/consent.js?v=1" defer></script>

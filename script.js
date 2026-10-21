@@ -212,6 +212,15 @@ async function submitForm(e){
   var notes     = document.getElementById('cf-notes').value.trim();
   var source    = document.getElementById('cf-source') ? document.getElementById('cf-source').value : '';
 
+  // Address picked from the postcode lookup, or typed in the manual box.
+  function addrVal(base){
+    var s = document.getElementById(base), m = document.getElementById(base + '-manual');
+    var v = (s && s.value && s.value !== '__manual') ? s.value : (m ? m.value : '');
+    return String(v || '').trim().slice(0, 200);
+  }
+  var fromAddr = addrVal('cf-from-addr');
+  var toAddr   = addrVal('cf-to-addr');
+
   if(!fname || !phone || !email || !service || !fromPost || !toPost){
     alert('Please fill in all required fields before submitting.');
     btn.textContent = originalText;
@@ -236,6 +245,8 @@ async function submitForm(e){
         access:        access,
         notes:         notes,
         source:        source,
+        from_address:  fromAddr,
+        to_address:    toAddr,
       }),
     });
 

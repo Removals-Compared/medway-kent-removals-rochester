@@ -13,7 +13,36 @@
 
 export default async function handler(req, res) {
 
-  // ── Only accept POST requests ──
+  // ── GET ?postcode=… — UK address lookup for the quote form ──
+  // Proxies getAddress.io so the key stays server side. Shares this
+  // function to stay inside the Vercel function limit. Without a
+  // GETADDRESS_API_KEY env var it answers ok:false and the form falls
+  // back to a plain address box.
+  if (req.method === 'GET' && req.query && req.query.postcode) {
+    const pc = String(req.query.postcode).trim().toUpperCase();
+    if (!/^[A-Z]{1,2}\d[A-Z0-9]?\s*\d[A-Z]{2}$/.test(pc)) {
+      return res.status(200).json({ ok: false });
+    }
+    const key = process.env.GETADDRESS_API_KEY;
+    if (!key) return res.status(200).json({ ok: false });
+    try {
+      const r = await fetch(
+        'https://api.getAddress.io/find/' + encodeURIComponent(pc.replace(/\s+/g, '')) + '?api-key=' + encodeURIComponent(key),
+        { signal: AbortSignal.timeout(6000) },
+      );
+      if (!r.ok) return res.status(200).json({ ok: false });
+      const data = await r.json();
+      const addresses = (data.addresses || [])
+        .map((a) => String(a).split(',').map((p) => p.trim()).filter(Boolean).join(', '))
+        .slice(0, 80);
+      res.setHeader('Cache-Control', 's-maxage=86400');
+      return res.status(200).json({ ok: addresses.length > 0, addresses });
+    } catch {
+      return res.status(200).json({ ok: false });
+    }
+  }
+
+  // ── Only accept POST requests beyond this point ──
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -35,7 +64,13 @@ export default async function handler(req, res) {
     access,
     notes,
     source,
+    from_address,
+    to_address,
   } = req.body;
+
+  // Full addresses picked from the postcode lookup (both optional).
+  const fromAddr = String(from_address || '').trim().slice(0, 200);
+  const toAddr   = String(to_address || '').trim().slice(0, 200);
 
   // Lead source: only known values are accepted; anything else falls back to
   // 'website' (the form itself lives on the website).
@@ -89,6 +124,10 @@ export default async function handler(req, res) {
                   <td style="padding:10px 0;border-bottom:1px solid #e8e8e8;font-weight:600;color:#111">${esc(property_size || 'Not specified')}</td></tr>
               <tr><td style="padding:10px 0;border-bottom:1px solid #e8e8e8;color:#666">Preferred date</td>
                   <td style="padding:10px 0;border-bottom:1px solid #e8e8e8;font-weight:600;color:#111">${esc(moveLabel)}</td></tr>
+              ${fromAddr ? `<tr><td style="padding:10px 0;border-bottom:1px solid #e8e8e8;color:#666">Collection address</td>
+                  <td style="padding:10px 0;border-bottom:1px solid #e8e8e8;font-weight:600;color:#111">${esc(fromAddr)}</td></tr>` : ''}
+              ${toAddr ? `<tr><td style="padding:10px 0;border-bottom:1px solid #e8e8e8;color:#666">Delivery address</td>
+                  <td style="padding:10px 0;border-bottom:1px solid #e8e8e8;font-weight:600;color:#111">${esc(toAddr)}</td></tr>` : ''}
               <tr><td style="padding:10px 0;border-bottom:1px solid #e8e8e8;color:#666">Access issues</td>
                   <td style="padding:10px 0;border-bottom:1px solid #e8e8e8;font-weight:600;color:#111">${esc(accessText)}</td></tr>
               <tr><td style="padding:10px 0;border-bottom:1px solid #e8e8e8;color:#666">How they found us</td>
@@ -164,10 +203,12 @@ export default async function handler(req, res) {
   // dynamic import (a static import fails with ERR_REQUIRE_ESM on Vercel).
   const dbPromise = import('./admin/_sql.mjs').then(({ q }) => q(
     `INSERT INTO quote_requests
-       (name, phone, email, service, from_postcode, to_postcode, property_size, move_date, notes, source)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+       (name, phone, email, service, from_postcode, to_postcode, property_size, move_date, notes, source, address)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
     [fullName, phone, email, service, from_postcode, to_postcode,
-     property_size || '', move_date || '', `Access: ${accessText} | ${notesText}`, leadSource],
+     property_size || '', move_date || '',
+     `Access: ${accessText} | ${notesText}` + (toAddr ? ` | Delivery address: ${toAddr}` : ''),
+     leadSource, fromAddr || null],
   ));
 
   // ════════════════════════════════════════════════════════
