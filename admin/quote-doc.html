@@ -258,7 +258,7 @@
   </div>
 
   <div class="body">
-    <p class="greeting">Dear <strong id="g-name">Customer</strong>, thank you for the opportunity to quote for your upcoming house move. Please find your fixed, all-inclusive price below. Everything is fully insured and carried out by our own trained, background-checked crew. If you are happy to proceed, simply call us on 01634 971005 to secure your date.</p>
+    <p class="greeting">Dear <strong id="g-name">Customer</strong>, thank you for the opportunity to quote for <span id="g-what">your upcoming house move</span>. Please find your fixed, all-inclusive price below. Everything is fully insured and carried out by our own trained, background-checked crew. If you are happy to proceed, simply call us on 01634 971005 to secure your date.</p>
 
     <div class="grid2">
       <div class="card">
@@ -398,6 +398,26 @@
   // Pre-fill the customer email (editable). Customer-specific bits (name,
   // addresses, date, amount) come from the record; vehicles/team default to
   // the common wording and can be edited to match the quote.
+  // The quote wording follows the lead's service, so a clearance or a
+  // single item collection never reads like a house move. Keyword matching
+  // covers both the new admin dropdown values and older free-typed ones.
+  function servicePhrase(s){
+    var t = String(s || '').toLowerCase();
+    if (t.indexOf('clearance') > -1)   return { what: 'your house clearance',       subject: 'Your house clearance quote',     job: 'the clearance', move: false };
+    if (t.indexOf('disposal') > -1)    return { what: 'your furniture disposal',    subject: 'Your furniture disposal quote',  job: 'the collection', move: false };
+    if (t.indexOf('office') > -1 || t.indexOf('commercial') > -1)
+                                       return { what: 'your office move',           subject: 'Your office removal quote',      job: 'your move', move: true };
+    if (t.indexOf('single item') > -1 || t.indexOf('collection') > -1 || t.indexOf('pickup') > -1)
+                                       return { what: 'your single item collection', subject: 'Your collection quote',         job: 'the collection', move: false };
+    if (t.indexOf('man and van') > -1) return { what: 'your man and van job',       subject: 'Your man and van quote',         job: 'the job', move: true };
+    if (t.indexOf('packing') > -1)     return { what: 'your packing service',       subject: 'Your packing service quote',     job: 'the packing day', move: false };
+    if (t.indexOf('storage') > -1)     return { what: 'your storage booking',       subject: 'Your storage quote',             job: 'the booking', move: false };
+    if (t.indexOf('long distance') > -1)
+                                       return { what: 'your long distance move',    subject: 'Your long distance removal quote', job: 'your move', move: true };
+    if (t.indexOf('flat') > -1)        return { what: 'your flat move',             subject: 'Your flat removal quote',        job: 'your move', move: true };
+    return { what: 'your upcoming house move', subject: 'Your removal quote', job: 'your move', move: true };
+  }
+
   function fillMailer(q){
     var first = (q.name || 'there').split(' ')[0];
     var fromS = streetName(q.from_postcode), toS = streetName(q.to_postcode);
@@ -405,16 +425,19 @@
     var v10 = Number(q.value) || 0;
     var amt = money(v10, 0);
     var dep10 = Math.round(v10 * 0.10);
+    var ph = servicePhrase(q.service);
     document.getElementById('m-to').value = q.email || '';
-    document.getElementById('m-subject').value = 'Your removal quote' + (dShort ? ' — ' + dShort : '');
+    document.getElementById('m-subject').value = ph.subject + (dShort ? ' — ' + dShort : '');
     document.getElementById('m-body').value = [
       'Hi ' + first + ',',
       '',
-      'Thank you for the opportunity to quote for your move' + ((fromS && toS) ? ' from ' + fromS + ' to ' + toS : '') + (dShort ? ' on ' + dShort : '') + '.',
+      'Thank you for the opportunity to quote for ' + ph.what + ((fromS && toS) ? ' from ' + fromS + ' to ' + toS : '') + (dShort ? ' on ' + dShort : '') + '.',
       '',
-      'Please find your fixed, all-inclusive quote attached. It covers 1 maxi loader Luton van and 2 movers, with full protection and insurance, for ' + amt + ' with no hidden charges.',
+      ph.move
+        ? 'Please find your fixed, all-inclusive quote attached. It covers 1 maxi loader Luton van and 2 movers, with full protection and insurance, for ' + amt + ' with no hidden charges.'
+        : 'Please find your fixed, all-inclusive quote attached: ' + amt + ' with no hidden charges, fully insured and carried out by our own trained crew.',
       '',
-      'To secure the date we ask for a 10% deposit' + (dep10 ? ' (' + money(dep10, 0) + ')' : '') + ', with the remaining 90%' + (dep10 ? ' (' + money(v10 - dep10, 0) + ')' : '') + ' payable on the move date. If you are happy with everything, just tap the green button below to accept your quote:',
+      'To secure the date we ask for a 10% deposit' + (dep10 ? ' (' + money(dep10, 0) + ')' : '') + ', with the remaining 90%' + (dep10 ? ' (' + money(v10 - dep10, 0) + ')' : '') + ' payable on ' + (ph.move ? 'the move date' : 'the day') + '. If you are happy with everything, just tap the green button below to accept your quote:',
       '',
       (window.ACCEPT_LINK || ''),
       '',
@@ -442,6 +465,7 @@
 
     var first = (q.name || 'there').split(' ')[0];
     $('g-name').textContent = first;
+    $('g-what').textContent = servicePhrase(q.service).what;
     $('pf-name').textContent = dashIfEmpty(q.name);
     $('pf-phone').textContent = dashIfEmpty(q.phone);
     $('pf-email').textContent = dashIfEmpty(q.email);

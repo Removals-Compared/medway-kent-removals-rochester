@@ -383,7 +383,8 @@
               <div><label>Phone</label><input id="e-phone" value="${esc(q.phone||'')}"></div>
             </div>
             <label>Email</label><input id="e-email" type="email" value="${esc(q.email||'')}">
-            <label>Service</label><input id="e-service" value="${esc(q.service||'')}">
+            <label>Service</label>
+            <select id="e-service">${serviceOptions(q.service)}</select>
             <label>Lead source</label>
             <select id="e-source">
               <option value="" ${!q.source?'selected':''}>Not set</option>
@@ -399,7 +400,7 @@
               <div><label>Moving to</label><input id="e-to" value="${esc(q.to_postcode||'')}"></div>
             </div>
             <div class="inline">
-              <div><label>Property</label><input id="e-property" value="${esc(q.property_size||'')}"></div>
+              <div><label>Property</label><select id="e-property">${propertyOptions(q.property_size)}</select></div>
               <div><label>Move date</label><input id="e-date" type="date" value="${esc((q.move_date||'').slice(0,10))}"></div>
             </div>
             <label>Full address</label><textarea id="e-address">${esc(q.address||'')}</textarea>
@@ -497,6 +498,27 @@
     wire();
     if (pendingFlash){ flash(pendingFlash.id, pendingFlash.msg, pendingFlash.ok); pendingFlash = null; }
   }
+
+  // ── Service and property choices for the edit form. A lead whose saved
+  //    value is not in the list keeps it as an extra option, so editing
+  //    an old lead never silently changes what was recorded. ──
+  const SERVICES = [
+    'House Removals', 'Flat Removals', 'House Clearance Service', 'Furniture Disposal',
+    'Office Removals', 'Single Item Collection', 'Man and Van', 'Packing Service',
+    'Storage', 'Long Distance Move',
+  ];
+  const PROPERTY_SIZES = [
+    'Single room move', 'Studio flat', '1 bedroom', '2 bedroom', '3 bedroom',
+    '4 bedroom', '5+ bedroom', 'Office / commercial',
+  ];
+  function choiceOptions(list, cur){
+    const items = [...list];
+    if (cur && !items.includes(cur)) items.push(cur);
+    return `<option value="" ${!cur ? 'selected' : ''}>Not set</option>`
+      + items.map((v) => `<option ${v === cur ? 'selected' : ''}>${esc(v)}</option>`).join('');
+  }
+  const serviceOptions = (cur) => choiceOptions(SERVICES, cur);
+  const propertyOptions = (cur) => choiceOptions(PROPERTY_SIZES, cur);
 
   // Saved crew entries are {name, role}; older rows may be plain names.
   const ROLES = ['Mover', 'Driver', 'Packer', 'Team leader', 'Foreman', 'Office'];
