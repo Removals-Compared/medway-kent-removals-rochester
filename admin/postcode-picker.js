@@ -58,7 +58,7 @@
     try {
       var r = await fetch("/api/address-lookup?postcode=" + encodeURIComponent(pc));
       if (r.status === 501) {
-        note(target, "Address lookup not configured. Add OS_PLACES_KEY in Vercel.");
+        note(target, "Address lookup not configured. Add IDEAL_POSTCODES_KEY in Vercel.");
         return;
       }
       var j = {};
