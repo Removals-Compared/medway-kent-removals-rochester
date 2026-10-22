@@ -154,13 +154,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               </select>
             </div>
             <div class="form-row">
-              <div class="fg"><label for="cf-from">Current postcode (moving from) *</label><input type="text" id="cf-from" placeholder="ME1 1AA" required autocomplete="postal-code">
+              <div class="fg"><label for="cf-from">Current postcode (moving from) *</label>
+                <div class="addr-row"><input type="text" id="cf-from" placeholder="ME1 1AA" required autocomplete="postal-code"><button type="button" class="addr-find" data-target="cf-from">Find address</button></div>
                 <select id="cf-from-addr" style="display:none;margin-top:8px" aria-label="Select the address you are moving from"></select>
-                <input type="text" id="cf-from-addr-manual" style="display:none;margin-top:8px" placeholder="House number and street (optional)" aria-label="Address you are moving from">
+                <input type="text" id="cf-from-addr-manual" style="display:none;margin-top:8px" placeholder="House number and street" aria-label="Address you are moving from">
+                <p class="addr-note" data-target="cf-from" role="status" aria-live="polite" hidden></p>
               </div>
-              <div class="fg"><label for="cf-to">Destination postcode (moving to) *</label><input type="text" id="cf-to" placeholder="ME4 5BB" required autocomplete="postal-code">
+              <div class="fg"><label for="cf-to">Destination postcode (moving to) *</label>
+                <div class="addr-row"><input type="text" id="cf-to" placeholder="ME4 5BB" required autocomplete="postal-code"><button type="button" class="addr-find" data-target="cf-to">Find address</button></div>
                 <select id="cf-to-addr" style="display:none;margin-top:8px" aria-label="Select the address you are moving to"></select>
-                <input type="text" id="cf-to-addr-manual" style="display:none;margin-top:8px" placeholder="House number and street (optional)" aria-label="Address you are moving to">
+                <input type="text" id="cf-to-addr-manual" style="display:none;margin-top:8px" placeholder="House number and street" aria-label="Address you are moving to">
+                <p class="addr-note" data-target="cf-to" role="status" aria-live="polite" hidden></p>
               </div>
             </div>
             <div class="fg"><label for="cf-property">Property size</label>

@@ -321,3 +321,92 @@ document.addEventListener('DOMContentLoaded', function () {
     a.addEventListener('click', close);
   });
 });
+
+/* Postcode -> address picker on the public contact form.
+   Wires the "Find address" button beside cf-from / cf-to to our
+   /api/address-lookup proxy (Ideal Postcodes). Fills the sibling
+   <select id="cf-from-addr"> / <select id="cf-to-addr"> with results,
+   plus a "I'll type it manually" option that reveals the fallback input. */
+(function () {
+  var CSS =
+    ".addr-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}"
+    + ".addr-row > input{flex:1 1 160px;min-width:140px}"
+    + ".addr-find{padding:11px 18px;border:0;border-radius:10px;background:var(--navy,#0d1f3c);color:#fff;font-weight:700;font-size:14px;cursor:pointer;min-height:44px;letter-spacing:0.3px}"
+    + ".addr-find:hover{background:var(--accent,#e04e1b)}"
+    + ".addr-find:disabled{opacity:0.55;cursor:default}"
+    + ".addr-note{margin:6px 2px 0;font-size:12.5px;color:#a4281d}"
+    + ".addr-note.ok{color:#1f6b43}";
+  if (!document.getElementById("mkr-addr-css")) {
+    var s = document.createElement("style");
+    s.id = "mkr-addr-css";
+    s.textContent = CSS;
+    document.head.appendChild(s);
+  }
+  function note(target, msg, ok) {
+    var n = document.querySelector('.addr-note[data-target="' + target + '"]');
+    if (!n) return;
+    n.textContent = msg || "";
+    n.hidden = !msg;
+    n.classList.toggle("ok", !!ok);
+  }
+  function esc(x) {
+    return String(x).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+  document.addEventListener("click", async function (e) {
+    var btn = e.target.closest(".addr-find");
+    if (!btn) return;
+    e.preventDefault();
+    var target = btn.dataset.target;
+    if (!target) return;
+    var input = document.getElementById(target);
+    var sel = document.getElementById(target + "-addr");
+    var manual = document.getElementById(target + "-addr-manual");
+    note(target, "");
+    if (sel) sel.style.display = "none";
+    if (manual) manual.style.display = "none";
+    var pc = ((input && input.value) || "").trim();
+    if (!pc) { note(target, "Enter a postcode first."); input && input.focus(); return; }
+    var label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Finding...";
+    try {
+      var r = await fetch("/api/address-lookup?postcode=" + encodeURIComponent(pc));
+      if (r.status === 501) { note(target, "Address lookup is unavailable. Please type your address below."); if (manual) manual.style.display = "block"; return; }
+      var j = {};
+      try { j = await r.json(); } catch (_) {}
+      if (r.status === 400) { note(target, j.error || "Enter a valid UK postcode."); return; }
+      if (!r.ok) { note(target, "Lookup unavailable. Please type your address below."); if (manual) manual.style.display = "block"; return; }
+      var list = (j && j.addresses) || [];
+      if (!list.length) { note(target, "No addresses found for " + (j.postcode || pc) + ". Please type your address below."); if (manual) manual.style.display = "block"; return; }
+      if (sel) {
+        sel.innerHTML = '<option value="">' + list.length + ' addresses found, select yours</option>'
+          + list.map(function (a) { return '<option>' + esc(a) + '</option>'; }).join('')
+          + '<option value="__manual">I will type my address instead</option>';
+        sel.style.display = "block";
+        sel.focus();
+        note(target, "Pick your address from the list.", true);
+      }
+    } catch (_) {
+      note(target, "Lookup unavailable. Please type your address below.");
+      if (manual) manual.style.display = "block";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = label;
+    }
+  });
+  document.addEventListener("change", function (e) {
+    var sel = e.target;
+    if (sel.id !== "cf-from-addr" && sel.id !== "cf-to-addr") return;
+    var base = sel.id.replace("-addr", "");
+    var manual = document.getElementById(base + "-addr-manual");
+    if (sel.value === "__manual") {
+      if (manual) { manual.style.display = "block"; manual.focus(); }
+      note(base, "");
+    } else if (sel.value) {
+      if (manual) manual.style.display = "none";
+      note(base, "");
+    }
+  });
+})();
