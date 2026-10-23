@@ -111,13 +111,15 @@ export default async function handler(req, res) {
       }
 
       // Shared plain-letter email sender for the small customer nudges.
-      const sendLetter = async (q, subject, lines) => {
+      // waText, when given, prefills the customer's side of the WhatsApp chat.
+      const sendLetter = async (q, subject, lines, waText) => {
         const text = lines.join('\n');
         const lEsc = (x) => String(x || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const waHref = 'https://wa.me/447359917380' + (waText ? '?text=' + encodeURIComponent(waText) : '');
         const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#222;line-height:1.6;white-space:pre-wrap">' + lEsc(text) + '</div>'
           + '<div style="text-align:center;margin:22px 0 4px">'
           + '<a href="tel:01634971005" style="background:#E04E1B;color:#fff;text-decoration:none;font-weight:700;font-family:Arial,sans-serif;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128222; Call 01634 971005</a>'
-          + '<a href="https://wa.me/447359917380" style="background:#1EBE57;color:#fff;text-decoration:none;font-weight:700;font-family:Arial,sans-serif;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128172; WhatsApp us</a>'
+          + '<a href="' + waHref + '" style="background:#1EBE57;color:#fff;text-decoration:none;font-weight:700;font-family:Arial,sans-serif;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128172; WhatsApp us</a>'
           + '</div>';
         const r2 = await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -131,6 +133,38 @@ export default async function handler(req, res) {
         });
         if (!r2.ok) throw new Error(`resend ${r2.status}`);
       };
+
+      // Templated follow-up letters. The admin previews and can edit the
+      // text before sending, so the client posts the final subject and
+      // body; the template key only sets the activity label and the
+      // customer-side WhatsApp prefill on the green button.
+      const LETTER_KINDS = {
+        cant_reach: { label: 'Could-not-reach-you', wa: (q) => `Hi, it's ${q.name || 'a customer'}. You tried to reach me about my removals quote.` },
+        nudge:      { label: 'Nudge',               wa: (q) => `Hi, it's ${q.name || 'a customer'} about my removals enquiry.` },
+        after_call: { label: 'After-call follow-up', wa: (q) => `Hi, it's ${q.name || 'a customer'}. Following up on our call about my move.` },
+        still_need: { label: 'Still-need-us',        wa: (q) => `Hi, it's ${q.name || 'a customer'} about my removals enquiry.` },
+      };
+      if (typeof b.send_letter === 'string') {
+        const kind = LETTER_KINDS[b.send_letter];
+        if (!kind) return res.status(400).json({ error: 'unknown letter template' });
+        const subject = String(b.subject || '').trim().slice(0, 150);
+        const bodyText = String(b.body || '').trim().slice(0, 6000);
+        if (!subject || !bodyText) return res.status(400).json({ error: 'subject and body are required' });
+        const q = await getQuote(id);
+        if (!q) return res.status(404).json({ error: 'not found' });
+        if (!q.email) return res.status(400).json({ error: 'no email on this lead' });
+        try {
+          await sendLetter(q, subject, bodyText.split('\n'), kind.wa(q));
+          const actorL = role === 'staff' ? (req._staffName || 'staff') : (process.env.ADMIN_NAME || 'Amos Osho');
+          await appendNote(id, `${kind.label} email sent to ${q.email} by ${actorL}`);
+          await logActivity({ actor: actorL, action: `sent ${kind.label.toLowerCase()} email`, lead_id: id, lead_name: q.name });
+          if (role === 'staff') { delete q.value; delete q.costs; }
+          return res.status(200).json({ quote: q, letter: 'sent', role });
+        } catch (e) {
+          console.error('letter', e);
+          return res.status(502).json({ error: String(e.message || e) });
+        }
+      }
 
       // Price-hold reminder: quotes are valid 14 days, so near expiry the
       // customer gets one honest nudge. No prices in it, both roles can send.

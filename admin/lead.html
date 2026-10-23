@@ -55,6 +55,19 @@
   .menu button{ display:block; width:100%; text-align:left; background:none; border:none; padding:10px 12px; font-size:13.5px;
                 font-weight:600; border-radius:8px; cursor:pointer; color:#1a2233; font-family:inherit; }
   .menu button:hover{ background:#f2f5fa; }
+  .menu-sep{ border-top:1px solid var(--line); margin:5px 8px; }
+  /* ── Email preview modal: read the letter through before it goes ── */
+  .lt-overlay{ position:fixed; inset:0; background:rgba(13,31,60,.45); z-index:60; display:none; align-items:flex-start; justify-content:center; padding:24px 14px; overflow:auto; }
+  .lt-overlay.open{ display:flex; }
+  .lt-box{ background:#fff; border-radius:16px; max-width:620px; width:100%; padding:20px 22px; box-shadow:0 18px 50px rgba(13,31,60,.35); }
+  .lt-box h3{ margin:0 0 4px; font-size:16.5px; }
+  .lt-box .lt-to{ font-size:13px; color:#5b6880; margin:0 0 10px; }
+  .lt-box textarea{ min-height:300px; font-size:14px; line-height:1.55; }
+  .lt-box .lt-note{ font-size:12px; color:#7a8599; margin:8px 0 0; }
+  @media (prefers-color-scheme: dark){
+    .lt-box{ background:#18213a; }
+    .lt-box h3{ color:#fff; }
+  }
   @media(max-width:560px){
     .step{ border-radius:8px !important; flex:1 1 30%; }
     .actionbar{ gap:8px; }
@@ -177,6 +190,24 @@
   <div class="wrap">
     <a class="back" href="/admin/dashboard">← Back to dashboard</a>
     <div id="content"><div class="skel"></div><div class="skel" style="width:70%"></div><div class="skel" style="width:85%"></div></div>
+
+    <!-- Follow-up email preview: nothing sends until "Send email" here -->
+    <div class="lt-overlay" id="lt-overlay">
+      <div class="lt-box">
+        <h3 id="lt-title">Email preview</h3>
+        <p class="lt-to" id="lt-to"></p>
+        <label>Subject</label>
+        <input id="lt-subject">
+        <label>Email text</label>
+        <textarea id="lt-body"></textarea>
+        <p class="lt-note">A Call button and a green WhatsApp chat button are added underneath automatically. Edit anything above before sending.</p>
+        <div class="btn-row" style="margin-top:12px">
+          <button type="button" class="btn green" id="lt-send">Send email</button>
+          <button type="button" class="btn" id="lt-cancel">Cancel</button>
+        </div>
+        <p class="flash" id="lt-flash"></p>
+      </div>
+    </div>
   </div>
 
 <script>
@@ -340,6 +371,11 @@
       <span class="abtn">
         <button class="btn" id="menu-msg" type="button">&#128172; Message customer &#9662;</button>
         <div class="menu" id="msg-menu">
+          <button type="button" data-letter="cant_reach">&#128245; Can't reach you (wrong number)</button>
+          <button type="button" data-letter="nudge">&#128075; Gentle nudge</button>
+          <button type="button" data-letter="after_call">&#128222; Follow-up after our call</button>
+          <button type="button" data-letter="still_need">&#128737;&#65039; Still need us? (insurance)</button>
+          <div class="menu-sep"></div>
           <button type="button" id="send-followup">&#9203; Quote follow-up</button>
           ${st === 'quote_sent' ? '<button type="button" id="send-expiry">&#8987; Price-hold reminder</button>' : ''}
           ${st === 'lost' ? '<button type="button" id="send-winback">&#128260; Win-back email</button>' : ''}
@@ -714,6 +750,97 @@
     } catch { el.innerHTML = 'Could not work out the distance &bull; ' + route; }
   }
 
+  // ── Follow-up email templates. The text is built here so the preview
+  //    shows exactly what will be sent; the server adds the Call and
+  //    WhatsApp buttons underneath and the customer-side chat prefill. ──
+  const SIGN_OFF = ['Best regards,', 'Medway and Kent Removals', '01634 971005 | WhatsApp 07359 917380'];
+  const LETTERS = {
+    cant_reach: {
+      title: "Can't reach you email",
+      subject: () => 'We could not reach you about your removals quote',
+      body: (q, first) => [
+        `Hi ${first},`, '',
+        `Thank you for your ${q.service || 'removals'} enquiry. We have been trying to reach you on ${q.phone || 'the number on your enquiry'}, but calls are not connecting and WhatsApp does not recognise the number, so it may have a small typo in it.`, '',
+        'We would still love to help. You can:',
+        '- Reply to this email with your best contact number',
+        '- Tap the green WhatsApp button below to start a chat with us straight away',
+        '- Call us on 01634 971005', '',
+        ...SIGN_OFF,
+      ],
+    },
+    nudge: {
+      title: 'Gentle nudge email',
+      subject: () => 'Your removals enquiry with Medway and Kent Removals',
+      body: (q, first) => [
+        `Hi ${first},`, '',
+        `Just a friendly nudge about your ${q.service || 'removals'} enquiry${q.move_date ? ' for ' + fmtDate(q.move_date) : ''}. We are ready when you are, and popular dates do book up quickly, so it is worth locking yours in early.`, '',
+        'If you have any questions, or anything about the move has changed, just reply to this email, call us, or tap the WhatsApp button below and we will sort it the same day.', '',
+        ...SIGN_OFF,
+      ],
+    },
+    after_call: {
+      title: 'After-our-call email',
+      subject: () => 'Good to speak with you about your move',
+      body: (q, first) => [
+        `Hi ${first},`, '',
+        `Thank you for taking the time to speak with us about your ${q.service || 'move'}${(q.from_postcode && q.to_postcode) ? ' from ' + q.from_postcode + ' to ' + q.to_postcode : ''}. Here is a quick note so you have everything in writing.`, '',
+        'When you are ready for the next step, just reply to this email, call us on 01634 971005, or tap the WhatsApp button below and we will take it from there.', '',
+        ...SIGN_OFF,
+      ],
+    },
+    still_need: {
+      title: 'Still need us? email',
+      subject: () => 'Do you still need a hand with your move?',
+      body: (q, first) => [
+        `Hi ${first},`, '',
+        `A little while ago you asked us about ${q.service || 'a removal'}, and I wanted to check whether you still need a hand.`, '',
+        'If you are still comparing companies, it is worth knowing that every job we do is carried out by our own trained, background-checked crew and is fully insured:',
+        '- Goods in transit insurance, covering your belongings while we move them',
+        '- Public and product liability cover of £1,000,000',
+        "- Employers' liability cover of £10,000,000",
+        '- Professional indemnity cover of £100,000', '',
+        'If the move is still on, reply to this email, call us, or tap the WhatsApp button below and we will get you a fresh fixed price with no hidden charges.', '',
+        ...SIGN_OFF,
+      ],
+    },
+  };
+  let ltKind = null;
+  function openLetter(kind){
+    const t = LETTERS[kind];
+    if (!t || !QUOTE) return;
+    if (!QUOTE.email){ flash('flash-left', 'No email address on this lead.', false); return; }
+    ltKind = kind;
+    const first = (QUOTE.name || 'there').split(' ')[0];
+    $('lt-title').textContent = t.title;
+    $('lt-to').textContent = 'To: ' + QUOTE.email;
+    $('lt-subject').value = t.subject(QUOTE);
+    $('lt-body').value = t.body(QUOTE, first).join('\n');
+    $('lt-flash').textContent = '';
+    $('lt-overlay').classList.add('open');
+  }
+  $('lt-cancel').addEventListener('click', () => $('lt-overlay').classList.remove('open'));
+  $('lt-send').addEventListener('click', async () => {
+    const subject = $('lt-subject').value.trim();
+    const body = $('lt-body').value.trim();
+    if (!subject || !body){ flash('lt-flash', 'Subject and email text are both needed.', false); return; }
+    const btn = $('lt-send'); btn.disabled = true;
+    try {
+      const r = await api('/api/admin/quote/' + LEAD_ID, {
+        method:'PATCH', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ send_letter: ltKind, subject, body }),
+      });
+      const d = await r.json();
+      if (r.ok && d.letter === 'sent'){
+        $('lt-overlay').classList.remove('open');
+        pendingFlash = { id:'flash-left', msg:'Email sent to ' + QUOTE.email + '.', ok:true };
+        load();
+      } else {
+        flash('lt-flash', 'Could not send: ' + (d.error || 'error'), false);
+      }
+    } catch(e){ if (String(e.message) !== 'unauth') flash('lt-flash', 'Network error, please try again.', false); }
+    btn.disabled = false;
+  });
+
   // One document-level listener closes any open action-bar menu on an
   // outside click; registered once, not per render.
   if (!window.__menuCloser){
@@ -734,6 +861,8 @@
       });
       m.addEventListener('click', () => m.classList.remove('open'));
     });
+    document.querySelectorAll('[data-letter]').forEach((b) =>
+      b.addEventListener('click', () => openLetter(b.dataset.letter)));
     calcDistance();
     // ── Edit customer details ──
     $('edit-toggle').addEventListener('click', () => {
