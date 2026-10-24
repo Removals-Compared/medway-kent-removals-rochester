@@ -1,6 +1,18 @@
 import { requireAuth } from './_session.mjs';
 import { listQuotes, createQuote, fetchPendingReminders, appendNote, logActivity } from './_db.mjs';
 
+
+// Staff see the quoted price only while a lead is new, quote sent or
+// survey booked; costs and every other money field stay admin-only.
+const STAFF_VALUE_STATUSES = ['new', 'quote_sent', 'survey_booked'];
+const stripMoney = (quote, role) => {
+  if (role === 'staff' && quote) {
+    delete quote.costs;
+    if (!STAFF_VALUE_STATUSES.includes(quote.status || 'new')) delete quote.value;
+  }
+  return quote;
+};
+
 export default async function handler(req, res) {
   const role = requireAuth(req, res);
   if (!role) return;
@@ -19,7 +31,7 @@ export default async function handler(req, res) {
       for (const p of pending) { if (!map[p.lead_id]) map[p.lead_id] = p; }
       quotes.forEach((q) => { if (map[q.id]) q.reminder = map[q.id]; });
       // Staff sessions never receive money fields — stripped server-side.
-      if (role === 'staff') quotes.forEach((q) => { delete q.value; delete q.costs; });
+      quotes.forEach((q) => stripMoney(q, role));
       return res.status(200).json({ quotes, role, staff_name: role === 'staff' ? (req._staffName || process.env.STAFF_NAME || 'Staff') : undefined, display_name: role === 'staff' ? (req._staffName || process.env.STAFF_NAME || 'Staff') : (process.env.ADMIN_NAME || 'Amos Osho') });
     }
     if (req.method === 'POST') {
@@ -33,7 +45,7 @@ export default async function handler(req, res) {
       }
       const actor = role === 'staff' ? (req._staffName || 'staff') : (process.env.ADMIN_NAME || 'Amos Osho');
       if (quote && quote.id) await logActivity({ actor, action: 'added', lead_id: quote.id, lead_name: quote.name });
-      if (role === 'staff') delete quote.value;
+      stripMoney(quote, role);
       return res.status(201).json({ quote });
     }
     return res.status(405).json({ error: 'method not allowed' });

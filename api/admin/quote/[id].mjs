@@ -67,6 +67,18 @@ async function sendReviewRequest(quote) {
   if (!r.ok) throw new Error(`resend ${r.status}: ${await r.text()}`);
 }
 
+
+// Staff see the quoted price only while a lead is new, quote sent or
+// survey booked; costs and every other money field stay admin-only.
+const STAFF_VALUE_STATUSES = ['new', 'quote_sent', 'survey_booked'];
+const stripMoney = (quote, role) => {
+  if (role === 'staff' && quote) {
+    delete quote.costs;
+    if (!STAFF_VALUE_STATUSES.includes(quote.status || 'new')) delete quote.value;
+  }
+  return quote;
+};
+
 export default async function handler(req, res) {
   const role = requireAuth(req, res);
   if (!role) return;
@@ -82,7 +94,7 @@ export default async function handler(req, res) {
       const appointments = await fetchAppointmentsByLeadIds([id]);
       const reminders = await fetchRemindersByLeadIds([id]);
       // Staff sessions never receive money fields — stripped server-side.
-      if (role === 'staff') { delete quote.value; delete quote.costs; }
+      stripMoney(quote, role);
       const duplicates = await fetchDuplicates(id, quote.phone, quote.email);
       return res.status(200).json({ quote, appointments, reminders, duplicates, role,
         accept_token: role === 'staff' ? undefined : acceptToken(id),
@@ -158,7 +170,7 @@ export default async function handler(req, res) {
           const actorL = role === 'staff' ? (req._staffName || 'staff') : (process.env.ADMIN_NAME || 'Amos Osho');
           await appendNote(id, `${kind.label} email sent to ${q.email} by ${actorL}`);
           await logActivity({ actor: actorL, action: `sent ${kind.label.toLowerCase()} email`, lead_id: id, lead_name: q.name });
-          if (role === 'staff') { delete q.value; delete q.costs; }
+          stripMoney(q, role);
           return res.status(200).json({ quote: q, letter: 'sent', role });
         } catch (e) {
           console.error('letter', e);
@@ -199,7 +211,7 @@ export default async function handler(req, res) {
           const actorX = role === 'staff' ? (req._staffName || 'staff') : (process.env.ADMIN_NAME || 'Amos Osho');
           await appendNote(id, `Price-hold reminder emailed to ${q.email} by ${actorX}`);
           await logActivity({ actor: actorX, action: 'sent price-hold reminder', lead_id: id, lead_name: q.name });
-          if (role === 'staff') { delete q.value; delete q.costs; }
+          stripMoney(q, role);
           return res.status(200).json({ quote: q, expiry: 'sent', role });
         } catch (e) {
           console.error('price-hold', e);
@@ -231,7 +243,7 @@ export default async function handler(req, res) {
           const actorW = role === 'staff' ? (req._staffName || 'staff') : (process.env.ADMIN_NAME || 'Amos Osho');
           await appendNote(id, `Win-back email sent to ${q.email} by ${actorW}`);
           await logActivity({ actor: actorW, action: 'sent win-back email', lead_id: id, lead_name: q.name });
-          if (role === 'staff') { delete q.value; delete q.costs; }
+          stripMoney(q, role);
           return res.status(200).json({ quote: q, winback: 'sent', role });
         } catch (e) {
           console.error('win-back', e);
@@ -278,7 +290,7 @@ export default async function handler(req, res) {
           const actor2 = role === 'staff' ? (req._staffName || 'staff') : (process.env.ADMIN_NAME || 'Amos Osho');
           await appendNote(id, `Follow-up emailed to ${q.email} by ${actor2}`);
           await logActivity({ actor: actor2, action: 'sent follow-up', lead_id: id, lead_name: q.name });
-          if (role === 'staff') delete q.value;
+          stripMoney(q, role);
           return res.status(200).json({ quote: q, followup: 'sent', role });
         } catch (e) {
           console.error('follow-up', e);
@@ -295,7 +307,7 @@ export default async function handler(req, res) {
         try {
           await sendReviewRequest(q);
           await appendNote(id, `Review request emailed to ${q.email}`);
-          if (role === 'staff') delete q.value;
+          stripMoney(q, role);
           return res.status(200).json({ quote: q, review_request: 'sent', role });
         } catch (e) {
           console.error('review resend', e);
@@ -380,7 +392,7 @@ export default async function handler(req, res) {
           }
         }
       }
-      if (role === 'staff') { delete quote.value; delete quote.costs; }
+      stripMoney(quote, role);
       return res.status(200).json({ quote, review_request, role });
     }
 

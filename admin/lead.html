@@ -402,6 +402,7 @@
               <dt>Email</dt><dd>${q.email?`<a href="mailto:${esc(q.email)}">${esc(q.email)}</a>`:'—'}</dd>
               <dt>Service</dt><dd>${esc(q.service||'—')}</dd>
               <dt>Source</dt><dd>${({phone:'Phone call',lsa:'Google Local Services',whatsapp:'WhatsApp',referral:'Referral',website:'Website',other:'Other'})[q.source] || (q.source ? esc(q.source) : 'Website (untagged)')}</dd>
+              ${(document.body.classList.contains('staff') && q.value !== undefined && q.value !== null && q.value !== '') ? `<dt>Quoted price</dt><dd>&pound;${Number(q.value).toLocaleString('en-GB')}</dd>` : ''}
               <dt>Moving from</dt><dd>${q.from_postcode ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q.from_postcode)}" target="_blank" rel="noopener" title="Open in Google Maps">${esc(q.from_postcode)} &#128205;</a>` : '—'}</dd>
               <dt>Moving to</dt><dd>${q.to_postcode ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q.to_postcode)}" target="_blank" rel="noopener" title="Open in Google Maps">${esc(q.to_postcode)} &#128205;</a>` : '—'}</dd>
               <dt>Distance</dt><dd id="lead-distance">${(q.from_postcode && q.to_postcode) ? 'Working it out\u2026' : '—'}</dd>
