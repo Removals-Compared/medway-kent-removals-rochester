@@ -67,11 +67,19 @@
 .iq-form,.iq-result{text-align:left}
 .iq-form label,.iq-result label{text-transform:none;letter-spacing:0;font-size:inherit;font-weight:inherit;color:inherit;display:block;margin:0}
 .iq-form .lbl{text-align:left}
+.iq-form .step p{max-width:none;margin-left:0;margin-right:0;text-align:left}
 .hint,.fine{text-align:left}
+.journey{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:11px 13px;border-radius:10px;font-size:14px;line-height:1.45;background:#f3efe6;color:var(--muted);text-align:left}
+.journey svg{flex:none;width:20px;height:20px;margin-top:1px}
+.journey.ok{background:#e6f4ea;color:#1b5e3a;border:1px solid #b9dfc6;font-weight:600}
+.journey.bad{background:#fdecea;color:#a4281d;border:1px solid #f3c1bb}
+.note{max-width:none;width:auto;margin-left:0;margin-right:0;display:flex;gap:9px;align-items:flex-start;margin-top:8px;padding:10px 12px;border-radius:10px;background:#eef3fb;color:#24406e;font-size:13.5px;line-height:1.45;text-align:left}
+.note:before{content:"i";flex:none;width:18px;height:18px;border-radius:50%;background:#24406e;color:#fff;font:700 12px/18px Georgia,serif;text-align:center;margin-top:1px}
+.packing-opt{margin-top:2px;padding:12px 14px;border:1.5px solid var(--border2);border-radius:10px;background:var(--paper)}
 .addr-block{margin-bottom:14px}
 .addr-block .addr-pc{font-size:15px}
 .addr-block .field{margin-top:8px}
-.sublbl{display:block;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:2px}
+.sublbl{text-align:left;display:block;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:2px}
 .hint{font-size:13px;color:var(--muted);margin-top:8px}
 .chk{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;margin-top:8px;color:var(--text)}
 .chk input{margin-top:4px;accent-color:var(--accent)}
@@ -171,8 +179,8 @@
           <button type="button" class="chip" data-v="3" aria-pressed="false">3 vans · 5 to 6 movers</button>
           <button type="button" class="chip" data-v="4" aria-pressed="false">4 vans · 6 to 7 movers</button>
         </div>
-        <p class="hint">All vehicles are maxi loader Luton vans or Luton vans with a tail lift.</p>
-        <p class="hint" id="vanhint">Right for most 1–3 bed homes.</p>
+        <p class="note">All vehicles are maxi loader Luton vans or Luton vans with a tail lift.</p>
+        <p class="note" id="vanhint">Right for most 1–3 bed homes.</p>
       </div>
 
       <div class="step">
@@ -197,13 +205,14 @@
           <p class="addr-note" data-target="addrTo" hidden></p>
           <input class="field" id="addrTo" placeholder="Pick your address from the list, or type it" aria-label="Moving to">
         </div>
-        <p class="hint" id="journey">Enter both postcodes and we work out the journey time for you.</p>
+        <div class="journey" id="journey"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg><span id="journeyText">Enter both postcodes and we work out the journey time for you.</span></div>
         <div style="margin-top:12px"><input class="field" type="date" id="moveDate" aria-label="Move date" required></div>
       </div>
 
       <div class="step">
         <span class="lbl">4 · Packing</span>
-        <p class="hint" style="margin:0 0 8px">Need packing? It is booked separately after a free survey. Nothing to add here.</p>
+        <label class="chk packing-opt"><input type="checkbox" id="packing"> <span>I may need packing. Please call me to discuss it after the survey.</span></label>
+        <p class="note">Need packing? It is booked separately after a free survey, so nothing is added to your price here.</p>
       </div>
 
       <div class="step">
@@ -297,11 +306,12 @@
     return fetch('https://api.postcodes.io/postcodes/'+encodeURIComponent(pc.replace(/\s+/g,''))).then(function(r){return r.json()}).then(function(j){
       if(!j.result)throw new Error('postcode');return j.result});
   }
+  function show(kind,text){var j=$('journey'); j.className='journey'+(kind?' '+kind:''); $('journeyText').textContent=text}
   function journey(){
     var f=$('pcFrom').value.trim(), t=$('pcTo').value.trim(), out=$('journey'), me=++seq;
     state.hrs=null; state.mins=null;
-    if(!PC.test(f)||!PC.test(t)){out.textContent='Enter both postcodes and we work out the journey time for you.';calc();return}
-    out.textContent='Working out your journey…';calc();
+    if(!PC.test(f)||!PC.test(t)){show('','Enter both postcodes and we work out the journey time for you.');calc();return}
+    show('','Working out your journey…');calc();
     Promise.all([geo(f),geo(t)]).then(function(r){
       return fetch('https://router.project-osrm.org/route/v1/driving/'+r[0].longitude+','+r[0].latitude+';'+r[1].longitude+','+r[1].latitude+'?overview=false').then(function(x){return x.json()});
     }).then(function(j){
@@ -309,9 +319,9 @@
       var mins=Math.round(j.routes[0].duration/60), mi=Math.round(j.routes[0].distance/1609.34);
       state.mins=mins; state.hrs=mins<=FREE_MIN?0:Math.ceil(mins/60);
       var h=Math.floor(mins/60), m=mins%60, txt=(h?h+' hr ':'')+m+' min';
-      out.textContent='About '+mi+' miles, '+txt+' drive. '+(state.hrs===0?'Local move, no journey charge.':state.hrs>=5?'Long distance: we confirm a fixed price with you.':'Journey charge: '+gbp(PER_HR*state.hrs)+'.');
+      show('ok','About '+mi+' miles, '+txt+' drive. '+(state.hrs===0?'Local move, no journey charge.':state.hrs>=5?'Long distance: we confirm a fixed price with you.':'Journey charge: '+gbp(PER_HR*state.hrs)+'.'));
       calc();
-    }).catch(function(){ if(me!==seq)return; out.textContent='We could not find one of those postcodes. Please check and try again.'; calc(); });
+    }).catch(function(){ if(me!==seq)return; show('bad','We could not find one of those postcodes. Please check and try again.'); calc(); });
   }
   ['pcFrom','pcTo'].forEach(function(id){$(id).addEventListener('input',function(){clearTimeout(timer);timer=setTimeout(journey,500)})});
 
@@ -336,7 +346,7 @@
       size:+state.size, vans:+state.vans,
       from_postcode:$('pcFrom').value, to_postcode:$('pcTo').value,
       from_address:$('addrFrom').value, to_address:$('addrTo').value,
-      move_date:$('moveDate').value, name:$('cName').value, email:$('cEmail').value, phone:$('cPhone').value,
+      packing:$('packing').checked, move_date:$('moveDate').value, name:$('cName').value, email:$('cEmail').value, phone:$('cPhone').value,
       pay:document.querySelector('input[name=pay]:checked').value==='k'?'klarna':'deposit',
       return_path:location.pathname
     })}).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})}).then(function(x){
