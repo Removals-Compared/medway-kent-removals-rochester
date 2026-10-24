@@ -33,7 +33,11 @@
     <p class="brand">Medway &amp; Kent Removals</p>
     <h1>Admin sign in</h1>
     <label for="password">Password</label>
-    <input type="password" id="password" name="password" autocomplete="current-password" autofocus required>
+    <div style="position:relative">
+      <input type="password" id="password" name="password" autocomplete="current-password" autofocus required style="padding-right:64px">
+      <button type="button" id="toggle-pw" aria-label="Show password" aria-pressed="false"
+        style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:auto;margin:0;padding:6px 10px;background:none;border:none;color:#5b6880;font-size:12.5px;font-weight:700;cursor:pointer">Show</button>
+    </div>
     <button type="submit" id="submit">Sign in</button>
     <p class="err" id="err"></p>
   </form>
@@ -42,6 +46,18 @@
   const form = document.getElementById('login-form');
   const btn = document.getElementById('submit');
   const err = document.getElementById('err');
+
+  // Show or hide the password while typing it.
+  const pw = document.getElementById('password');
+  const toggle = document.getElementById('toggle-pw');
+  toggle.addEventListener('click', () => {
+    const show = pw.type === 'password';
+    pw.type = show ? 'text' : 'password';
+    toggle.textContent = show ? 'Hide' : 'Show';
+    toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    toggle.setAttribute('aria-pressed', String(show));
+    pw.focus();
+  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
