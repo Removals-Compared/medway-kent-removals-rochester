@@ -3,12 +3,14 @@
 //  browser sends the answers, never a price. The leading underscore keeps
 //  this file from being deployed as its own serverless function.
 //
-//  Studio £500, 1 bed £750, +£450 per extra bedroom, +£150 per started
+//  Studio £500, 1 bed £750, 2 bed £1,200, 3 bed £1,650, 4 bed £2,000, 5 bed £2,550,
+//  +£150 per started
 //  hour of drive time (first 30 minutes free), second and further vans
 //  +£750 each. Packing is booked separately after a survey.
 // ════════════════════════════════════════════════════════════
 export const PRICES = {
-  studio: 500, firstBed: 750, extraBed: 450,
+  // base price by bedrooms (0 = studio)
+  base: { 0: 500, 1: 750, 2: 1200, 3: 1650, 4: 2000, 5: 2550 },
   perHour: 150, freeMinutes: 30,
   extraVan: 750,
   depositRate: 0.10,
@@ -47,6 +49,5 @@ export const hoursCharged = (mins) => (mins <= PRICES.freeMinutes ? 0 : Math.cei
 
 // size: 0 = studio, 1..5 bedrooms. vans: 1..4. Returns whole pounds.
 export function priceFor({ size, vans, hours }) {
-  const base = size === 0 ? PRICES.studio : PRICES.firstBed + PRICES.extraBed * (size - 1);
-  return base + PRICES.perHour * hours + PRICES.extraVan * (vans - 1);
+  return PRICES.base[size] + PRICES.perHour * hours + PRICES.extraVan * (vans - 1);
 }

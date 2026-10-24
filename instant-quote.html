@@ -315,8 +315,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="/admin/postcode-picker.js"></script>
 <script>
 (function(){
-  // studio £500, 1 bed £750, +£450 per extra bedroom, +£150 per hour of journey
-  var FIRST=750, EXTRA_BED=450, PER_HR=150, STUDIO=500, FREE_MIN=30;
+  // base price by bedrooms (studio £500 to 5 bed £2,550), +£150 per started hour of journey
+  var BASE={0:500,1:750,2:1200,3:1650,4:2000,5:2550}, PER_HR=150, FREE_MIN=30;
   // ASSUMPTION: each extra van adds £750 (owner gave the 2nd van only)
   var vanAdd={1:0,2:750,3:1500,4:2250};
   var state={size:'3',vans:'1',hrs:null,mins:null};
@@ -327,7 +327,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   function calc(){
     $('vanhint').textContent=hints[state.vans];
     var ready=state.hrs!==null, long=ready&&state.hrs>=5, addrOk=$('addrFrom').value.trim()&&$('addrTo').value.trim()&&$('cName').value.trim()&&/.+@.+\..+/.test($('cEmail').value)&&$('cPhone').value.trim().length>=10&&$('cTerms').checked&&$('moveDate').value;
-    var p=(state.size==='0'?STUDIO:FIRST+EXTRA_BED*(+state.size-1))+PER_HR*(state.hrs||0)+vanAdd[state.vans];
+    var p=BASE[state.size]+PER_HR*(state.hrs||0)+vanAdd[state.vans];
     var dep=Math.round(p*0.1), third=Math.floor(p/3*100)/100, last=Math.round((p-third*2)*100)/100;
     $('price').textContent=!ready?'Add postcodes':(long?'From ':'')+gbp(p);
     $('price').style.fontSize=ready?'':'28px';
