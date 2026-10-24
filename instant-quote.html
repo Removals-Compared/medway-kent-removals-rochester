@@ -12,13 +12,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- End Google Tag Manager -->
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Instant Quote &amp; Pay: Fixed Price Removals Kent | Medway &amp; Kent Removals</title>
-<meta name="description" content="Get an instant fixed price for your removal in Medway and Kent, then pay a 10% deposit or spread the full cost in 3 interest-free payments with Klarna. No call needed.">
+<meta name="description" content="Get an instant fixed price for your removal in Medway and Kent, then book online with a 10% deposit, or pay the full price with Klarna. No call needed.">
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
 <meta name="author" content="Medway and Kent Removals">
 <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.png">
 <link rel="canonical" href="https://www.medwaykentremovals.co.uk/instant-quote">
 <meta property="og:type" content="website"><meta property="og:title" content="Instant Quote &amp; Pay: Fixed Price Removals Kent | Medway &amp; Kent Removals">
-<meta property="og:description" content="Get an instant fixed price for your removal in Medway and Kent, then pay a 10% deposit or spread the full cost in 3 interest-free payments with Klarna. No call needed."><meta property="og:url" content="https://www.medwaykentremovals.co.uk/instant-quote">
+<meta property="og:description" content="Get an instant fixed price for your removal in Medway and Kent, then book online with a 10% deposit, or pay the full price with Klarna. No call needed."><meta property="og:url" content="https://www.medwaykentremovals.co.uk/instant-quote">
 <meta property="og:site_name" content="Medway and Kent Removals">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.medwaykentremovals.co.uk/"},{"@type":"ListItem","position":2,"name":"Instant Quote & Pay","item":"https://www.medwaykentremovals.co.uk/instant-quote"}]}</script>
 
@@ -196,7 +196,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <nav aria-label="Breadcrumb" style="margin-bottom:16px"><ol style="list-style:none;display:flex;gap:8px;font-size:13px;color:var(--muted)"><li><a href="/" style="color:var(--muted)">Home</a></li><li style="color:var(--lighter)">/</li><li>Instant quote &amp; pay</li></ol></nav>
     <span class="label">Instant quote &amp; pay</span>
     <h1 style="font-size:clamp(32px,4vw,50px);color:var(--navy);letter-spacing:0;max-width:780px;margin-bottom:14px">Get your fixed price in a minute, then book online</h1>
-    <p style="color:var(--muted);font-size:17px;max-width:700px;line-height:1.75">Tell us the size of your move and the two postcodes. You get a fixed, all-inclusive price, then pay a 10% deposit to secure your date or spread the full cost in 3 interest-free payments with Klarna. Prefer a person? <a href="/contact" style="color:var(--accent);text-decoration:underline">Get a free quote</a> or call <a href="tel:01634971005" style="color:var(--accent);text-decoration:underline">01634 971005</a>.</p>
+    <p style="color:var(--muted);font-size:17px;max-width:700px;line-height:1.75">Tell us the size of your move and the two postcodes. You get a fixed, all-inclusive price, then pay a 10% deposit to secure your date, or pay the full price with Klarna. Prefer a person? <a href="/contact" style="color:var(--accent);text-decoration:underline">Get a free quote</a> or call <a href="tel:01634971005" style="color:var(--accent);text-decoration:underline">01634 971005</a>.</p>
   </div>
 </div>
 <section style="padding:36px 0 64px">
@@ -295,16 +295,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       <label class="pay-opt klarna">
         <input type="radio" name="pay" value="k">
-        <div class="top"><span><span class="kbadge">Klarna</span>Pay in 3</span><span class="amt" id="k1">£233.33</span></div>
-        <div class="desc">Interest-free instalments. Pay the full move in 3 parts.</div>
-        <div class="sched">
-          <div><b id="s1">£233.33</b>Today</div>
-          <div><b id="s2">£233.33</b>In 30 days</div>
-          <div><b id="s3">£233.34</b>In 60 days</div>
-        </div>
+        <div class="top"><span><span class="kbadge">Klarna</span>Pay with Klarna</span><span class="amt" id="k1">£233.33</span></div>
+        <div class="desc">Pay the full price today with Klarna. You choose your Klarna payment option on Klarna's secure page.</div>
       </label>
 
       </div>
+      <p class="hint" id="klarnaMax" hidden>Klarna is available for moves up to £2,000. Your price is above that, so the deposit option applies.</p>
       <p class="hint" id="longnote" hidden>Moves of 5 hours or more are long distance, so we confirm a fixed price with you first. The figure above is the minimum.</p>
       <button type="button" class="go" id="go">Pay £70 deposit and book</button>
       <p class="fine" id="goNote" hidden>You will be taken to our secure payment page. Fill in every step to enable the button.</p>
@@ -337,12 +333,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     $('price').style.fontSize=ready?'':'28px';
     $('payopts').hidden=long||!ready;
     $('longnote').hidden=!long;
-    $('dep').textContent=gbp(dep); $('k1').textContent=gbp(third);
-    $('s1').textContent=gbp(third); $('s2').textContent=gbp(third); $('s3').textContent=gbp(last);
+    $('dep').textContent=gbp(dep); $('k1').textContent=gbp(p);
+    var KMAX=2000, kopt=document.querySelector('.pay-opt.klarna'), over=p>KMAX;
+    kopt.hidden=over; $('klarnaMax').hidden=!over;
+    if(over){document.querySelector('input[name=pay][value=dep]').checked=true}
     var k=document.querySelector('input[name=pay]:checked').value==='k', go=$('go');
     go.disabled=!ready||(!long&&!addrOk); go.style.opacity=go.disabled?'.5':'';
     if(long){go.textContent='Get a fixed quote for this move';go.className='go';return}
-    go.textContent=k?'Continue with Klarna: '+gbp(third)+' today':'Pay '+gbp(dep)+' deposit and book';
+    go.textContent=k?'Continue to pay with Klarna':'Pay '+gbp(dep)+' deposit and book';
     $('goNote').hidden=false;
     go.className='go'+(k?' k':'');
   }

@@ -143,6 +143,9 @@ async function createCheckout(req, res, raw) {
     return res.status(422).json({ error: 'That is a long distance move. Please call 01634 971005 for a fixed quote.' });
   }
   const total = priceFor({ size, vans, hours });
+  if (option === 'klarna' && total > PRICES.klarnaMax) {
+    return res.status(400).json({ error: `Klarna is available for moves up to £${PRICES.klarnaMax.toLocaleString('en-GB')}. Please choose the deposit option, or call 01634 971005.` });
+  }
   let amountPence = option === 'klarna' ? total * 100 : Math.round(total * 100 * PRICES.depositRate);
 
   // Test hook: preview/dev only, never production.
@@ -186,7 +189,7 @@ async function createCheckout(req, res, raw) {
         price_data: {
           currency: 'gbp', unit_amount: amountPence,
           product_data: {
-            name: option === 'klarna' ? 'Removal, paid in full (Pay in 3 with Klarna)' : 'Removal booking deposit (10%)',
+            name: option === 'klarna' ? 'Removal, paid in full with Klarna' : 'Removal booking deposit (10%)',
             description: detail,
           },
         },

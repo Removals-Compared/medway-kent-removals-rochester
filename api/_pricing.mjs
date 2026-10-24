@@ -12,6 +12,7 @@ export const PRICES = {
   perHour: 150, freeMinutes: 30,
   extraVan: 750,
   depositRate: 0.10,
+  klarnaMax: 2000,          // Klarna limit for UK pay-over-time options in GBP (Stripe docs); above this Klarna won't show
   longJourneyHours: 5,      // this many hours or more: fixed quote by phone
 };
 

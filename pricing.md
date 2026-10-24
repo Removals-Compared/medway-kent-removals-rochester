@@ -35,7 +35,7 @@ Full guide with tables: https://www.medwaykentremovals.co.uk/removal-costs-kent
 
 ## Booking and payment terms
 
-- Payment methods: all major credit and debit cards, bank transfer, cash and cryptocurrency. Online instant-quote bookings can also be paid in 3 interest-free instalments with Klarna (18+, subject to Klarna's approval and terms)
+- Payment methods: all major credit and debit cards, bank transfer, cash and cryptocurrency. Online instant-quote bookings can also be paid in full with Klarna (18+, subject to Klarna's approval and terms)
 - Cancellation: free, with everything paid refunded in full to the original payment method. If paid with Klarna, the refund goes back through Klarna and unpaid instalments are cancelled (it can take Klarna a few days to show)
 - Same-day moves: available subject to availability, call 01634 971005
 - Deposit: 10% of the quote value, payable on booking to secure the date

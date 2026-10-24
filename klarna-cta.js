@@ -42,7 +42,7 @@
       '<button type="button" class="mkr-klarna-x" aria-label="Close">&times;</button>' +
       '<span class="mkr-klarna-pill">Klarna</span>' +
       '<div class="mkr-klarna-t">Instant quote &amp; pay</div>' +
-      '<p class="mkr-klarna-s">Get a fixed price in 60 seconds. Pay in 3 interest-free instalments.</p>' +
+      '<p class="mkr-klarna-s">Get a fixed price in 60 seconds, then book online. You can pay with Klarna.</p>' +
       '<a class="mkr-klarna-b" href="/instant-quote?src=klarna-card">Get my instant price</a>';
     document.body.appendChild(card);
 
