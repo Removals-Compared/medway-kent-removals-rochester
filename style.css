@@ -28,6 +28,12 @@ h1,h2,h3,h4,h5{font-family:var(--ff-display);line-height:1.18;letter-spacing:0;f
 .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:var(--r-sm);font-size:15px;font-weight:600;transition:var(--trans);border:2px solid transparent;white-space:nowrap}
 .btn-primary{background:var(--accent);color:var(--white)}
 .btn-primary:hover{background:var(--accent2);transform:translateY(-2px);box-shadow:0 6px 20px rgba(224,78,27,0.35)}
+.btn-klarna{background:#ffb3c7;color:#17120f;border-color:#ff8fb0}
+.btn-klarna:hover{background:#ffa1ba;transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,143,176,0.5)}
+.btn-klarna-k{background:#17120f;color:#ffb3c7;font-size:11px;font-weight:800;padding:2px 7px;border-radius:5px;letter-spacing:.3px}
+.hero-v2-btn-primary.hero-v2-btn-klarna{background:#ffb3c7;color:#17120f;box-shadow:0 6px 18px rgba(255,143,176,0.4);margin-left:10px}
+.hero-v2-btn-klarna:hover{background:#ffa1ba}
+.hero-v2-btn-klarna .btn-klarna-k{margin-left:6px;vertical-align:1px}
 .btn-secondary{background:var(--white);color:var(--navy);border-color:var(--border2)}
 .btn-secondary:hover{background:var(--cream);border-color:var(--navy)}
 .btn-outline{background:transparent;color:var(--navy);border-color:var(--border2)}

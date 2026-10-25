@@ -9,9 +9,32 @@
   var path = location.pathname.replace(/\/+$/, '') || '/';
   if (/^\/(instant-quote|booking-confirmed|thank-you|admin)/.test(path)) return;
   var KEY = 'mkr_klarna_cta_closed';
-  try { if (localStorage.getItem(KEY)) return; } catch (e) {}
+  var dismissed = false;
+  try { dismissed = !!localStorage.getItem(KEY); } catch (e) {}
+
+  // Inline "Instant quote & pay" button next to each primary "Get a Free Quote"
+  // button. Existing pages already carry it in their HTML; this only fills the
+  // gaps (for example a newly published post) and never doubles one up.
+  function addInlineButtons() {
+    var links = document.querySelectorAll('a.btn-primary[href^="/contact"]');
+    for (var i = 0; i < links.length; i++) {
+      var a = links[i];
+      if (/nav-cta|mob-nav-link|footer-cta/.test(a.className)) continue;
+      if (!/quote/i.test(a.textContent)) continue;
+      var n = a.nextElementSibling;
+      if (n && /btn-klarna/.test(n.className)) continue;
+      var b = document.createElement('a');
+      b.href = '/instant-quote?src=cta';
+      b.className = 'btn btn-klarna';
+      if (a.getAttribute('style')) b.setAttribute('style', a.getAttribute('style'));
+      b.innerHTML = 'Instant quote &amp; pay <span class="btn-klarna-k">Klarna</span>';
+      a.parentNode.insertBefore(b, a.nextSibling);
+    }
+  }
 
   function init() {
+    addInlineButtons();
+    if (dismissed) return;
     var css =
       '.mkr-klarna{position:fixed;left:20px;bottom:20px;z-index:9990;width:292px;box-sizing:border-box;' +
         'background:#ffb3c7;color:#17120f;border-radius:16px;padding:16px 18px 16px;' +
@@ -44,7 +67,15 @@
       '<div class="mkr-klarna-t">Instant quote &amp; pay</div>' +
       '<p class="mkr-klarna-s">Get a fixed price in 60 seconds, then book online. You can pay with Klarna.</p>' +
       '<a class="mkr-klarna-b" href="/instant-quote?src=klarna-card">Get my instant price</a>';
+    card.style.display = 'none';
     document.body.appendChild(card);
+    // Keep it clear of the page's own buttons: show once the visitor has scrolled
+    // past the first screen, or after 15 seconds on the page.
+    var shown = false;
+    function reveal() { if (shown) return; shown = true; card.style.display = ''; window.removeEventListener('scroll', onScroll); }
+    function onScroll() { if (window.scrollY > 500) reveal(); }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    setTimeout(reveal, 15000);
 
     card.querySelector('.mkr-klarna-x').addEventListener('click', function () {
       card.remove();

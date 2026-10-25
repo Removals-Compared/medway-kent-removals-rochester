@@ -82,7 +82,7 @@ def sidebar(page, name):
         <div class="side-card">
           <h3>Free {name.lower()} quote</h3>
           <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">Friday and end-of-month dates fill 4 to 6 weeks ahead. Fully insured, fixed-price, quote in 60 minutes.</p>
-          <a href="/contact?service={page['svc_param']}" class="btn btn-primary" style="width:100%;justify-content:center;font-size:14px;margin-bottom:10px">Get a Free Quote</a>
+          <a href="/contact?service={page['svc_param']}" class="btn btn-primary" style="width:100%;justify-content:center;font-size:14px;margin-bottom:10px">Get a Free Quote</a><a href="/instant-quote?src=cta" class="btn btn-klarna" style="width:100%;justify-content:center;font-size:14px;margin-bottom:10px">Instant quote &amp; pay <span class="btn-klarna-k">Klarna</span></a>
           <a href="tel:01634971005" style="display:block;text-align:center;font-size:14px;color:var(--accent);font-weight:700">&#128222; 01634 971005</a><a href="tel:07359917380" style="display:block;text-align:center;font-size:14px;color:var(--accent);font-weight:700">&#128241; 07359 917380</a>
           <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
             <div style="font-size:12px;color:var(--muted);line-height:1.9">
@@ -148,7 +148,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <strong style="color:var(--accent)">&#128197; {page['urgency']}</strong> Get a fixed-price quote within 60 minutes.
     </div>
     <div class="loc-hero-actions">
-      <a href="/contact?service={page['svc_param']}" class="btn btn-primary">{page['cta_btn']}</a>
+      <a href="/contact?service={page['svc_param']}" class="btn btn-primary">{page['cta_btn']}</a><a href="/instant-quote?src=cta" class="btn btn-klarna">Instant quote &amp; pay <span class="btn-klarna-k">Klarna</span></a>
       <a href="tel:01634971005" class="btn btn-secondary">&#128222; 01634 971005</a><a href="tel:07359917380" class="btn btn-secondary">&#128241; 07359 917380</a>
     </div>
     <div class="loc-trust">
