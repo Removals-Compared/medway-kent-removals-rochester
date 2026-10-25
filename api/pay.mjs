@@ -104,7 +104,7 @@ async function createCheckout(req, res, raw) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(b.move_date || '')) || b.move_date < new Date().toISOString().slice(0, 10)) {
     return res.status(400).json({ error: 'Please choose your move date.' });
   }
-  const option = b.pay === 'klarna' ? 'klarna' : 'deposit';
+  const option = b.pay === 'klarna' ? 'klarna' : (b.pay === 'full' ? 'full' : 'deposit');   // deposit | full (by card) | klarna (full)
   const wantsPacking = b.packing === true;
   const fromAddr = String(b.from_address || '').trim().slice(0, 220);
   const toAddr = String(b.to_address || '').trim().slice(0, 220);
@@ -125,7 +125,7 @@ async function createCheckout(req, res, raw) {
   if (option === 'klarna' && total > PRICES.klarnaMax) {
     return res.status(400).json({ error: `Klarna is available for moves up to £${PRICES.klarnaMax.toLocaleString('en-GB')}. Please choose the deposit option, or call 01634 971005.` });
   }
-  let amountPence = option === 'klarna' ? total * 100 : Math.round(total * 100 * PRICES.depositRate);
+  let amountPence = option === 'deposit' ? Math.round(total * 100 * PRICES.depositRate) : total * 100;
 
   // Test hook: preview/dev only, never production.
   const testPence = Number(process.env.STRIPE_TEST_AMOUNT_PENCE);
@@ -168,12 +168,12 @@ async function createCheckout(req, res, raw) {
         price_data: {
           currency: 'gbp', unit_amount: amountPence,
           product_data: {
-            name: option === 'klarna' ? 'Removal, paid in full with Klarna' : 'Removal booking deposit (10%)',
+            name: option === 'klarna' ? 'Removal, paid in full with Klarna' : (option === 'full' ? 'Removal, paid in full' : 'Removal booking deposit (10%)'),
             description: detail,
           },
         },
       }],
-      payment_intent_data: { description: `MKR ${option === 'klarna' ? 'full payment' : 'deposit'}: ${detail}` },
+      payment_intent_data: { description: `MKR ${option === 'deposit' ? 'deposit' : 'full payment'}: ${detail}` },
       metadata: { lead_id: String(leadId), option, total_pounds: String(total) },
       success_url: `${base}/booking-confirmed?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${base}${back}?cancelled=1`,
@@ -229,7 +229,8 @@ async function handleWebhook(req, res, raw) {
       stripe_session_id: s.id, status: 'move_booked', updated_at: new Date().toISOString(),
     });
     const total = Number(s.metadata.total_pounds) || Number(q.value) || paid;
-    const what = option === 'klarna' ? `paid in full with Klarna (${gbp(paid)})` : `deposit paid by card (${gbp(paid)}), balance ${gbp(total - paid)} on the day`;
+    const fullPay = option === 'klarna' || option === 'full';
+    const what = option === 'klarna' ? `paid in full with Klarna (${gbp(paid)})` : fullPay ? `paid in full by card (${gbp(paid)})` : `deposit paid by card (${gbp(paid)}), balance ${gbp(total - paid)} on the day`;
     try { await appendNote(leadId, `Online payment received: ${what}. Stripe session ${s.id}`); } catch {}
     await logActivity({ actor: q.name || 'Customer', action: 'paid online', lead_id: leadId, lead_name: q.name, detail: what });
 
@@ -245,9 +246,9 @@ async function handleWebhook(req, res, raw) {
       moveDate: fmtDate(q.move_date), size: q.property_size, vans: vansMatch ? Number(vansMatch[1]) : 0,
       from: q.address || q.from_postcode, to: q.to_address || q.to_postcode,
       price: gbp(total), paid: gbp(paid),
-      paidLabel: option === 'klarna' ? 'Paid today with Klarna' : 'Deposit paid (10%)',
-      balance: option === 'klarna' ? '£0' : gbp(total - paid),
-      balanceNote: option === 'klarna' ? 'Paid in full, nothing to pay on the day' : 'Payable to the crew on moving day',
+      paidLabel: option === 'klarna' ? 'Paid today with Klarna' : fullPay ? 'Paid in full by card' : 'Deposit paid (10%)',
+      balance: fullPay ? '£0' : gbp(total - paid),
+      balanceNote: fullPay ? 'Paid in full, nothing to pay on the day' : 'Payable to the crew on moving day',
       packing: /Packing: customer/.test(q.notes || ''),
     };
     await Promise.allSettled([

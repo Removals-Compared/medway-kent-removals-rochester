@@ -222,7 +222,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <p class="iq-lead">Tell us the size of your move and the two postcodes. You get a fixed, all-inclusive price, then book online with a 10% deposit, or pay the full price with Klarna.</p>
     <ul class="iq-trust" role="list">
       <li><span class="iq-tick" aria-hidden="true">&#10003;</span><span><strong>Fully insured</strong><small>Goods in transit &amp; public liability</small></span></li>
-      <li><span class="iq-tick" aria-hidden="true">&#10003;</span><span><strong>Rochester based</strong><small>Knight Templar Way, ME2 2ZE</small></span></li>
+      <li><span class="iq-tick" aria-hidden="true">&#10003;</span><span><strong>Rochester based</strong><small>We move across the country</small></span></li>
       <li><span class="iq-tick" aria-hidden="true">&#10003;</span><span><strong>5-star rated</strong><small>Service guaranteed</small></span></li>
       <li><span class="iq-tick" aria-hidden="true">&#10003;</span><span><strong>Fixed pricing</strong><small>No hidden charges, ever</small></span></li>
     </ul>
@@ -323,6 +323,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="desc">10% now. Balance on moving day. Free cancellation, deposit refunded.</div>
       </label>
 
+      <label class="pay-opt">
+        <input type="radio" name="pay" value="full">
+        <div class="top"><span>Pay in full by card</span><span class="amt" id="fullAmt">£700</span></div>
+        <div class="desc">Pay the whole price today by card. Nothing to pay on moving day. Free cancellation, everything refunded.</div>
+      </label>
+
       <label class="pay-opt klarna">
         <input type="radio" name="pay" value="k">
         <div class="top"><span><span class="kbadge">Klarna</span>Pay with Klarna</span><span class="amt" id="k1">£233.33</span></div>
@@ -395,10 +401,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     showKlarnaMessage(ready&&!long&&!over?Math.round(p*100):0);
     kopt.hidden=over; $('klarnaMax').hidden=!over;
     if(over){document.querySelector('input[name=pay][value=dep]').checked=true}
-    var k=document.querySelector('input[name=pay]:checked').value==='k', go=$('go');
+    $('fullAmt').textContent=gbp(p);
+    var pv=document.querySelector('input[name=pay]:checked').value, k=pv==='k', go=$('go');
     go.disabled=!ready||(!long&&!addrOk); go.style.opacity=go.disabled?'.5':'';
     if(long){go.textContent='Get a fixed quote for this move';go.className='go';return}
-    go.textContent=k?'Continue to pay with Klarna':'Pay '+gbp(dep)+' deposit and book';
+    go.textContent=k?'Continue to pay with Klarna':(pv==='full'?'Pay '+gbp(p)+' in full and book':'Pay '+gbp(dep)+' deposit and book');
     $('goNote').hidden=false;
     go.className='go'+(k?' k':'');
   }
@@ -451,7 +458,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       from_postcode:$('pcFrom').value, to_postcode:$('pcTo').value,
       from_address:$('addrFrom').value, to_address:$('addrTo').value,
       packing:$('packing').checked, move_date:$('moveDate').value, name:$('cName').value, email:$('cEmail').value, phone:$('cPhone').value,
-      pay:document.querySelector('input[name=pay]:checked').value==='k'?'klarna':'deposit',
+      pay:(function(v){return v==='k'?'klarna':(v==='full'?'full':'deposit')})(document.querySelector('input[name=pay]:checked').value),
       return_path:location.pathname
     })}).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})}).then(function(x){
       if(x.ok&&x.j.url){location.href=x.j.url;return}
