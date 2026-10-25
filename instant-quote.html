@@ -73,6 +73,29 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 </script>
 <style>
 :root{--klarna:#ffb3c7;--klarna-ink:#17120f}
+/* ── Hero: dark, like the home page ── */
+.iq-hero{background:radial-gradient(1100px 420px at 85% -10%,rgba(255,179,199,.20),transparent 60%),linear-gradient(135deg,#16294a 0%,#1f3560 55%,#28417a 100%);color:#fff;padding:54px 0 118px;position:relative;overflow:hidden}
+.iq-hero:after{content:"";position:absolute;right:-120px;bottom:-160px;width:420px;height:420px;border-radius:50%;background:rgba(255,255,255,.04)}
+.iq-hero-in{position:relative;z-index:1}
+.iq-crumb ol{list-style:none;display:flex;gap:8px;font-size:13px;color:#aebbd6;margin:0 0 22px;padding:0}
+.iq-crumb a{color:#cdd8ee}
+.iq-eyebrow{display:inline-block;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#ffb3c7;margin-bottom:14px}
+.iq-hero h1{font-family:var(--ff-display);color:#fff;font-size:clamp(34px,5.2vw,58px);line-height:1.1;letter-spacing:0;max-width:820px;margin:0 0 16px}
+.iq-hero h1 em{color:#ffb3c7;font-style:italic}
+.iq-lead{font-size:clamp(16px,1.8vw,19px);line-height:1.7;color:#d5dcec;max-width:680px;margin:0 0 26px}
+.iq-trust{list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;max-width:900px;margin:0 0 22px;padding:0}
+.iq-trust li{display:flex;gap:11px;align-items:flex-start}
+.iq-tick{flex:none;width:26px;height:26px;border-radius:50%;background:rgba(255,179,199,.2);color:#ffb3c7;font-size:14px;font-weight:700;line-height:26px;text-align:center}
+.iq-trust strong{display:block;font-size:14.5px;color:#fff}
+.iq-trust small{display:block;font-size:12.5px;line-height:1.4;color:#b9c5de}
+.iq-talk{font-size:15px;color:#cdd8ee;margin:0}
+.iq-talk a{color:#fff;font-weight:700;text-decoration:underline}
+.iq-stage{background:var(--paper);padding:0 0 64px}
+.iq-stage .iq{margin-top:-74px;position:relative;z-index:2}
+.iq-stage .iq-card{box-shadow:0 22px 60px rgba(22,41,74,.22)}
+.iq-pricenote{margin:18px auto 0;max-width:760px;text-align:center}
+@media(max-width:860px){.iq-trust{grid-template-columns:1fr 1fr}.iq-hero{padding:38px 0 100px}.iq-stage .iq{margin-top:-62px}}
+@media(max-width:480px){.iq-trust{grid-template-columns:1fr}}
 /* ── Instant quote tool ── */
 .iq{max-width:1120px;margin:0 auto;padding:0 5%}
 .iq-card{display:grid;grid-template-columns:1.15fr .85fr;background:#fff;border:1px solid var(--border);border-radius:20px;box-shadow:var(--sh-lg);overflow:hidden}
@@ -191,16 +214,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <a class="mob-nav-link" href="/removals-tonbridge" style="font-size:14px;padding-left:24px">↳ Removals Tonbridge</a><a class="mob-nav-link" href="/about">About Us</a>
   <a class="mob-nav-link" href="/contact" style="color:var(--accent)">Get a Free Quote &#8594;</a>
 </div>
-<div style="background:linear-gradient(180deg,var(--cream),var(--paper));border-bottom:1px solid var(--border);padding:56px 0 40px">
-  <div class="container">
-    <nav aria-label="Breadcrumb" style="margin-bottom:16px"><ol style="list-style:none;display:flex;gap:8px;font-size:13px;color:var(--muted)"><li><a href="/" style="color:var(--muted)">Home</a></li><li style="color:var(--lighter)">/</li><li>Instant quote &amp; pay</li></ol></nav>
-    <span class="label">Instant quote &amp; pay</span>
-    <h1 style="font-size:clamp(32px,4vw,50px);color:var(--navy);letter-spacing:0;max-width:780px;margin-bottom:14px">Get your fixed price in a minute, then book online</h1>
-    <p style="color:var(--muted);font-size:17px;max-width:700px;line-height:1.75">Tell us the size of your move and the two postcodes. You get a fixed, all-inclusive price, then pay a 10% deposit to secure your date, or pay the full price with Klarna. Prefer a person? <a href="/contact" style="color:var(--accent);text-decoration:underline">Get a free quote</a> or call <a href="tel:01634971005" style="color:var(--accent);text-decoration:underline">01634 971005</a>.</p>
+<section class="iq-hero" aria-label="Instant quote and pay">
+  <div class="container iq-hero-in">
+    <nav aria-label="Breadcrumb" class="iq-crumb"><ol><li><a href="/">Home</a></li><li aria-hidden="true">/</li><li>Instant quote &amp; pay</li></ol></nav>
+    <span class="iq-eyebrow">Instant quote &amp; pay &middot; Rochester, Kent</span>
+    <h1>Your fixed removal price in <em>60 seconds.</em></h1>
+    <p class="iq-lead">Tell us the size of your move and the two postcodes. You get a fixed, all-inclusive price, then book online with a 10% deposit, or pay the full price with Klarna.</p>
+    <ul class="iq-trust" role="list">
+      <li><span class="iq-tick" aria-hidden="true">&#10003;</span><span><strong>Fully insured</strong><small>Goods in transit &amp; public liability</small></span></li>
+      <li><span class="iq-tick" aria-hidden="true">&#10003;</span><span><strong>Rochester based</strong><small>Knight Templar Way, ME2 2ZE</small></span></li>
+      <li><span class="iq-tick" aria-hidden="true">&#10003;</span><span><strong>5-star rated</strong><small>Service guaranteed</small></span></li>
+      <li><span class="iq-tick" aria-hidden="true">&#10003;</span><span><strong>Fixed pricing</strong><small>No hidden charges, ever</small></span></li>
+    </ul>
+    <p class="iq-talk">Prefer to talk? <a href="/contact">Get a free quote</a> or call <a href="tel:01634971005">01634 971005</a></p>
   </div>
-</div>
-<section style="padding:36px 0 64px">
-<div class="container"><p class="note" style="margin:0 0 14px;max-width:640px">This online price is a fixed price for booking instantly with no survey. Our free-quote prices elsewhere on this site depend on a survey and can differ, so use whichever suits you.</p></div>
+</section>
+<section class="iq-stage">
 <div class="iq">
   <div class="iq-card">
     <form class="iq-form" onsubmit="return false">
@@ -311,6 +340,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </div>
 
+<div class="container"><p class="note iq-pricenote">This online price is a fixed price for booking instantly with no survey. Our free-quote prices elsewhere on this site depend on a survey and can differ, so use whichever suits you.</p></div>
 </section>
 <!-- the same postcode picker the admin uses; it talks to /api/address-lookup (Ideal Postcodes, key stays server-side) -->
 <script src="/admin/postcode-picker.js"></script>
