@@ -44,6 +44,57 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .cs-back{background:#fff;border:1.5px solid #e9e0cd;color:#556}
   .cs-next:active{transform:translateY(1px)}
   .cs-err{color:#c0392b;font-size:13px;font-weight:600;min-height:18px;margin:8px 0 0}
+
+  /* ── Contact page redesign ── */
+  .ct-hero{background:radial-gradient(1100px 420px at 85% -10%,rgba(222,95,46,.22),transparent 60%),linear-gradient(135deg,#16294a 0%,#1f3560 55%,#28417a 100%);color:#fff;padding:50px 0 116px;position:relative;overflow:hidden}
+  .ct-hero:after{content:"";position:absolute;right:-120px;bottom:-170px;width:430px;height:430px;border-radius:50%;background:rgba(255,255,255,.04)}
+  .ct-hero-in{position:relative;z-index:1}
+  .ct-crumb ol{list-style:none;display:flex;gap:8px;font-size:13px;color:#aebbd6;margin:0 0 20px;padding:0}
+  .ct-crumb a{color:#cdd8ee}
+  .ct-eyebrow{display:inline-block;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#f3c9b3;margin-bottom:14px}
+  .ct-hero h1{font-family:var(--ff-display);color:#fff;font-size:clamp(32px,4.8vw,54px);line-height:1.12;letter-spacing:0;max-width:820px;margin:0 0 16px}
+  .ct-hero h1 em{color:#f5a07a;font-style:italic}
+  .ct-lead{font-size:clamp(16px,1.7vw,18.5px);line-height:1.7;color:#d5dcec;max-width:660px;margin:0 0 26px}
+  .ct-trust{list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;max-width:920px;margin:0;padding:0}
+  .ct-trust li{display:flex;gap:11px;align-items:flex-start}
+  .ct-tick{flex:none;width:26px;height:26px;border-radius:50%;background:rgba(245,160,122,.2);color:#f5a07a;font-size:14px;font-weight:700;line-height:26px;text-align:center}
+  .ct-trust strong{display:block;font-size:14.5px;color:#fff}
+  .ct-trust small{display:block;font-size:12.5px;line-height:1.4;color:#b9c5de}
+  .contact-stage{background:var(--paper);padding:0 0 64px}
+  .contact-stage .contact-grid{grid-template-columns:minmax(0,1fr) 390px;gap:30px;margin-top:-76px;position:relative;z-index:2;align-items:start}
+  .contact-stage .contact-box{background:#fff;border:1px solid var(--border);border-radius:20px;padding:36px 38px;box-shadow:0 22px 60px rgba(22,41,74,.18)}
+  .contact-stage .contact-box h3{font-family:var(--ff-display);font-size:26px;margin-bottom:6px}
+  .contact-stage .fg input,.contact-stage .fg select,.contact-stage .fg textarea{border:1.5px solid #e4dccb;border-radius:10px;padding:13px 14px;background:#fcfaf6}
+  .contact-stage .fg input:focus,.contact-stage .fg select:focus,.contact-stage .fg textarea:focus{background:#fff;border-color:var(--accent);box-shadow:0 0 0 4px rgba(224,78,27,.12)}
+  .contact-stage .cs-seg{height:7px;border-radius:5px}
+  .contact-stage .cs-next{border-radius:11px;padding:15px 20px}
+  .contact-stage .cs-back{border-radius:11px;padding:15px 20px}
+  .ct-side{position:sticky;top:96px;display:grid;gap:16px}
+  .ct-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:20px 22px;box-shadow:0 8px 26px rgba(22,41,74,.07)}
+  .ct-side h3{font-family:var(--ff-display);font-size:21px;color:var(--navy);margin:0 0 4px}
+  .ct-talk p{font-size:14px;color:var(--muted);margin:0 0 14px}
+  .ct-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 16px;border-radius:11px;font-weight:700;font-size:15px;margin-bottom:10px;text-decoration:none;transition:transform .12s,box-shadow .15s}
+  .ct-btn:hover{transform:translateY(-1px)}
+  .ct-call{background:var(--accent);color:#fff;box-shadow:0 6px 16px rgba(224,78,27,.28)}
+  .ct-wa{background:#1EBE57;color:#fff;box-shadow:0 6px 16px rgba(30,190,87,.25)}
+  .ct-mail{display:block;text-align:center;font-size:14px;color:var(--navy);font-weight:600;word-break:break-all;margin-top:2px}
+  .ct-mail:hover{color:var(--accent)}
+  .ct-instant{display:flex;flex-direction:column;gap:5px;background:#ffb3c7;border-color:#ff8fb0;color:#17120f;text-decoration:none;transition:transform .15s,box-shadow .15s}
+  .ct-instant:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(255,143,176,.5)}
+  .ct-i-tag{align-self:flex-start;font-size:10.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;background:#17120f;color:#fff;padding:3px 10px;border-radius:99px}
+  .ct-instant strong{font-family:var(--ff-display);font-size:21px;line-height:1.2}
+  .ct-instant small{font-size:13.5px;color:#4a2c36;line-height:1.45}
+  .ct-i-k{align-self:flex-start;display:inline-flex;align-items:center;gap:7px;background:#fff;border-radius:99px;padding:4px 11px;font-size:13px;font-weight:700}
+  .ct-i-k b{background:#17120f;color:#ffb3c7;font-size:11px;font-weight:800;padding:2px 7px;border-radius:5px}
+  .ct-i-go{margin-top:4px;font-weight:700;font-size:14.5px}
+  .ct-where{display:flex;gap:14px;align-items:flex-start}
+  .ct-where-ico{flex:none;width:44px;height:44px;border-radius:12px;background:var(--accent-pale);display:flex;align-items:center;justify-content:center;font-size:20px}
+  .ct-where strong{display:block;font-size:15px;color:var(--navy)}
+  .ct-where span{display:block;font-size:14.5px;color:var(--text);margin-top:1px}
+  .ct-where small{display:block;font-size:13px;color:var(--muted);line-height:1.5;margin-top:6px}
+  .ct-side .hours-block{margin-top:0;background:#fff;padding:20px 22px}
+  @media(max-width:980px){.contact-stage .contact-grid{grid-template-columns:1fr;gap:26px;margin-top:-60px}.contact-grid .contact-info{order:0}.ct-side{position:static}.ct-trust{grid-template-columns:1fr 1fr}.ct-hero{padding:38px 0 100px}}
+  @media(max-width:520px){.ct-trust{grid-template-columns:1fr}.contact-stage .contact-box{padding:24px 18px}}
 </style>
 <!-- OpenAI Ads Measurement Pixel (init only; the lead_created conversion
      fires solely on the thank-you page after a verified form submission) -->
@@ -123,16 +174,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <a class="mob-nav-link" href="/contact" style="color:var(--accent)">Get a Free Quote &#8594;</a>
 </div>
 
-<div style="background:linear-gradient(180deg,var(--cream),var(--paper));border-bottom:1px solid var(--border);padding:56px 0 48px">
-  <div class="container">
-    <nav aria-label="Breadcrumb" style="margin-bottom:16px"><ol style="list-style:none;display:flex;gap:8px;font-size:13px;color:var(--muted)"><li><a href="/" style="color:var(--muted)">Home</a></li><li style="color:var(--lighter)">&#8250;</li><li style="color:var(--navy)">Get a Free Quote</li></ol></nav>
-    <span class="label">Free No-Obligation Quote</span>
-    <h1 style="font-size:clamp(32px,4vw,50px);color:var(--navy);letter-spacing:0;max-width:750px;margin-bottom:14px">Get your free removal quote from our Rochester team</h1>
-    <p style="color:var(--muted);font-size:17px;max-width:700px;line-height:1.75">Fill in the form below with details about your move and we will come back to you with a detailed, fixed-price quote, usually within 60 minutes during business hours. There is no obligation and no pressure. Or call us directly on 01634 971005 and we can talk it through right now.</p>
+<section class="ct-hero" aria-label="Get a free quote">
+  <div class="container ct-hero-in">
+    <nav aria-label="Breadcrumb" class="ct-crumb"><ol><li><a href="/">Home</a></li><li aria-hidden="true">&#8250;</li><li>Free quote</li></ol></nav>
+    <span class="ct-eyebrow">Free quote &middot; No obligation</span>
+    <h1>Get your free removal quote from our <em>Rochester team</em></h1>
+    <p class="ct-lead">Tell us about your move in the short form below. We come back with a clear, fixed-price quote, usually within 60 minutes during business hours. No obligation and no pressure.</p>
+    <ul class="ct-trust" role="list">
+      <li><span class="ct-tick" aria-hidden="true">&#10003;</span><span><strong>Fully insured</strong><small>Goods in transit &amp; public liability</small></span></li>
+      <li><span class="ct-tick" aria-hidden="true">&#10003;</span><span><strong>Fixed pricing</strong><small>No hidden charges, ever</small></span></li>
+      <li><span class="ct-tick" aria-hidden="true">&#10003;</span><span><strong>Reply within 60 mins</strong><small>7 days a week</small></span></li>
+      <li><span class="ct-tick" aria-hidden="true">&#10003;</span><span><strong>Based in Rochester</strong><small>We move you across the country</small></span></li>
+    </ul>
   </div>
-</div>
+</section>
 
-<section>
+<section class="contact-stage">
   <div class="container">
     <div class="contact-grid">
       <div>
@@ -214,6 +271,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="cs-nav"><button type="button" class="cs-back" data-go="2">&#8592; Back</button></div>
             <button type="submit" class="form-submit" style="margin-top:12px">Send My Quote Request &#8594;</button>
             <p class="form-note">&#128274; Your information is kept strictly secure and will never be shared with third parties or used for unsolicited marketing without your permission. See our <a href="/privacy-policy" style="color:var(--accent)">Privacy Policy</a> for full details.</p>
+          </div>
           </form>
           <div class="form-success" id="form-success">
             <div class="form-success-icon">&#10003;</div>
@@ -222,13 +280,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
         </div>
       </div>
-      <div class="contact-info">
-        <h3>Contact us directly</h3>
-        <div class="ci-item"><div class="ci-ico">&#128222;</div><div class="ci-body"><strong>Phone</strong><a href="tel:01634971005">01634 971005</a><br><span style="font-size:13px;color:var(--lighter)">Mon to Fri 7am to 7pm, Sat 8am to 5pm, Sun 9am to 2pm</span></div></div>
-        <div class="ci-item"><div class="ci-ico">&#9993;</div><div class="ci-body"><strong>Email</strong><a href="mailto:info@medwaykentremovals.co.uk">info@medwaykentremovals.co.uk</a></div></div>
-        <div class="ci-item"><div class="ci-ico">&#128205;</div><div class="ci-body"><strong>Based in Rochester</strong><span>We move you across the country.</span></div></div>
-        <div class="ci-item"><div class="ci-ico">&#127758;</div><div class="ci-body"><strong>Service area</strong><span>Rochester, Medway and all of Kent.<br>Long distance to anywhere in Great Britain.</span></div></div>
-        <div class="hours-block">
+      <div class="contact-info ct-side">
+        <div class="ct-card ct-talk">
+          <h3>Prefer to talk?</h3>
+          <p>Call or message us any day. A real person answers.</p>
+          <a class="ct-btn ct-call" href="tel:01634971005">&#128222; Call 01634 971005</a>
+          <a class="ct-btn ct-wa" href="https://wa.me/447359917380?text=Hi%2C%20I%20would%20like%20a%20removals%20quote" target="_blank" rel="noopener">WhatsApp 07359 917380</a>
+          <a class="ct-mail" href="mailto:info@medwaykentremovals.co.uk">info@medwaykentremovals.co.uk</a>
+        </div>
+        <a class="ct-card ct-instant" href="/instant-quote?src=contact">
+          <span class="ct-i-tag">Want a price right now?</span>
+          <strong>Instant quote &amp; pay</strong>
+          <small>Get a fixed price in 60 seconds and book online.</small>
+          <span class="ct-i-k"><b>Klarna</b> You can pay with Klarna</span>
+          <span class="ct-i-go">Get my instant price &rarr;</span>
+        </a>
+        <div class="ct-card ct-where">
+          <div class="ct-where-ico" aria-hidden="true">&#128205;</div>
+          <div><strong>Based in Rochester</strong><span>We move you across the country.</span><small>Rochester, Medway and all of Kent, with long distance to anywhere in Great Britain.</small></div>
+        </div>
+        <div class="ct-card hours-block">
           <h4>Opening hours</h4>
           <div class="hr-row"><span>Monday</span><strong>7:00am to 7:00pm</strong></div>
           <div class="hr-row"><span>Tuesday</span><strong>7:00am to 7:00pm</strong></div>
@@ -238,7 +309,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="hr-row"><span>Saturday</span><strong>8:00am to 5:00pm</strong></div>
           <div class="hr-row"><span>Sunday</span><strong>9:00am to 2:00pm</strong></div>
         </div>
-</div>
+      </div>
     </div>
   </div>
 </section>
@@ -373,74 +444,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div style="display:flex;gap:18px"><a href="/privacy-policy" style="font-size:12px;color:rgba(255,255,255,0.95)">Privacy Policy</a><a href="/contact" style="font-size:12px;color:rgba(255,255,255,0.95)">Contact</a></div>
   </div>
 </footer><script src="/script.js"></script>
-<section>
-  <div class="container">
-    <span class="label">Moving checklist</span>
-    <h2 class="section-title">Your complete moving checklist for Rochester and Medway</h2>
-    <p style="font-size:16px;color:var(--muted);line-height:1.85;max-width:820px;margin-bottom:32px">Use this checklist to plan your move effectively. The more you prepare in advance, the smoother your moving day will be. Our team is always happy to advise on any of these points if you have questions.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px" class="about-split">
-      <div>
-        <h3 style="font-size:18px;color:var(--navy);margin-bottom:16px;font-family:var(--ff-display)">6 to 8 weeks before your move</h3>
-        <ul style="font-size:15px;color:var(--muted);line-height:2;padding-left:20px">
-          <li>Contact Medway and Kent Removals for a free quote</li>
-          <li>Confirm your removal date and secure it with a deposit</li>
-          <li>Begin sorting and decluttering to reduce the volume of items to move</li>
-          <li>Donate, sell or dispose of items you no longer need</li>
-          <li>Start collecting packing boxes if you are self-packing</li>
-          <li>Notify your employer, bank, HMRC and relevant organisations of your new address</li>
-          <li>Register with a new GP and dentist near your new address if required</li>
-        </ul>
-        <h3 style="font-size:18px;color:var(--navy);margin-bottom:16px;font-family:var(--ff-display);margin-top:28px">2 to 4 weeks before your move</h3>
-        <ul style="font-size:15px;color:var(--muted);line-height:2;padding-left:20px">
-          <li>Begin packing non-essential items, books, ornaments, out-of-season clothes</li>
-          <li>Arrange a parking suspension if required for your street in Medway</li>
-          <li>Confirm key collection arrangements with your estate agent or solicitor</li>
-          <li>Arrange transfer of utility accounts at your current and new addresses</li>
-          <li>Set up mail redirection with Royal Mail</li>
-          <li>Arrange pet care or childcare for moving day if required</li>
-          <li>Confirm building insurance starts on completion day</li>
-        </ul>
-      </div>
-      <div>
-        <h3 style="font-size:18px;color:var(--navy);margin-bottom:16px;font-family:var(--ff-display)">Moving week</h3>
-        <ul style="font-size:15px;color:var(--muted);line-height:2;padding-left:20px">
-          <li>Defrost fridge and freezer and use up perishable food</li>
-          <li>Pack remaining items, keep out only daily essentials</li>
-          <li>Label every box with contents and destination room</li>
-          <li>Prepare your moving day essentials box or bag</li>
-          <li>Charge your phone and have key contacts ready, solicitor, estate agent, us</li>
-          <li>Confirm final details with our team, we will also call you the evening before</li>
-          <li>Pack important documents in a secure bag to travel with you personally</li>
-        </ul>
-        <h3 style="font-size:18px;color:var(--navy);margin-bottom:16px;font-family:var(--ff-display);margin-top:28px">Moving day</h3>
-        <ul style="font-size:15px;color:var(--muted);line-height:2;padding-left:20px">
-          <li>Our crew arrive at the agreed time, introduce yourself and show us around</li>
-          <li>Keep children and pets safely away from the loading area</li>
-          <li>Make sure all access at your destination is arranged, keys ready</li>
-          <li>Do a final check of all rooms, loft, shed and garage before leaving</li>
-          <li>Take meter readings at both properties and photograph them</li>
-          <li>Hand over keys to your property once it is fully empty</li>
-          <li>Confirm with our team that you are happy before we leave your new home</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="cream">
-  <div class="container">
-    <span class="label">Common questions</span>
-    <h2 class="section-title">Frequently asked questions about getting a quote and booking</h2>
-    <div class="faq-list">
-      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How quickly will I receive my quote after contacting you?<span class="faq-arrow">+</span></button><div class="faq-a">We aim to respond to all online quote requests within 60 minutes during business hours. Our business hours are Monday to Friday 7am to 7pm, Saturday 8am to 5pm and Sunday 9am to 2pm. For enquiries received outside business hours, we respond first thing the following morning. If your move date is imminent or your enquiry is urgent, calling us directly on 01634 971005 will get you the fastest response. We are usually able to provide an indicative quote on the phone immediately and follow up with a detailed written quote shortly afterwards.</div></div>
-      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Is the quote you provide fixed or just an estimate?<span class="faq-arrow">+</span></button><div class="faq-a">Our quotes are fixed prices, not estimates. This means the price stated in your quote is the price you pay on moving day, with no additions for stairs, parking waits, heavy items, extra time or anything else beyond what is discussed and agreed at the quoting stage. The only exception to this is if you request additional services on moving day that were not included in the original quote, in which case we would discuss and agree any additional cost with you before proceeding. We believe fixed-price quoting is the only fair approach and it is something our customers specifically praise in their reviews.</div></div>
-      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Do I need to be at home for the removal team to visit for a survey?<span class="faq-arrow">+</span></button><div class="faq-a">For most moves, we are able to provide a detailed, accurate fixed-price quote based on the information you provide in your online form or over the phone, without needing to visit your property beforehand. For larger or more complex moves, such as large 5-bedroom properties, moves involving a significant number of specialist items, or commercial relocations, we may suggest carrying out a brief pre-move site visit to ensure our quote is fully accurate. If a site visit is beneficial, we will suggest it and arrange a convenient time with you. Site visits are always free of charge.</div></div>
-      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How does the deposit work and when do I pay the balance?<span class="faq-arrow">+</span></button><div class="faq-a">When you confirm your booking, we require a deposit to secure your moving date. The deposit amount is clearly stated in your quote. The remaining balance is payable on the day of your move, either just before we begin loading or immediately after the move is complete, depending on the specific arrangement agreed. We accept payment by BACS bank transfer, cash, cryptocurrency and all major credit and debit cards. Cancellation is free and your deposit is refunded in full. All payment terms are set out clearly in your booking confirmation.</div></div>
-      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What if my completion date changes after I have booked?<span class="faq-arrow">+</span></button><div class="faq-a">Property transactions in Medway and Kent frequently involve date changes. If your completion date changes, contact us as soon as you know. We will do everything we can to accommodate the new date. If we have availability on the new date, we will simply move the booking at no additional charge. If the new date is not available, we will work closely with you to find the nearest suitable alternative. We understand that date changes are rarely within your control, and we always try to be as flexible and supportive as possible in these situations.</div></div>
-      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Can I get a quote if I do not yet have a confirmed moving date?<span class="faq-arrow">+</span></button><div class="faq-a">Yes, absolutely. We regularly provide quotes to customers who are still in the early stages of a property transaction and do not yet have a confirmed completion date. We can quote based on an approximate timeframe and provisionally pencil in likely dates, then firm up the exact date when your solicitor confirms completion. This means you have your quote ready and an idea of availability, so there is no scramble to find a removal company at short notice once completion is confirmed.</div></div>
-    </div>
-  </div>
-</section>
 <!-- wa-float: WhatsApp button --><a id="wa-float" href="https://wa.me/447359917380?text=Hi%20Medway%20%26%20Kent%20Removals%2C%20I%27d%20like%20a%20removals%20quote." target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp" style="position:fixed;right:20px;bottom:20px;z-index:9999;display:flex;align-items:center;gap:9px;background:#25D366;color:#fff;text-decoration:none;padding:12px 18px 12px 14px;border-radius:50px;box-shadow:0 6px 20px rgba(0,0,0,.25);font-family:'DM Sans',-apple-system,Arial,sans-serif;font-weight:700;font-size:15px;line-height:1"><svg width="26" height="26" viewBox="0 0 32 32" fill="#fff" aria-hidden="true"><path d="M16 .5C7.4.5.5 7.4.5 16c0 2.8.7 5.4 2 7.8L.4 31.6l8-2.1c2.3 1.3 4.9 1.9 7.6 1.9 8.6 0 15.5-6.9 15.5-15.5S24.6.5 16 .5zm0 28.3c-2.4 0-4.7-.6-6.7-1.8l-.5-.3-4.8 1.3 1.3-4.6-.3-.5c-1.3-2.1-2-4.5-2-7C3 8.9 8.9 3 16 3s13 5.9 13 13-5.9 12.8-13 12.8zm7.1-9.6c-.4-.2-2.3-1.1-2.6-1.3-.4-.1-.6-.2-.9.2-.3.4-1 1.3-1.2 1.5-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3.1-1.9-1.1-1-1.9-2.3-2.1-2.7-.2-.4 0-.6.2-.8.2-.2.4-.4.6-.7.2-.2.3-.4.4-.7.1-.3 0-.5 0-.7-.1-.2-.9-2.1-1.2-2.9-.3-.8-.6-.7-.9-.7h-.8c-.3 0-.7.1-1 .5-.4.4-1.3 1.3-1.3 3.1s1.4 3.6 1.5 3.9c.2.3 2.7 4.1 6.5 5.8.9.4 1.6.6 2.2.8.9.3 1.7.2 2.4.1.7-.1 2.3-.9 2.6-1.8.3-.9.3-1.6.2-1.8-.1-.2-.3-.3-.7-.5z"/></svg><span>WhatsApp us</span></a><script src="/sticky-bar.js?v=2" defer></script><script>
 (function(){
   var label = { 1:'Step 1 of 3 \u2014 Your move', 2:'Step 2 of 3 \u2014 The details', 3:'Step 3 of 3 \u2014 About you' };
