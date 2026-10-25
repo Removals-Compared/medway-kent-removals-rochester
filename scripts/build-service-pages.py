@@ -29,8 +29,8 @@ FONTS_GTAG = '''<link rel="preload" href="https://fonts.googleapis.com/css2?fami
   gtag('js', new Date());
   gtag('config', 'G-2FXN3VMLGT');
 </script>
-<link rel="preload" href="/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="/style.css"></noscript>'''
+<link rel="preload" href="/style.css?v=2" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="/style.css?v=2"></noscript>'''
 
 STATS = '''<div class="stats-bar">
   <div class="stats-inner">

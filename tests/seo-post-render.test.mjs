@@ -29,7 +29,7 @@ test('a rendered page is a complete, valid page for the right address', () => {
   assert.equal(/\{\{[A-Z0-9_]+\}\}/.test(html), false, 'no template placeholders left');
   assert.match(html, /Published 21 Oct 2026 &nbsp;\|&nbsp; 3 min read/);
   assert.match(html, /&copy; 2026 /);
-  assert.ok(html.includes('<link rel="stylesheet" href="/style.css">'), 'uses the site stylesheet');
+  assert.ok(html.includes('<link rel="stylesheet" href="/style.css?v=2">'), 'uses the site stylesheet');
   assert.ok(html.includes('GTM-WQHT5D2L') && html.includes('/sticky-bar.js'), 'keeps the site tracking and call bar like every other post');
 });
 
