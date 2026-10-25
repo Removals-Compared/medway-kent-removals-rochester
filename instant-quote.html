@@ -279,6 +279,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <span class="lbl">Your fixed price</span>
       <div class="price" id="price">£1,650</div>
       <div class="price-sub">All inclusive. No VAT. Held for 14 days.</div>
+      <div id="klarnaMsg" hidden style="margin:0 0 16px"></div>
       <ul class="incl">
         <li>Luton van and professional crew</li>
         <li>Loading, transport and unloading</li>
@@ -324,6 +325,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   function gbp(n){return '£'+n.toLocaleString('en-GB',{minimumFractionDigits:n%1?2:0,maximumFractionDigits:2})}
   var $=function(id){return document.getElementById(id)};
 
+
+  // Stripe's Klarna message: shows the real instalment amount in Klarna-approved
+  // wording, and only when Klarna is available for the amount. It loads only if
+  // the server has a publishable key (STRIPE_PUBLISHABLE_KEY); without one the
+  // page simply shows nothing extra.
+  var msgEl=null, msgState='idle', msgPence=0;
+  function showKlarnaMessage(pence){
+    msgPence=pence; var box=$('klarnaMsg'); if(!box) return;
+    box.hidden=!pence;
+    if(!pence) return;
+    if(msgEl){ msgEl.update({amount:pence}); return }
+    if(msgState!=='idle') return;
+    msgState='loading';
+    fetch('/api/pay').then(function(r){return r.json()}).then(function(j){
+      if(!j||!j.pk){msgState='off';return}
+      var sc=document.createElement('script'); sc.src='https://js.stripe.com/v3/';
+      sc.onload=function(){ try{
+        var st=Stripe(j.pk);
+        msgEl=st.elements().create('paymentMethodMessaging',{amount:msgPence||5000,currency:'GBP',countryCode:'GB',paymentMethodTypes:['klarna']});
+        msgEl.mount('#klarnaMsg'); msgState='ready';
+      }catch(e){msgState='off'} };
+      sc.onerror=function(){msgState='off'};
+      document.head.appendChild(sc);
+    }).catch(function(){msgState='off'});
+  }
+
   function calc(){
     $('vanhint').textContent=hints[state.vans];
     var ready=state.hrs!==null, long=ready&&state.hrs>=5, addrOk=$('addrFrom').value.trim()&&$('addrTo').value.trim()&&$('cName').value.trim()&&/.+@.+\..+/.test($('cEmail').value)&&$('cPhone').value.trim().length>=10&&$('cTerms').checked&&$('moveDate').value;
@@ -335,6 +362,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     $('longnote').hidden=!long;
     $('dep').textContent=gbp(dep); $('k1').textContent=gbp(p);
     var KMAX=2000, kopt=document.querySelector('.pay-opt.klarna'), over=p>KMAX;
+    showKlarnaMessage(ready&&!long&&!over?Math.round(p*100):0);
     kopt.hidden=over; $('klarnaMax').hidden=!over;
     if(over){document.querySelector('input[name=pay][value=dep]').checked=true}
     var k=document.querySelector('input[name=pay]:checked').value==='k', go=$('go');

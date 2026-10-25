@@ -262,6 +262,11 @@ async function handleWebhook(req, res, raw) {
 }
 
 export default async function handler(req, res) {
+  // The page asks for the PUBLIC (publishable) key so Stripe's Klarna message can show.
+  if (req.method === 'GET') {
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    return res.status(200).json({ pk: process.env.STRIPE_PUBLISHABLE_KEY || null });
+  }
   if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return res.status(405).json({ error: 'Method not allowed' }); }
   const raw = await rawBody(req);
   return req.headers['stripe-signature'] ? handleWebhook(req, res, raw) : createCheckout(req, res, raw);
