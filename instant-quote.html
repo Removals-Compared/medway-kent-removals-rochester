@@ -243,7 +243,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <button type="button" class="chip" data-v="0" aria-pressed="false">Studio</button>
           <button type="button" class="chip" data-v="1" aria-pressed="false">1 bed</button>
           <button type="button" class="chip" data-v="2" aria-pressed="false">2 bed</button>
-          <button type="button" class="chip" data-v="3" aria-pressed="true">3 bed</button>
+          <button type="button" class="chip" data-v="3" aria-pressed="false">3 bed</button>
           <button type="button" class="chip" data-v="4" aria-pressed="false">4 bed</button>
           <button type="button" class="chip" data-v="5" aria-pressed="false">5 bed</button>
         </div>
@@ -252,13 +252,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="step">
         <span class="lbl">2 · How many vans?</span>
         <div class="chips" id="vans">
-          <button type="button" class="chip" data-v="1" aria-pressed="true">1 van · 2 to 3 movers</button>
+          <button type="button" class="chip" data-v="1" aria-pressed="false">1 van · 2 to 3 movers</button>
           <button type="button" class="chip" data-v="2" aria-pressed="false">2 vans · 4 to 5 movers</button>
           <button type="button" class="chip" data-v="3" aria-pressed="false">3 vans · 5 to 6 movers</button>
           <button type="button" class="chip" data-v="4" aria-pressed="false">4 vans · 6 to 7 movers</button>
         </div>
         <p class="note">All vehicles are maxi loader Luton vans or Luton vans with a tail lift.</p>
-        <p class="note" id="vanhint">Right for most 1–3 bed homes.</p>
+        <p class="note" id="vanhint">Not sure? Most 1 to 3 bed homes need one van.</p>
       </div>
 
       <div class="step">
@@ -266,7 +266,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="addr-block">
           <span class="sublbl">Moving from</span>
           <div class="addr-row">
-            <input class="addr-pc" id="pcFrom" data-target="addrFrom" placeholder="Postcode" value="ME2 2ZE" autocomplete="postal-code" aria-label="Moving from postcode">
+            <input class="addr-pc" id="pcFrom" data-target="addrFrom" placeholder="Postcode" autocomplete="postal-code" aria-label="Moving from postcode">
             <button type="button" class="addr-find" data-target="addrFrom">Find address</button>
           </div>
           <select class="addr-select" data-target="addrFrom" hidden aria-label="Choose moving from"></select>
@@ -307,8 +307,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <aside class="iq-result" aria-live="polite">
       <div id="main">
       <span class="lbl">Your fixed price</span>
-      <div class="price" id="price">£1,650</div>
-      <div class="price-sub">All inclusive. No VAT. Held for 14 days.</div>
+      <div class="price" id="price">Choose your move</div>
+      <div class="price-sub" id="priceSub">Pick your move size and vans to start your price.</div>
       <div id="klarnaMsg" hidden style="margin:0 0 16px"></div>
       <ul class="incl">
         <li>Luton van and professional crew</li>
@@ -339,9 +339,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
       <p class="hint" id="klarnaMax" hidden>Klarna is available for moves up to £2,000, so it isn't offered at your price. You can pay the 10% deposit or pay in full by card.</p>
       <p class="hint" id="longnote" hidden>Moves of 5 hours or more are long distance, so we confirm a fixed price with you first. The figure above is the minimum.</p>
-      <button type="button" class="go" id="go">Pay £70 deposit and book</button>
+      <button type="button" class="go" id="go" disabled>Add your move details to book</button>
       <p class="fine" id="goNote" hidden>You will be taken to our secure payment page. Fill in every step to enable the button.</p>
-      <p class="fine">Free cancellation. If you pay with Klarna, any refund goes back through Klarna and unpaid instalments are cancelled. Klarna is 18+, subject to status and approval, and late fees may apply: see Klarna's terms. Preview figures only.</p>
+      <p class="fine">Free cancellation: everything you pay is refunded the way you paid. Klarna is for customers aged 18 or over, subject to Klarna's approval and terms.</p>
       </div>
     </aside>
   </div>
@@ -357,7 +357,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   var BASE={0:500,1:750,2:1200,3:1650,4:2000,5:2550}, PER_HR=150, FREE_MIN=30;
   // ASSUMPTION: each extra van adds £750 (owner gave the 2nd van only)
   var vanAdd={1:0,2:750,3:1500,4:2250};
-  var state={size:'3',vans:'1',hrs:null,mins:null};
+  var state={size:null,vans:null,hrs:null,mins:null};
   var hints={1:'Right for most 1–3 bed homes.',2:'Two vans, four to five movers, one trip. Adds £750.',3:'Three vans, five to six movers. Adds £1,500.',4:'Four vans, six to seven movers. Adds £2,250.'};
   function gbp(n){return '£'+n.toLocaleString('en-GB',{minimumFractionDigits:n%1?2:0,maximumFractionDigits:2})}
   var $=function(id){return document.getElementById(id)};
@@ -389,12 +389,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   }
 
   function calc(){
-    $('vanhint').textContent=hints[state.vans];
-    var ready=state.hrs!==null, long=ready&&state.hrs>=5, addrOk=$('addrFrom').value.trim()&&$('addrTo').value.trim()&&$('cName').value.trim()&&/.+@.+\..+/.test($('cEmail').value)&&$('cPhone').value.trim().length>=10&&$('cTerms').checked&&$('moveDate').value;
-    var p=BASE[state.size]+PER_HR*(state.hrs||0)+vanAdd[state.vans];
+    if(state.vans) $('vanhint').textContent=hints[state.vans];
+    var sv=state.size!==null&&state.vans!==null;
+    var ready=sv&&state.hrs!==null, long=ready&&state.hrs>=5, addrOk=$('addrFrom').value.trim()&&$('addrTo').value.trim()&&$('cName').value.trim()&&/.+@.+\..+/.test($('cEmail').value)&&$('cPhone').value.trim().length>=10&&$('cTerms').checked&&$('moveDate').value;
+    var p=sv?BASE[state.size]+PER_HR*(state.hrs||0)+vanAdd[state.vans]:0;
     var dep=Math.round(p*0.1), third=Math.floor(p/3*100)/100, last=Math.round((p-third*2)*100)/100;
-    $('price').textContent=!ready?'Add postcodes':(long?'From ':'')+gbp(p);
-    $('price').style.fontSize=ready?'':'28px';
+    // the price builds up live: nothing, then 'from' price, then the fixed price
+    if(!sv){$('price').textContent='Choose your move';$('priceSub').textContent='Pick your move size and vans to start your price.'}
+    else if(!ready){$('price').textContent='From '+gbp(p);$('priceSub').textContent=(state.hrs===null&&/^Working/.test($('journeyText').textContent)?'Working out your journey…':'Add both postcodes and we add your journey to give your fixed price.')}
+    else{$('price').textContent=(long?'From ':'')+gbp(p);$('priceSub').textContent=long?'Long distance, so we confirm the final price with you.':'Your fixed price. All inclusive, no VAT, held for 14 days.'}
+    $('price').style.fontSize=sv?'':'28px';
     $('payopts').hidden=long||!ready;
     $('longnote').hidden=!long;
     $('dep').textContent=gbp(dep); $('k1').textContent=gbp(p);
@@ -405,6 +409,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     $('fullAmt').textContent=gbp(p);
     var pv=document.querySelector('input[name=pay]:checked').value, k=pv==='k', go=$('go');
     go.disabled=!ready||(!long&&!addrOk); go.style.opacity=go.disabled?'.5':'';
+    if(!ready){go.textContent=!sv?'Choose your move size and vans':'Add both postcodes to see your price';go.className='go';$('goNote').hidden=true;return}
     if(long){go.textContent='Get a fixed quote for this move';go.className='go';return}
     go.textContent=k?'Continue to pay with Klarna':(pv==='full'?'Pay '+gbp(p)+' in full and book':'Pay '+gbp(dep)+' deposit and book');
     $('goNote').hidden=false;
