@@ -139,6 +139,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 .incl li{padding:3px 0 3px 22px;position:relative}
 .incl li:before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:700}
 
+.pay-opt[hidden]{display:none}
 .pay-opt{border:2px solid var(--border2);border-radius:14px;background:#fff;padding:14px 16px;margin-bottom:10px;cursor:pointer;display:block;transition:var(--trans)}
 .pay-opt input{position:absolute;opacity:0}
 .pay-opt:has(input:checked){border-color:var(--navy);box-shadow:0 0 0 3px rgba(22,41,74,.1)}
@@ -336,7 +337,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </label>
 
       </div>
-      <p class="hint" id="klarnaMax" hidden>Klarna is available for moves up to £2,000. Your price is above that, so the deposit option applies.</p>
+      <p class="hint" id="klarnaMax" hidden>Klarna is available for moves up to £2,000, so it isn't offered at your price. You can pay the 10% deposit or pay in full by card.</p>
       <p class="hint" id="longnote" hidden>Moves of 5 hours or more are long distance, so we confirm a fixed price with you first. The figure above is the minimum.</p>
       <button type="button" class="go" id="go">Pay £70 deposit and book</button>
       <p class="fine" id="goNote" hidden>You will be taken to our secure payment page. Fill in every step to enable the button.</p>
@@ -400,7 +401,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var KMAX=2000, kopt=document.querySelector('.pay-opt.klarna'), over=p>KMAX;
     showKlarnaMessage(ready&&!long&&!over?Math.round(p*100):0);
     kopt.hidden=over; $('klarnaMax').hidden=!over;
-    if(over){document.querySelector('input[name=pay][value=dep]').checked=true}
+    if(over&&document.querySelector('input[name=pay]:checked').value==='k'){document.querySelector('input[name=pay][value=dep]').checked=true}
     $('fullAmt').textContent=gbp(p);
     var pv=document.querySelector('input[name=pay]:checked').value, k=pv==='k', go=$('go');
     go.disabled=!ready||(!long&&!addrOk); go.style.opacity=go.disabled?'.5':'';
