@@ -178,7 +178,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div class="container ct-hero-in">
     <nav aria-label="Breadcrumb" class="ct-crumb"><ol><li><a href="/">Home</a></li><li aria-hidden="true">&#8250;</li><li>Free quote</li></ol></nav>
     <span class="ct-eyebrow">Free quote &middot; No obligation</span>
-    <h1>Get your free removal quote from our <em>Rochester team</em></h1>
+    <h1 id="ct-h1">Get your free removal quote anywhere in <em>Kent</em></h1>
     <p class="ct-lead">Tell us about your move in the short form below. We come back with a clear, fixed-price quote, usually within 60 minutes during business hours. No obligation and no pressure.</p>
     <ul class="ct-trust" role="list">
       <li><span class="ct-tick" aria-hidden="true">&#10003;</span><span><strong>Fully insured</strong><small>Goods in transit &amp; public liability</small></span></li>
@@ -189,6 +189,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </section>
 
+<script>
+/* If the visitor came from one of our town pages (or the link says ?area=town), say that town in the heading.
+   Everyone else sees the Kent-wide heading above. */
+(function () {
+  var KNOWN = ['ashford','canterbury','chatham','cliffe','dartford','deal','dover','faversham','folkestone','gillingham','gravesend','hempstead','herne-bay','hoo','lordswood','maidstone','margate','new-romney','ramsgate','rochester','sevenoaks','sittingbourne','strood','tonbridge','tunbridge-wells','walderslade','whitstable'];
+  var area = '';
+  try { area = (new URLSearchParams(location.search).get('area') || '').toLowerCase(); } catch (e) {}
+  if (!area) {
+    var m = (document.referrer || '').match(/^https?:\/\/[^\/]*medwaykentremovals\.co\.uk\/removals-([a-z-]+)(?:[\/?#]|$)/i);
+    if (m) area = m[1].toLowerCase();
+  }
+  if (KNOWN.indexOf(area) === -1) return;
+  var town = area.split('-').map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
+  var h = document.getElementById('ct-h1');
+  if (h) h.innerHTML = 'Get your free removal quote in <em>' + town + '</em>';
+})();
+</script>
 <section class="contact-stage">
   <div class="container">
     <div class="contact-grid">
