@@ -913,6 +913,26 @@ li:hover .dropdown{display:block}
 
 /* ============== STATS BAR ============== */
 .stats-bar{background:var(--cream);padding:36px 0;border-bottom:1px solid var(--border)}
+/* two-choice block: free quote or instant quote & pay */
+.iq-choice{background:var(--paper);padding:34px 0 30px;border-bottom:1px solid var(--border)}
+.iq-choice-inner{max-width:1280px;margin:0 auto;padding:0 24px}
+.iq-choice-title{font-size:12px;font-weight:700;letter-spacing:2.2px;text-transform:uppercase;color:var(--lighter);text-align:center;margin:0 0 16px}
+.iq-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:900px;margin:0 auto}
+.iq-card{display:flex;flex-direction:column;gap:6px;padding:22px 24px;border-radius:16px;text-decoration:none;border:2px solid var(--border2);background:#fff;color:var(--navy);transition:transform .15s,box-shadow .15s,border-color .15s}
+.iq-card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(22,41,74,.14)}
+.iq-card strong{font-family:var(--ff-display);font-size:22px;line-height:1.2}
+.iq-card small{font-size:14px;line-height:1.5;color:var(--muted)}
+.iq-tag{align-self:flex-start;font-size:10.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:3px 10px;border-radius:99px;background:var(--cream);color:var(--navy)}
+.iq-go{margin-top:8px;font-weight:700;font-size:14.5px}
+.iq-card-free:hover{border-color:var(--navy)}
+.iq-card-free .iq-go{color:var(--accent)}
+.iq-card-instant{background:#ffb3c7;border-color:#ff8fb0;color:#17120f}
+.iq-card-instant small{color:#4a2c36}
+.iq-card-instant .iq-tag{background:#17120f;color:#fff}
+.iq-card-instant:hover{border-color:#17120f;box-shadow:0 10px 28px rgba(255,143,176,.5)}
+.iq-k{align-self:flex-start;display:inline-flex;align-items:center;gap:7px;margin-top:2px;background:#fff;border-radius:99px;padding:4px 11px;font-size:13px;font-weight:700}
+.iq-k b{background:#17120f;color:#ffb3c7;font-size:11px;font-weight:800;padding:2px 7px;border-radius:5px;letter-spacing:.3px}
+@media(max-width:720px){.iq-choice{padding:26px 0 22px}.iq-choice-grid{grid-template-columns:1fr;gap:14px}.iq-card{padding:18px 20px}.iq-card strong{font-size:20px}}
 .stats-bar-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(4, 1fr);gap:24px;text-align:center}
 .stats-bar-item .num{font-family:var(--ff-display);font-size:34px;font-weight:800;color:var(--navy);line-height:1.1;letter-spacing:-0.02em}
 .stats-bar-item .label{font-size:13px;color:var(--muted);margin-top:4px;font-weight:500}
@@ -1447,6 +1467,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <p style="margin:0;color:#666;font-size:14px">We respond within 60 minutes during business hours. If urgent, call <a href="tel:01634971005" style="color:var(--accent);font-weight:600">01634 971005</a>.</p>
       </div>
     </aside>
+  </div>
+</section>
+
+<section class="iq-choice" aria-label="Choose how to get your price">
+  <div class="iq-choice-inner">
+    <p class="iq-choice-title">Choose how to get your price</p>
+    <div class="iq-choice-grid">
+      <a class="iq-card iq-card-free" href="/contact">
+        <span class="iq-tag">Free &middot; No obligation</span>
+        <strong>Get a free quote</strong>
+        <small>Tell us about your move and we reply within 60 minutes.</small>
+        <span class="iq-go">Request my quote &rarr;</span>
+      </a>
+      <a class="iq-card iq-card-instant" href="/instant-quote?src=home-choice">
+        <span class="iq-tag">Instant &middot; Book online</span>
+        <strong>Instant quote &amp; pay</strong>
+        <small>Get a fixed price in 60 seconds and secure your date today.</small>
+        <span class="iq-k"><b>Klarna</b> You can pay with Klarna</span>
+        <span class="iq-go">Get my instant price &rarr;</span>
+      </a>
+    </div>
   </div>
 </section>
 
