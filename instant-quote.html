@@ -436,7 +436,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       var mins=Math.round(j.routes[0].duration/60), mi=Math.round(j.routes[0].distance/1609.34);
       state.mins=mins; state.hrs=mins<=FREE_MIN?0:Math.ceil(mins/60);
       var h=Math.floor(mins/60), m=mins%60, txt=(h?h+' hr ':'')+m+' min';
-      show('ok','About '+mi+' miles, '+txt+' drive. '+(state.hrs===0?'Local move, no journey charge.':state.hrs>=5?'Long distance: we confirm a fixed price with you.':'Journey charge: '+gbp(PER_HR*state.hrs)+'.'));
+      show('ok','About '+mi+' miles, '+txt+' drive.'+(state.hrs>=5?' Long distance: we confirm a fixed price with you.':''));
       calc();
     }).catch(function(){ if(me!==seq)return; show('bad','We could not find one of those postcodes. Please check and try again.'); calc(); });
   }
