@@ -7,7 +7,7 @@
   if (window.__mkrKlarnaCta) return;
   window.__mkrKlarnaCta = true;
   var path = location.pathname.replace(/\/+$/, '') || '/';
-  if (/^\/(instant-quote|instant-quote-preview|booking-confirmed|thank-you|admin)/.test(path)) return;
+  if (/^\/(instant-quote|booking-confirmed|thank-you|admin)/.test(path)) return;
   var KEY = 'mkr_klarna_cta_closed';
   try { if (localStorage.getItem(KEY)) return; } catch (e) {}
 
