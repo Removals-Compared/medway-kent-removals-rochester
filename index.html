@@ -842,6 +842,12 @@ li:hover .dropdown{display:block}
   border-color:var(--accent);
   background:var(--cream);
 }
+@media (max-width:640px){
+  .hero-v2-ctas{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .hero-v2-ctas .hero-v2-btn-primary,.hero-v2-ctas .hero-v2-btn-primary.hero-v2-btn-klarna{margin:0;padding:14px 10px;font-size:14px;line-height:1.3;text-align:center;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 6px;min-height:64px}
+  .hero-v2-ctas .btn-klarna-k{margin-left:0}
+  .hero-v2-ctas .hero-v2-btn-phone{grid-column:1 / -1;justify-content:center}
+}
 .hero-v2-trust{
   list-style:none;padding:0;margin:0;
   display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:16px 24px;
