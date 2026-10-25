@@ -206,7 +206,7 @@ function buildHtmlPage(post, articleContent) {
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.medwaykentremovals.co.uk/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https://www.medwaykentremovals.co.uk/blog"},{"@type":"ListItem","position":3,"name":"${post.title}","item":"https://www.medwaykentremovals.co.uk/blog/posts/${post.slug}"}]}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,600&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/style.css?v=2">
 <style>
 .post-hero{background:linear-gradient(180deg,var(--cream),var(--paper));border-bottom:1px solid var(--border);padding:56px 0 48px}
 .post-hero h1{font-size:clamp(26px,3.5vw,42px);color:var(--navy);letter-spacing:0;max-width:780px;line-height:1.25;margin-bottom:14px}
