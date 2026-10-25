@@ -18,6 +18,7 @@ import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { createQuote, updateQuote, getQuote, appendNote, logActivity } from './admin/_db.mjs';
 import { LOGO_PNG_B64 } from './_brand.mjs';
+import { confirmationEmail } from './_email-confirmation.mjs';
 import { PRICES, isPostcode, tidyPostcode, journeyMinutes, hoursCharged, priceFor } from './_pricing.mjs';
 
 // Stripe needs the exact raw bytes to check its signature.
@@ -78,28 +79,6 @@ async function sendEmail({ to, subject, html, replyTo }) {
     from: `Medway & Kent Removals <${process.env.GMAIL_USER}>`, to, replyTo, subject, html,
     attachments: [{ filename: 'mkr-logo.png', content: Buffer.from(LOGO_PNG_B64, 'base64'), cid: 'mkrlogo' }],
   });
-}
-
-// Branded email shell: orange header with logo and company name, then the details.
-export function brandedEmail({ heading, intro, rows }) {
-  const tr = rows.map(([k, v]) => `<tr><td style="padding:10px 0;border-bottom:1px solid #eee;color:#666;width:38%">${esc(k)}</td><td style="padding:10px 0;border-bottom:1px solid #eee;font-weight:600;color:#111">${esc(v)}</td></tr>`).join('');
-  return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;background:#ffffff">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#e04e1b;border-radius:10px 10px 0 0"><tr>
-    <td style="padding:20px 0 20px 28px;width:116px"><img src="cid:mkrlogo" width="116" height="56" alt="Medway &amp; Kent Removals" style="display:block;border-radius:10px;border:0"></td>
-    <td style="padding:20px 28px 20px 16px"><div style="color:#ffffff;font-size:22px;font-weight:700;line-height:1.2">Medway &amp; Kent Removals</div><div style="color:#ffe3d6;font-size:13px;margin-top:4px">Professional removals across Kent</div></td>
-  </tr></table>
-  <div style="padding:26px 28px 24px;border:1px solid #e6e1d8;border-top:none;border-radius:0 0 10px 10px">
-    <h1 style="color:#16294a;font-size:22px;margin:0 0 10px">${esc(heading)}</h1>
-    <p style="margin:0 0 16px;color:#333;font-size:15px;line-height:1.6">${intro}</p>
-    <table style="width:100%;border-collapse:collapse;font-size:15px">${tr}</table>
-    <p style="margin:20px 0 0;color:#666;font-size:13px;line-height:1.6">Free cancellation: reply to this email or call 01634 971005 and everything you paid is refunded.</p>
-    <div style="text-align:center;margin:20px 0 4px">
-      <a href="tel:01634971005" style="background:#e04e1b;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">Call 01634 971005</a>
-      <a href="https://wa.me/447359917380" style="background:#1EBE57;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">WhatsApp us</a>
-    </div>
-    <p style="margin:18px 0 0;font-size:12px;color:#999;text-align:center">Medway &amp; Kent Removals · Knight Templar Way, Rochester ME2 2ZE</p>
-  </div>
-</div>`;
 }
 
 // ════════════════════════════════════════════════════════════
@@ -254,17 +233,26 @@ async function handleWebhook(req, res, raw) {
     try { await appendNote(leadId, `Online payment received: ${what}. Stripe session ${s.id}`); } catch {}
     await logActivity({ actor: q.name || 'Customer', action: 'paid online', lead_id: leadId, lead_name: q.name, detail: what });
 
-    const summaryRows = [
-      ['Move date', q.move_date], ['From', q.address || q.from_postcode], ['To', q.to_address || q.to_postcode],
-      ['Size', q.property_size], ['Move price', gbp(total)],
-      [option === 'klarna' ? 'Paid today (Klarna)' : 'Deposit paid', gbp(paid)],
-      option === 'klarna' ? ['Balance due', '£0, nothing to pay on the day'] : ['Balance due on the day', gbp(total - paid)],
-    ];
-    if (/Packing: customer/.test(q.notes || '')) summaryRows.push(['Packing', 'We will call you to discuss it after your survey']);
-    const wrap = (heading, intro) => brandedEmail({ heading, intro, rows: summaryRows });
+    const fmtDate = (iso) => {
+      const d = new Date(`${iso}T12:00:00Z`);
+      return Number.isNaN(d.getTime()) ? String(iso || '') : d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/London' });
+    };
+    const vansMatch = /(\d)\s*van/.exec(q.notes || '');
+    const data = {
+      name: q.name, firstName: (q.name || '').split(' ')[0], phone: q.phone, email: q.email,
+      ref: `MKR-${String(leadId).padStart(5, '0')}`,
+      issued: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/London' }),
+      moveDate: fmtDate(q.move_date), size: q.property_size, vans: vansMatch ? Number(vansMatch[1]) : 0,
+      from: q.address || q.from_postcode, to: q.to_address || q.to_postcode,
+      price: gbp(total), paid: gbp(paid),
+      paidLabel: option === 'klarna' ? 'Paid today with Klarna' : 'Deposit paid (10%)',
+      balance: option === 'klarna' ? '£0' : gbp(total - paid),
+      balanceNote: option === 'klarna' ? 'Paid in full, nothing to pay on the day' : 'Payable to the crew on moving day',
+      packing: /Packing: customer/.test(q.notes || ''),
+    };
     await Promise.allSettled([
-      sendEmail({ to: OFFICE, subject: `PAID online: ${q.name} (${gbp(paid)})`, html: wrap('New paid booking', `${esc(q.name)} paid online. Phone ${esc(q.phone)}.`), replyTo: q.email }),
-      q.email ? sendEmail({ to: q.email, subject: 'Your removal is booked: Medway & Kent Removals', html: wrap('You are booked in', `Thank you ${esc((q.name || '').split(' ')[0])}, your payment has gone through and your move is booked.`), replyTo: OFFICE }) : null,
+      sendEmail({ to: OFFICE, subject: `PAID online: ${q.name} (${gbp(paid)})`, html: confirmationEmail({ ...data, audience: 'office' }), replyTo: q.email }),
+      q.email ? sendEmail({ to: q.email, subject: 'Your removal is booked: Medway & Kent Removals', html: confirmationEmail({ ...data, audience: 'customer' }), replyTo: OFFICE }) : null,
     ].filter(Boolean));
   } catch (e) {
     console.error('webhook processing failed', e);
