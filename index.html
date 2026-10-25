@@ -877,6 +877,8 @@ li:hover .dropdown{display:block}
 }
 .hero-v2-formcard-sub{font-size:13px;color:#666;margin:0 0 18px}
 .hero-v2-field{display:block;margin-bottom:12px}
+.hero-v2-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hero-v2-grid2 .hero-v2-field{margin-bottom:12px;min-width:0}
 .hero-v2-field > span{
   display:block;font-size:12.5px;font-weight:600;color:#444;margin-bottom:4px;
 }
@@ -1454,11 +1456,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </select>
         </label>
 
+        <div class="hero-v2-grid2">
+          <label class="hero-v2-field">
+            <span>Moving from</span>
+            <input name="from_postcode" type="text" placeholder="ME1 1AA" required autocomplete="postal-code" style="text-transform:uppercase">
+          </label>
+          <label class="hero-v2-field">
+            <span>Moving to</span>
+            <input name="to_postcode" type="text" placeholder="ME4 5BB" required autocomplete="postal-code" style="text-transform:uppercase">
+          </label>
+        </div>
+        <label class="hero-v2-field">
+          <span>Property</span>
+          <select name="property_size" required>
+            <option value="" disabled selected>Select...</option>
+            <option value="1-bed flat">1 bedroom flat</option>
+            <option value="2-bed flat">2 bedroom flat</option>
+            <option value="3-bed flat">3 bedroom flat</option>
+            <option value="1-bed house">1 bedroom house</option>
+            <option value="2-bed house">2 bedroom house</option>
+            <option value="3-bed house">3 bedroom house</option>
+            <option value="4+ bed house">4+ bedroom house</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+
         <input type="hidden" name="fname" value="">
         <input type="hidden" name="lname" value="">
-        <input type="hidden" name="from_postcode" value="">
-        <input type="hidden" name="to_postcode" value="">
-        <input type="hidden" name="property_size" value="">
         <input type="hidden" name="move_date" value="">
         <input type="hidden" name="access" value="">
         <input type="hidden" name="notes" value="Submitted from homepage hero (short form)">
@@ -1968,6 +1992,12 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!phone || phone.replace(/\s/g,'').length < 10) { errEl.textContent = 'Please enter a valid phone number.'; return; }
     if (!email || !email.includes('@')) { errEl.textContent = 'Please enter a valid email address.'; return; }
     if (!service) { errEl.textContent = 'Please select the type of move.'; return; }
+    var fromP = (form.querySelector('[name="from_postcode"]').value || '').trim();
+    var toP   = (form.querySelector('[name="to_postcode"]').value || '').trim();
+    var prop  = (form.querySelector('[name="property_size"]').value || '').trim();
+    if (!fromP) { errEl.textContent = 'Please enter the postcode you are moving from.'; return; }
+    if (!toP)   { errEl.textContent = 'Please enter the postcode you are moving to.'; return; }
+    if (!prop)  { errEl.textContent = 'Please select your property type.'; return; }
 
     var parts = fullname.split(/\s+/);
     fnameHidden.value = parts[0] || '';
