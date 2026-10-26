@@ -22,10 +22,12 @@ function transport() {
 // Generic Gmail sender used by every endpoint that previously posted to
 // Resend. Attachments: [{ filename, content }] where content is base64.
 // A bcc equal to the sending account is dropped (Gmail keeps a sent copy).
-export async function sendMail({ to, cc, bcc, replyTo, subject, text, html, attachments }) {
+export async function sendMail({ to, cc, bcc, replyTo, subject, text, html, attachments, fromAddr }) {
   const user = process.env.GMAIL_USER;
+  // fromAddr must be an alias configured on the Gmail account ("Send mail
+  // as"), or Google rewrites the From back to the signed-in address.
   const msg = {
-    from: `${BRAND} <${user}>`,
+    from: `${BRAND} <${fromAddr || user}>`,
     to, subject, text, html,
     replyTo: replyTo || 'info@medwaykentremovals.co.uk',
   };

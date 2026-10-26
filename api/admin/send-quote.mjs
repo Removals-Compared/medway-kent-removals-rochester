@@ -50,6 +50,7 @@ export default async function handler(req, res) {
       + '</div>';
 
     const payload = {
+      fromAddr: 'movers@medwaykentremovals.co.uk',
       to: [to],
       cc: ccList,
       bcc: ['info@medwaykentremovals.co.uk', ...bccList],
