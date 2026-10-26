@@ -19,6 +19,25 @@ function transport() {
   });
 }
 
+// Generic Gmail sender used by every endpoint that previously posted to
+// Resend. Attachments: [{ filename, content }] where content is base64.
+// A bcc equal to the sending account is dropped (Gmail keeps a sent copy).
+export async function sendMail({ to, cc, bcc, replyTo, subject, text, html, attachments }) {
+  const user = process.env.GMAIL_USER;
+  const msg = {
+    from: `${BRAND} <${user}>`,
+    to, subject, text, html,
+    replyTo: replyTo || 'info@medwaykentremovals.co.uk',
+  };
+  if (cc && cc.length) msg.cc = cc;
+  const bccSet = new Set((bcc || []).filter((a) => a && a.toLowerCase() !== String(user || '').toLowerCase()));
+  if (bccSet.size) msg.bcc = [...bccSet];
+  if (attachments && attachments.length) {
+    msg.attachments = attachments.map((a) => ({ filename: a.filename, content: a.content, encoding: 'base64' }));
+  }
+  return transport().sendMail(msg);
+}
+
 function fmtDate(iso) {
   return new Date(iso).toLocaleString('en-GB', {
     timeZone: 'Europe/London',

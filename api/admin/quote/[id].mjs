@@ -1,4 +1,5 @@
 import { requireAuth } from '../_session.mjs';
+import { sendMail } from '../_email.mjs';
 import crypto from 'crypto';
 import {
   getQuote, updateQuote, deleteQuote, fetchAppointmentsByLeadIds,
@@ -52,19 +53,12 @@ async function sendReviewRequest(quote) {
       <a href="https://wa.me/447359917380" style="background:#1EBE57;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128172; WhatsApp us</a>
     </div>
   </div>`;
-  const r = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-    body: JSON.stringify({
-      from: 'Medway & Kent Removals <quotes@medwaykentremovals.co.uk>',
-      to: [quote.email],
-      bcc: ['info@medwaykentremovals.co.uk'],
-      reply_to: 'info@medwaykentremovals.co.uk',
-      subject: 'Thank you from Medway and Kent Removals',
-      text, html,
-    }),
+  await sendMail({
+    to: [quote.email],
+    bcc: ['info@medwaykentremovals.co.uk'],
+    subject: 'Thank you from Medway and Kent Removals',
+    text, html,
   });
-  if (!r.ok) throw new Error(`resend ${r.status}: ${await r.text()}`);
 }
 
 
@@ -133,17 +127,10 @@ export default async function handler(req, res) {
           + '<a href="tel:01634971005" style="background:#E04E1B;color:#fff;text-decoration:none;font-weight:700;font-family:Arial,sans-serif;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128222; Call 01634 971005</a>'
           + '<a href="' + waHref + '" style="background:#1EBE57;color:#fff;text-decoration:none;font-weight:700;font-family:Arial,sans-serif;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128172; WhatsApp us</a>'
           + '</div>';
-        const r2 = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-          body: JSON.stringify({
-            from: 'Medway & Kent Removals <quotes@medwaykentremovals.co.uk>',
-            to: [q.email], bcc: ['info@medwaykentremovals.co.uk'],
-            reply_to: 'info@medwaykentremovals.co.uk',
-            subject, text, html,
-          }),
+        await sendMail({
+          to: [q.email], bcc: ['info@medwaykentremovals.co.uk'],
+          subject, text, html,
         });
-        if (!r2.ok) throw new Error(`resend ${r2.status}`);
       };
 
       // Templated follow-up letters. The admin previews and can edit the
@@ -275,18 +262,11 @@ export default async function handler(req, res) {
           + '<a href="https://wa.me/447359917380" style="background:#1EBE57;color:#fff;text-decoration:none;font-weight:700;font-family:Arial,sans-serif;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128172; WhatsApp us</a>'
           + '</div>';
         try {
-          const r2 = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-            body: JSON.stringify({
-              from: 'Medway & Kent Removals <quotes@medwaykentremovals.co.uk>',
-              to: [q.email], bcc: ['info@medwaykentremovals.co.uk'],
-              reply_to: 'info@medwaykentremovals.co.uk',
-              subject: 'Your removal quote from Medway and Kent Removals',
-              text, html: fuHtml,
-            }),
+          await sendMail({
+            to: [q.email], bcc: ['info@medwaykentremovals.co.uk'],
+            subject: 'Your removal quote from Medway and Kent Removals',
+            text, html: fuHtml,
           });
-          if (!r2.ok) throw new Error(`resend ${r2.status}`);
           const actor2 = role === 'staff' ? (req._staffName || 'staff') : (process.env.ADMIN_NAME || 'Amos Osho');
           await appendNote(id, `Follow-up emailed to ${q.email} by ${actor2}`);
           await logActivity({ actor: actor2, action: 'sent follow-up', lead_id: id, lead_name: q.name });

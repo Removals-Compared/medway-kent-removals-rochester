@@ -50,15 +50,11 @@ export default async function handler(req, res) {
       await logActivity({ actor: q.name || 'Customer', action: 'accepted quote', lead_id: id, lead_name: q.name });
       // Tell the office straight away.
       try {
-        await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-          body: JSON.stringify({
-            from: 'MKR Admin <quotes@medwaykentremovals.co.uk>',
+        const { sendMail } = await import('./admin/_email.mjs');
+        await sendMail({
             to: ['info@medwaykentremovals.co.uk'],
             subject: `Quote ACCEPTED: ${q.name || 'Customer'}`,
             text: `${q.name || 'A customer'} has accepted their quote via the email link.\n\nPhone: ${q.phone || ''}\nEmail: ${q.email || ''}\nMove date: ${q.move_date || 'not set'}\n\nOpen the lead: https://www.medwaykentremovals.co.uk/admin/quote/${id}\n\nNext step: call to confirm the date and take the 10% deposit${Math.round((Number(q.value) || 0) * 0.10) ? ` (\u00a3${Math.round((Number(q.value) || 0) * 0.10).toLocaleString('en-GB')})` : ''}.`,
-          }),
         });
       } catch (e) { console.error('accept notify', e); }
     }

@@ -6,8 +6,8 @@
 // ════════════════════════════════════════════════════════════
 import { fetchDueReminders, markReminderSent, getQuote, fetchExpiredDeleted, deleteQuote, logActivity, appendNote } from './_db.mjs';
 import { q } from './_sql.mjs';
+import { sendMail } from './_email.mjs';
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const TO = 'info@medwaykentremovals.co.uk';
 const SITE = 'https://www.medwaykentremovals.co.uk';
 
@@ -87,16 +87,10 @@ export default async function handler(req, res) {
           + '<a href="' + waHref + '" style="background:#1EBE57;color:#fff;text-decoration:none;font-weight:700;font-family:Arial,sans-serif;font-size:14px;padding:12px 22px;border-radius:9px;display:inline-block;margin:4px">&#128172; WhatsApp us</a>'
           + '</div>';
         try {
-          const r = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${RESEND_API_KEY}` },
-            body: JSON.stringify({
-              from: 'Medway & Kent Removals <quotes@medwaykentremovals.co.uk>',
-              to: [lead.email], bcc: [TO], reply_to: TO,
-              subject: 'We have your removals enquiry', text, html,
-            }),
+          await sendMail({
+            to: [lead.email], bcc: [TO],
+            subject: 'We have your removals enquiry', text, html,
           });
-          if (!r.ok) throw new Error(`resend ${r.status}`);
           await appendNote(lead.id, `Welcome email sent to ${lead.email} (automatic, 5 minutes after the enquiry)`);
           await logActivity({ actor: 'welcome-bot', action: 'sent welcome email', lead_id: lead.id, lead_name: lead.name });
           out.sent++;
@@ -121,20 +115,11 @@ export default async function handler(req, res) {
     for (const rem of due) {
       try {
         const lead = await getQuote(rem.lead_id);
-        const r = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: 'MKR Reminders <quotes@medwaykentremovals.co.uk>',
-            to: [TO],
-            subject: `Call reminder: ${(lead && lead.name) || 'Customer'}${rem.note ? ' — ' + rem.note : ''}`,
-            html: emailHtml(lead, rem),
-          }),
+        await sendMail({
+          to: [TO],
+          subject: `Call reminder: ${(lead && lead.name) || 'Customer'}${rem.note ? ' — ' + rem.note : ''}`,
+          html: emailHtml(lead, rem),
         });
-        if (!r.ok) throw new Error(`resend ${r.status}: ${await r.text()}`);
         await markReminderSent(rem.id);
         results.sent += 1;
       } catch (e) {

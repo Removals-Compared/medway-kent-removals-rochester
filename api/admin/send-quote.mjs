@@ -1,11 +1,10 @@
 // ════════════════════════════════════════════════════════════
-//  Send a quote to the customer via Resend, with the PDF attached.
+//  Send a quote to the customer via Gmail, with the PDF attached.
 //  The browser generates the PDF and posts it here as base64.
 // ════════════════════════════════════════════════════════════
 import { requireAuth } from './_session.mjs';
 import { appendNote } from './_db.mjs';
-
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
+import { sendMail } from './_email.mjs';
 const esc = (s) => String(s || '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -51,28 +50,19 @@ export default async function handler(req, res) {
       + '</div>';
 
     const payload = {
-      from: 'Medway & Kent Removals <quotes@medwaykentremovals.co.uk>',
       to: [to],
-      bcc: [...new Set(['info@medwaykentremovals.co.uk', ...bccList])],
-      reply_to: 'info@medwaykentremovals.co.uk',
+      cc: ccList,
+      bcc: ['info@medwaykentremovals.co.uk', ...bccList],
+      replyTo: 'info@medwaykentremovals.co.uk',
       subject,
       text: body,
       html,
     };
-    if (ccList.length) payload.cc = ccList;
     if (pdf_base64) {
       payload.attachments = [{ filename: filename || 'MKR-Quote.pdf', content: pdf_base64 }];
     }
 
-    const r = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${RESEND_API_KEY}` },
-      body: JSON.stringify(payload),
-    });
-    if (!r.ok) {
-      const t = await r.text();
-      return res.status(502).json({ error: `resend ${r.status}: ${t}` });
-    }
+    await sendMail(payload);
 
     // Record it on the lead for your own history (best-effort).
     if (lead_id) { try { await appendNote(lead_id, `${kind || 'Quote'} emailed to ${to}`); } catch {} }

@@ -3,11 +3,11 @@
 //  Vercel Serverless Function  /api/quote
 //
 //  Handles two things on every form submission:
-//  1. Sends an email alert to you via Resend
+//  1. Sends an email alert to you via Gmail
 //  2. Inserts the lead into Neon Postgres for your records
 //
 //  Environment variables required in Vercel (never in code):
-//    RESEND_API_KEY
+//    GMAIL_USER / GMAIL_APP_PASS
 //    DATABASE_URL  (Neon connection string)
 // ════════════════════════════════════════════════════════════
 
@@ -48,7 +48,6 @@ export default async function handler(req, res) {
   }
 
   // ── Pull environment variables ──
-  const RESEND_API_KEY  = process.env.RESEND_API_KEY;
 
   // ── Destructure form data from request body ──
   const {
@@ -95,7 +94,7 @@ export default async function handler(req, res) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 
   // ════════════════════════════════════════════════════════
-  //  1. RESEND — Email alert to info@medwaykentremovals.co.uk
+  //  1. GMAIL — Email alert to info@medwaykentremovals.co.uk
   // ════════════════════════════════════════════════════════
   const emailHtml = `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
@@ -181,20 +180,12 @@ export default async function handler(req, res) {
         </div>
       `;
 
-  const resendPromise = fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${RESEND_API_KEY}`,
-    },
-    body: JSON.stringify({
-      from: 'MKR Quotes <quotes@medwaykentremovals.co.uk>',
-      to:   ['info@medwaykentremovals.co.uk'],
-      reply_to: emailClean || undefined,
-      subject: `New quote request — ${fullName} — ${service || 'Removal'}`,
-      html: emailHtml,
-    }),
-  });
+  const emailPromise = import('./admin/_email.mjs').then(({ sendMail }) => sendMail({
+    to: ['info@medwaykentremovals.co.uk'],
+    replyTo: emailClean || undefined,
+    subject: `New quote request — ${fullName} — ${service || 'Removal'}`,
+    html: emailHtml,
+  }));
 
   // ════════════════════════════════════════════════════════
   //  2. NEON — Insert row into quote_requests
@@ -215,13 +206,13 @@ export default async function handler(req, res) {
   //  Run both in parallel — don't let one block another
   // ════════════════════════════════════════════════════════
   const results = await Promise.allSettled([
-    resendPromise,
+    emailPromise,
     dbPromise,
   ]);
 
   // Log any failures server-side (visible in Vercel logs)
   results.forEach((result, i) => {
-    const label = ['Resend', 'Database'][i];
+    const label = ['Email', 'Database'][i];
     if (result.status === 'rejected') {
       console.error(`${label} failed:`, result.reason);
     }
