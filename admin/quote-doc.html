@@ -249,6 +249,8 @@
 
 <div class="mailer" id="mailer" style="display:none">
   <div class="m-row"><label>To</label><input id="m-to" type="email" placeholder="customer@email.com"></div>
+  <div class="m-row"><label>Cc</label><input id="m-cc" type="text" placeholder="optional, separate with commas"></div>
+  <div class="m-row"><label>Bcc</label><input id="m-bcc" type="text" placeholder="optional, separate with commas"></div>
   <div class="m-row"><label>Subject</label><input id="m-subject"></div>
   <label class="m-lbl">Message</label>
   <textarea id="m-body" rows="12"></textarea>
@@ -635,7 +637,7 @@
       btn.textContent = 'Sending…';
       var r = await fetch('/api/admin/send-quote', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ lead_id:id, to:to, subject:subject, body:body, pdf_base64:pdf64, filename:opt.filename }),
+        body: JSON.stringify({ lead_id:id, to:to, cc:$('m-cc').value, bcc:$('m-bcc').value, subject:subject, body:body, pdf_base64:pdf64, filename:opt.filename }),
       });
       if (r.status === 401){ window.location.href = '/admin'; return; }
       var d = await r.json().catch(function(){ return {}; });

@@ -17,10 +17,15 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
 
   try {
-    const { lead_id, to, subject, body, pdf_base64, filename, kind } = req.body || {};
+    const { lead_id, to, cc, bcc, subject, body, pdf_base64, filename, kind } = req.body || {};
     if (!to || !subject || !body) {
       return res.status(400).json({ error: 'to, subject and body are required' });
     }
+    // Optional CC/BCC: comma or semicolon separated, validated, max 5 each.
+    const parseEmails = (v) => String(v || '').split(/[,;]+/).map((e) => e.trim())
+      .filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)).slice(0, 5);
+    const ccList = parseEmails(cc);
+    const bccList = parseEmails(bcc);
 
     // The plain-text body keeps the raw accept URL; in the HTML version that
     // line is rendered as a proper 3D button instead.
@@ -48,12 +53,13 @@ export default async function handler(req, res) {
     const payload = {
       from: 'Medway & Kent Removals <quotes@medwaykentremovals.co.uk>',
       to: [to],
-      bcc: ['info@medwaykentremovals.co.uk'],
+      bcc: [...new Set(['info@medwaykentremovals.co.uk', ...bccList])],
       reply_to: 'info@medwaykentremovals.co.uk',
       subject,
       text: body,
       html,
     };
+    if (ccList.length) payload.cc = ccList;
     if (pdf_base64) {
       payload.attachments = [{ filename: filename || 'MKR-Quote.pdf', content: pdf_base64 }];
     }
