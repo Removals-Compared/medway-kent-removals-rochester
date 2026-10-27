@@ -141,6 +141,7 @@ export default async function handler(req, res) {
         cant_reach: { label: 'Could-not-reach-you', wa: (q) => `Hi, it's ${q.name || 'a customer'}. You tried to reach me about my removals quote.` },
         nudge:      { label: 'Nudge',               wa: (q) => `Hi, it's ${q.name || 'a customer'} about my removals enquiry.` },
         after_call: { label: 'After-call follow-up', wa: (q) => `Hi, it's ${q.name || 'a customer'}. Following up on our call about my move.` },
+        move_confirm: { label: 'Move-date confirmation', wa: (q) => `Hi, it's ${q.name || 'a customer'}. About my move date.` },
         still_need: { label: 'Still-need-us',        wa: (q) => `Hi, it's ${q.name || 'a customer'} about my removals enquiry.` },
       };
       if (typeof b.send_letter === 'string') {

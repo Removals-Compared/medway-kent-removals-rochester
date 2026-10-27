@@ -374,6 +374,7 @@
           <button type="button" data-letter="cant_reach">&#128245; Can't reach you (wrong number)</button>
           <button type="button" data-letter="nudge">&#128075; Gentle nudge</button>
           <button type="button" data-letter="after_call">&#128222; Follow-up after our call</button>
+          <button type="button" data-letter="move_confirm">&#128197; Move date confirmation</button>
           <button type="button" data-letter="still_need">&#128737;&#65039; Still need us? (insurance)</button>
           <div class="menu-sep"></div>
           <button type="button" id="send-followup">&#9203; Quote follow-up</button>
@@ -787,6 +788,17 @@
         `Thank you for taking the time to speak with us about your ${q.service || 'move'}${(q.from_postcode && q.to_postcode) ? ' from ' + q.from_postcode + ' to ' + q.to_postcode : ''}. Here is a quick note so you have everything in writing.`, '',
         'When you are ready for the next step, just reply to this email, call us on 01634 971005, or tap the WhatsApp button below and we will take it from there.', '',
         ...SIGN_OFF,
+      ],
+    },
+    move_confirm: {
+      title: 'Move date confirmation email',
+      subject: (q) => 'Your move is confirmed' + (q.move_date ? ' for ' + new Date(q.move_date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : ''),
+      body: (q, first) => [
+        `Hi ${first},`, '',
+        `A quick note ahead of the big day. Your move is confirmed for ${q.move_date ? new Date(q.move_date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : '[your move date]'}, and our crew will be with you between 8:30 and 9:00 in the morning.`, '',
+        'Everything is arranged on our side: your crew and vehicle are booked and your price is fixed, so there is nothing more you need to do.', '',
+        'If anything has changed, or a different arrival window would suit you better, just reply to this email, call us, or tap the WhatsApp button below and we will adjust it straight away.', '',
+        'See you on the day,', 'Medway and Kent Removals', '01634 971005 | WhatsApp 07359 917380',
       ],
     },
     still_need: {
