@@ -646,4 +646,16 @@
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
+  <url>
+    <loc>https://www.medwaykentremovals.co.uk/blog/posts/moving-to-faversham-what-londoners-need-to-know</loc>
+    <lastmod>2026-10-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.medwaykentremovals.co.uk/blog/posts/paying-the-balance-on-moving-day-what-to-expect</loc>
+    <lastmod>2026-10-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
 </urlset>
