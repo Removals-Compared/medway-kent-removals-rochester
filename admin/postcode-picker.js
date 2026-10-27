@@ -68,7 +68,7 @@
         return;
       }
       if (!r.ok) {
-        note(target, "Lookup unavailable. Please type the address.");
+        note(target, (j && j.error ? j.error + ". " : "Lookup unavailable. ") + "Please type the address.");
         return;
       }
       var list = (j && j.addresses) || [];
