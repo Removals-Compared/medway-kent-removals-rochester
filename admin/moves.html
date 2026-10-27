@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="apple-touch-icon" href="/images/admin-touch-icon.png">
+<meta name="theme-color" content="#0D1F3C">
+<meta name="robots" content="noindex, nofollow">
+<title>All booked moves — Admin — Medway &amp; Kent Removals</title>
+<style>
+  :root{ --navy:#0d1f3c; --orange:#e04e1b; --bg:#f4f5f7; --line:#e3e6ec;
+         --mkr:#0e7a5f; --rlk:#1d6f42; --tlr:#1f4fa3; --cer:#b4532a; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; background:var(--bg); color:#1a2233; }
+  .topbar{ background:var(--navy); color:#fff; padding:14px 24px; display:flex; align-items:center; gap:14px; }
+  .topbar .brand{ font-weight:700; }
+  .topbar .crumb{ color:#ff9a75; font-size:14px; }
+  .topbar .spacer{ flex:1; }
+  .topbar a{ color:#cfd6e4; text-decoration:none; font-size:14px; }
+  .wrap{ max-width:900px; margin:0 auto; padding:24px; }
+  .sub{ color:#66727f; font-size:13px; margin:2px 0 18px; }
+  .stats{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+  .stat{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 16px; min-width:120px; flex:1; }
+  .stat .n{ font-size:24px; font-weight:800; color:var(--navy); }
+  .stat .l{ font-size:12px; color:#667; text-transform:uppercase; letter-spacing:.4px; margin-top:2px; }
+  .chips{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+  .chip{ border:1px solid var(--line); background:#fff; border-radius:999px; padding:6px 14px; font-size:13px; cursor:pointer; font-weight:600; }
+  .chip.on{ background:var(--navy); color:#fff; border-color:var(--navy); }
+  .chip i{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+  .notice{ font-size:12.5px; color:#92400e; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:8px 12px; margin:10px 0 0; display:none; }
+  .day{ margin:22px 0 8px; font-size:12px; letter-spacing:1.4px; text-transform:uppercase; color:#66727f; font-weight:700; }
+  .day em{ font-style:normal; color:#1a2233; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:10px;
+         display:grid; grid-template-columns:1fr auto; gap:4px 12px; align-items:center; }
+  .card.next{ outline:2px solid #15b374; outline-offset:-1px; }
+  .nextflag{ grid-column:1; font-size:11px; font-weight:700; color:#0e7a5f; letter-spacing:1px; }
+  .who{ font-weight:650; font-size:15px; }
+  .route{ color:#66727f; font-size:13px; }
+  .route b{ color:#1a2233; font-weight:600; }
+  .meta{ grid-column:1; display:flex; gap:14px; font-size:12.5px; color:#66727f; flex-wrap:wrap; margin-top:2px; }
+  .meta a{ color:var(--orange); text-decoration:none; font-weight:600; }
+  .val{ font-weight:650; color:#1a2233; }
+  .badge{ grid-row:1 / 4; grid-column:2; justify-self:end; align-self:start; color:#fff; font-size:11px; font-weight:700;
+          letter-spacing:.6px; padding:4px 10px; border-radius:6px; text-transform:uppercase; }
+  .open{ grid-column:2; grid-row:3; justify-self:end; font-size:12.5px; color:#2563eb; text-decoration:none; white-space:nowrap; }
+  .b-mkr{ background:var(--mkr); } .b-relokates{ background:var(--rlk); }
+  .b-tlr{ background:var(--tlr); } .b-cer{ background:var(--cer); }
+  .empty{ background:#fff; border:1px dashed var(--line); border-radius:12px; padding:28px; text-align:center; color:#66727f; }
+  .past{ opacity:.55; }
+  @media(max-width:560px){
+    .topbar{ padding:12px 14px; gap:8px; }
+    .topbar .crumb{ display:none; }
+    .wrap{ padding:14px; }
+    .stats{ gap:8px; } .stat{ min-width:46%; }
+    .meta{ gap:10px; }
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#101622; --line:#273047; }
+    body{ color:#dbe2ef; }
+    .topbar{ background:#0a1020; }
+    .stat,.card,.chip{ background:#17203302; background:#171f33; }
+    .stat .n{ color:#fff; } .who,.val,.route b,.day em{ color:#e8edf7; }
+    .chip{ color:#dbe2ef; } .chip.on{ background:#e04e1b; border-color:#e04e1b; }
+    .empty{ background:#171f33; }
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="brand">Medway &amp; Kent Removals</span>
+    <span class="crumb">Admin / All booked moves</span>
+    <span class="spacer"></span>
+    <a href="/admin/dashboard">&larr; Quotes</a>
+    <a href="#" id="signout">Sign out</a>
+  </div>
+
+  <div class="wrap">
+    <p class="sub">Every lead at &ldquo;move booked&rdquo; across the four companies, soonest first. Moves from the last 2 days stay visible, greyed out.</p>
+    <div class="stats" id="stats"></div>
+    <div class="chips" id="chips"></div>
+    <div class="notice" id="notice"></div>
+    <div id="list"><div class="empty">Loading&hellip;</div></div>
+  </div>
+
+<script>
+(function () {
+  var COMPANY_META = {
+    mkr:       { label: 'MKR' },
+    relokates: { label: 'Relokates' },
+    tlr:       { label: 'Top London' },
+    cer:       { label: 'CER' },
+  };
+  var filter = 'all';
+  var data = null;
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function money(v) {
+    if (v == null || isNaN(v)) return '';
+    return '£' + Number(v).toLocaleString('en-GB', { maximumFractionDigits: 0 });
+  }
+  function todayIso() { return new Date().toLocaleDateString('en-CA'); }
+  function niceDay(iso) {
+    var d = new Date(iso + 'T12:00:00');
+    return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+  function relDay(iso) {
+    var t = new Date(todayIso() + 'T12:00:00');
+    var d = new Date(iso + 'T12:00:00');
+    var diff = Math.round((d - t) / 86400000);
+    if (diff === 0) return 'today';
+    if (diff === 1) return 'tomorrow';
+    if (diff === -1) return 'yesterday';
+    if (diff < 0) return Math.abs(diff) + ' days ago';
+    return 'in ' + diff + ' days';
+  }
+
+  function render() {
+    if (!data) return;
+    var today = todayIso();
+    var moves = data.moves.filter(function (m) { return filter === 'all' || m.company === filter; });
+
+    // Stats (always across all companies, not the filter)
+    var all = data.moves;
+    var upcoming = all.filter(function (m) { return m.move_date && m.move_date >= today; });
+    var next = upcoming[0];
+    var weekEnd = new Date(Date.now() + 7 * 86400000).toLocaleDateString('en-CA');
+    var thisWeek = upcoming.filter(function (m) { return m.move_date <= weekEnd; }).length;
+    var totalVal = all.reduce(function (s, m) { return s + (m.value || 0); }, 0);
+    var statsHtml =
+      '<div class="stat"><div class="n">' + (next ? esc(relDay(next.move_date)).replace(/^in /, '') : '—') + '</div><div class="l">Next move</div></div>' +
+      '<div class="stat"><div class="n">' + thisWeek + '</div><div class="l">Next 7 days</div></div>' +
+      '<div class="stat"><div class="n">' + all.length + '</div><div class="l">Booked in total</div></div>' +
+      (data.role === 'admin' ? '<div class="stat"><div class="n">' + (money(totalVal) || '£0') + '</div><div class="l">Booked value</div></div>' : '');
+    document.getElementById('stats').innerHTML = statsHtml;
+
+    // Chips
+    var chips = '<div class="chip' + (filter === 'all' ? ' on' : '') + '" data-f="all">All (' + all.length + ')</div>';
+    Object.keys(COMPANY_META).forEach(function (k) {
+      var n = all.filter(function (m) { return m.company === k; }).length;
+      chips += '<div class="chip' + (filter === k ? ' on' : '') + '" data-f="' + k + '"><i class="b-' + k + '" style="background:var(--' + (k === 'relokates' ? 'rlk' : k) + ')"></i>' + COMPANY_META[k].label + ' (' + n + ')</div>';
+    });
+    document.getElementById('chips').innerHTML = chips;
+
+    // Disconnected / failing companies
+    var bad = [];
+    Object.keys(data.companies || {}).forEach(function (k) {
+      var c = data.companies[k];
+      if (!c.connected) bad.push(COMPANY_META[k].label + ' is not connected yet');
+      else if (c.error) bad.push(COMPANY_META[k].label + ' could not be reached');
+    });
+    var notice = document.getElementById('notice');
+    notice.style.display = bad.length ? 'block' : 'none';
+    notice.textContent = bad.join(' · ');
+
+    // Grouped list
+    if (!moves.length) {
+      document.getElementById('list').innerHTML = '<div class="empty">No booked moves' + (filter !== 'all' ? ' for ' + esc(COMPANY_META[filter].label) : '') + '.</div>';
+      return;
+    }
+    var nextId = next ? next.company + ':' + next.id : '';
+    var html = '';
+    var lastDay = '__none__';
+    moves.forEach(function (m) {
+      var day = m.move_date || 'none';
+      if (day !== lastDay) {
+        lastDay = day;
+        html += '<div class="day">' + (m.move_date ? esc(niceDay(m.move_date)) + ' <em>· ' + esc(relDay(m.move_date)) + '</em>' : 'No move date set') + '</div>';
+      }
+      var isNext = (m.company + ':' + m.id) === nextId && (filter === 'all' || filter === m.company);
+      var past = m.move_date && m.move_date < today;
+      var route = [m.from_loc, m.to_loc].filter(Boolean).map(function (x) { return '<b>' + esc(x) + '</b>'; }).join(' → ');
+      var metaBits = [];
+      if (m.service) metaBits.push(esc(m.service));
+      if (m.value != null) metaBits.push('<span class="val">' + money(m.value) + '</span>');
+      if (m.phone) metaBits.push('<a href="tel:' + esc(String(m.phone).replace(/\s+/g, '')) + '">' + esc(m.phone) + '</a>');
+      html += '<div class="card' + (isNext ? ' next' : '') + (past ? ' past' : '') + '">' +
+        (isNext ? '<div class="nextflag">NEXT MOVE</div>' : '') +
+        '<div class="who">' + esc(m.name || '(no name)') + '</div>' +
+        '<div class="route">' + (route || '') + (m.property ? (route ? ' · ' : '') + esc(m.property) : '') + '</div>' +
+        '<div class="meta">' + metaBits.map(function (b) { return '<span>' + b + '</span>'; }).join('') + '</div>' +
+        '<span class="badge b-' + m.company + '">' + esc(m.label) + '</span>' +
+        '<a class="open" href="' + esc(m.link) + '" ' + (m.company !== 'mkr' ? 'target="_blank" rel="noopener"' : '') + '>Open in ' + esc(m.label) + ' admin →</a>' +
+        '</div>';
+    });
+    document.getElementById('list').innerHTML = html;
+  }
+
+  document.getElementById('chips').addEventListener('click', function (e) {
+    var chip = e.target.closest('.chip');
+    if (!chip) return;
+    filter = chip.getAttribute('data-f');
+    render();
+  });
+
+  document.getElementById('signout').addEventListener('click', async function (e) {
+    e.preventDefault();
+    try { await fetch('/api/admin/logout', { method: 'POST' }); } catch (_) {}
+    location.href = '/admin/';
+  });
+
+  (async function load() {
+    try {
+      var r = await fetch('/api/admin/all-moves');
+      if (r.status === 401) { location.href = '/admin/'; return; }
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      data = await r.json();
+      render();
+    } catch (err) {
+      document.getElementById('list').innerHTML = '<div class="empty">Could not load moves. Refresh to try again.</div>';
+    }
+  })();
+})();
+</script>
+</body>
+</html>
