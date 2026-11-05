@@ -17,6 +17,7 @@
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { createQuote, updateQuote, getQuote, appendNote, logActivity } from './admin/_db.mjs';
+import { q as sqlQuery } from './admin/_sql.mjs';
 import { LOGO_PNG_B64 } from './_brand.mjs';
 import { confirmationEmail } from './_email-confirmation.mjs';
 import { PRICES, isPostcode, tidyPostcode, journeyMinutes, hoursCharged, priceFor } from './_pricing.mjs';
@@ -137,13 +138,34 @@ async function createCheckout(req, res, raw) {
   // Save the lead first so nobody is lost if they abandon at Stripe.
   let lead = null;
   try {
-    lead = await createQuote({
+    const leadFields = {
       name, phone, email, service: 'House removal', from_postcode: from, to_postcode: to,
       property_size: sizeLabel, move_date: b.move_date, source: 'website', value: total,
       notes: `Instant quote & pay | ${vans} van(s) | ${mins} min drive (${hours} hr charged)` +
              (wantsPacking ? ' | Packing: customer wants to discuss packing, call after survey' : '') +
              ` | Delivery address: ${toAddr}`,
-    });
+    };
+    // The quote page asks for contact details before showing the price and saves a lead then.
+    // If this customer already left details for this move in the last two days, update that lead
+    // instead of creating a second one.
+    let earlier = null;
+    try {
+      const rows = await sqlQuery(
+        `SELECT id FROM quote_requests
+           WHERE lower(email) = lower($1)
+             AND upper(replace(from_postcode, ' ', '')) = upper(replace($2, ' ', ''))
+             AND upper(replace(to_postcode, ' ', '')) = upper(replace($3, ' ', ''))
+             AND status = 'new' AND notes LIKE '%DETAILS GIVEN BEFORE PRICE%'
+             AND created_at > now() - interval '2 days'
+           ORDER BY id DESC LIMIT 1`, [email, from, to]);
+      earlier = rows && rows[0];
+    } catch (e) { console.error('earlier lead lookup failed', e); }
+    if (earlier) {
+      lead = await updateQuote(earlier.id, { ...leadFields, updated_at: new Date().toISOString() });
+      if (!lead || !lead.id) lead = { id: earlier.id };
+    } else {
+      lead = await createQuote(leadFields);
+    }
   } catch (e) {
     console.error('lead save failed', e);
     return res.status(503).json({ error: 'Sorry, we could not save your booking. Please call 01634 971005.' });
