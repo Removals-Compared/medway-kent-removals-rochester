@@ -408,9 +408,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var dep=Math.round(p*0.1), third=Math.floor(p/3*100)/100, last=Math.round((p-third*2)*100)/100;
     // the price builds up live: nothing, then 'from' price, then the fixed price
     if(!sv){$('price').textContent='Choose your move';$('priceSub').textContent='Pick your move size and vans to start your price.'}
-    else if(!ready){$('price').textContent='From '+gbp(p);$('priceSub').textContent=(state.hrs===null&&/^Working/.test($('journeyText').textContent)?'Working out your journey…':'Add both postcodes and we add your journey to give your fixed price.')}
+    else if(!ready){$('price').textContent='Add your postcodes';$('priceSub').textContent=(state.hrs===null&&/^Working/.test($('journeyText').textContent)?'Working out your journey…':'Add both postcodes and we work out your fixed price.')}
     else{if(!window.__iqShown){window.__iqShown=1;try{if(typeof gtag==='function')gtag('event','iq_price_shown',{long_distance:long?1:0})}catch(e){}}$('price').textContent=(long?'From ':'')+gbp(p);$('priceSub').textContent=long?'Long distance, so we confirm the final price with you.':'Your fixed price. All inclusive, no VAT, held for 14 days.'}
-    $('price').style.fontSize=sv?'':'28px';
+    $('price').style.fontSize=(sv&&ready)?'':'28px';
     $('payopts').hidden=long||!ready;
     $('savebox').hidden=!ready;
     window.__iqQuote={size:state.size,vans:state.vans,hrs:state.hrs,price:p,long:long};
