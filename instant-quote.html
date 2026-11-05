@@ -397,7 +397,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     // the price builds up live: nothing, then 'from' price, then the fixed price
     if(!sv){$('price').textContent='Choose your move';$('priceSub').textContent='Pick your move size and vans to start your price.'}
     else if(!ready){$('price').textContent='From '+gbp(p);$('priceSub').textContent=(state.hrs===null&&/^Working/.test($('journeyText').textContent)?'Working out your journey…':'Add both postcodes and we add your journey to give your fixed price.')}
-    else{$('price').textContent=(long?'From ':'')+gbp(p);$('priceSub').textContent=long?'Long distance, so we confirm the final price with you.':'Your fixed price. All inclusive, no VAT, held for 14 days.'}
+    else{if(!window.__iqShown){window.__iqShown=1;try{if(typeof gtag==='function')gtag('event','iq_price_shown',{long_distance:long?1:0})}catch(e){}}$('price').textContent=(long?'From ':'')+gbp(p);$('priceSub').textContent=long?'Long distance, so we confirm the final price with you.':'Your fixed price. All inclusive, no VAT, held for 14 days.'}
     $('price').style.fontSize=sv?'':'28px';
     $('payopts').hidden=long||!ready;
     $('longnote').hidden=!long;
@@ -455,8 +455,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   ['addrFrom','addrTo','cName','cEmail','cPhone','cTerms','moveDate'].forEach(function(id){$(id).addEventListener('input',calc);$(id).addEventListener('change',calc)});
   // Pay: the server prices the move again from the postcodes, saves the lead and
   // returns a Stripe Checkout link. The browser never sends a price.
+  function track(n,p){try{if(typeof gtag==='function')gtag('event',n,p||{})}catch(e){}}
   $('go').addEventListener('click',function(){
     if(state.hrs===null||state.hrs>=5||$('go').disabled)return;
+    track('iq_pay_click',{pay_option:(function(v){return v==='k'?'klarna':(v==='full'?'full':'deposit')})(document.querySelector('input[name=pay]:checked').value)});
     var go=$('go'), label=go.textContent; go.disabled=true; go.textContent='Taking you to secure payment…';
     $('goNote').textContent='';
     fetch('/api/pay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
