@@ -3,14 +3,14 @@
 //  browser sends the answers, never a price. The leading underscore keeps
 //  this file from being deployed as its own serverless function.
 //
-//  Studio £500, 1 bed £750, 2 bed £1,200, 3 bed £1,650, 4 bed £2,000, 5 bed £2,550,
+//  Studio £450, 1 bed £550, 2 bed £950, 3 bed £1,350, 4 bed £1,850, 5 bed £2,250,
 //  +£150 per started
 //  hour of drive time (first 30 minutes free), second and further vans
 //  +£750 each. Packing is booked separately after a survey.
 // ════════════════════════════════════════════════════════════
 export const PRICES = {
   // base price by bedrooms (0 = studio)
-  base: { 0: 500, 1: 750, 2: 1200, 3: 1650, 4: 2000, 5: 2550 },
+  base: { 0: 450, 1: 550, 2: 950, 3: 1350, 4: 1850, 5: 2250 },
   perHour: 150, freeMinutes: 30,
   extraVan: 750,
   depositRate: 0.10,
