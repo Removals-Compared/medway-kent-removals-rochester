@@ -1,3 +1,34 @@
+/* ── Click tracking (GA4 via gtag) ─────────────────────────
+   One delegated listener, registered as soon as this file runs, so it sees
+   clicks even before the sticky bar is drawn. It records which quote route a
+   visitor chose: instant_quote_click (the pink buttons and card) or
+   free_quote_click (the Get a Free Quote buttons). Consent mode decides what
+   Google keeps. No personal data is sent. */
+(function () {
+  if (window.__mkrTrack) return;
+  window.__mkrTrack = true;
+  function send(name, params) {
+    try { if (typeof window.gtag === 'function') window.gtag('event', name, params); } catch (e) {}
+  }
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+    if (!a) return;
+    var href = a.getAttribute('href') || '';
+    var path = location.pathname.replace(/\/+$/, '') || '/';
+    var where = 'inline';
+    if (a.closest('.mkr-klarna')) where = 'floating_card';
+    else if (a.closest('.iq-choice')) where = 'home_choice';
+    else if (/hero/.test(a.className) || a.closest('[class*="hero"]')) where = 'hero';
+    else if (a.closest('nav, header, [class*="nav"]')) where = 'nav';
+    else if (a.closest('footer')) where = 'footer';
+    if (/^\/instant-quote/.test(href)) {
+      send('instant_quote_click', { link_location: where, page_path: path });
+    } else if (/^\/contact/.test(href) && /quote/i.test(a.textContent || '')) {
+      send('free_quote_click', { link_location: where, page_path: path });
+    }
+  }, true);
+})();
+
 /* ── Sticky mobile contact bar ─────────────────────────────
    One-tap Call and WhatsApp buttons pinned to the bottom of the
    screen on phones. Loaded on every public page via this script;

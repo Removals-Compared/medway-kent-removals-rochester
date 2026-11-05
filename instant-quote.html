@@ -128,6 +128,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 .addr-block .field{margin-top:8px}
 .sublbl{text-align:left;display:block;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:2px}
 .hint{font-size:13px;color:var(--muted);margin-top:8px}
+.savebox{margin-top:18px;padding:16px;border:1.5px dashed var(--border2);border-radius:12px;background:#fff}.savebox p{font-size:13.5px;margin:4px 0 10px;color:var(--muted,#555)}.savebox .go{background:#17120f;color:#fff}
 .chk{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;margin-top:8px;color:var(--text)}
 .chk input{margin-top:4px;accent-color:var(--accent)}
 
@@ -341,6 +342,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <p class="hint" id="longnote" hidden>Moves of 5 hours or more are long distance, so we confirm a fixed price with you first. The figure above is the minimum.</p>
       <button type="button" class="go" id="go" disabled>Add your move details to book</button>
       <p class="fine" id="goNote" hidden>You will be taken to our secure payment page. Fill in every step to enable the button.</p>
+      <div class="savebox" id="savebox" hidden>
+        <b>Not ready to book yet?</b>
+        <p>We will keep this price for 14 days. Leave your details and we will send it over and call you to talk it through. No payment needed.</p>
+        <input class="field" id="sName" placeholder="Your name" autocomplete="name" aria-label="Your name">
+        <div class="row2" style="margin-top:8px">
+          <input class="field" id="sEmail" type="email" placeholder="Email" autocomplete="email" aria-label="Email">
+          <input class="field" id="sPhone" type="tel" placeholder="Mobile" autocomplete="tel" aria-label="Mobile">
+        </div>
+        <button type="button" class="go" id="sSave" style="margin-top:10px">Save my price and call me</button>
+        <p class="fine" id="sNote" aria-live="polite">We use your details to send this quote and call you about your move. See our <a href="/privacy-policy" style="text-decoration:underline">privacy policy</a>.</p>
+      </div>
       <p class="fine">Free cancellation: everything you pay is refunded the way you paid. Klarna is for customers aged 18 or over, subject to Klarna's approval and terms.</p>
       </div>
     </aside>
@@ -354,7 +366,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script>
 (function(){
   // base price by bedrooms (studio £500 to 5 bed £2,550), +£150 per started hour of journey
-  var BASE={0:500,1:750,2:1200,3:1650,4:2000,5:2550}, PER_HR=150, FREE_MIN=30;
+  var BASE={0:450,1:550,2:950,3:1350,4:1850,5:2250}, PER_HR=150, FREE_MIN=30;
   // ASSUMPTION: each extra van adds £750 (owner gave the 2nd van only)
   var vanAdd={1:0,2:750,3:1500,4:2250};
   var state={size:null,vans:null,hrs:null,mins:null};
@@ -396,10 +408,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var dep=Math.round(p*0.1), third=Math.floor(p/3*100)/100, last=Math.round((p-third*2)*100)/100;
     // the price builds up live: nothing, then 'from' price, then the fixed price
     if(!sv){$('price').textContent='Choose your move';$('priceSub').textContent='Pick your move size and vans to start your price.'}
-    else if(!ready){$('price').textContent='From '+gbp(p);$('priceSub').textContent=(state.hrs===null&&/^Working/.test($('journeyText').textContent)?'Working out your journey…':'Add both postcodes and we add your journey to give your fixed price.')}
-    else{$('price').textContent=(long?'From ':'')+gbp(p);$('priceSub').textContent=long?'Long distance, so we confirm the final price with you.':'Your fixed price. All inclusive, no VAT, held for 14 days.'}
-    $('price').style.fontSize=sv?'':'28px';
+    else if(!ready){$('price').textContent='Add your postcodes';$('priceSub').textContent=(state.hrs===null&&/^Working/.test($('journeyText').textContent)?'Working out your journey…':'Add both postcodes and we work out your fixed price.')}
+    else{if(!window.__iqShown){window.__iqShown=1;try{if(typeof gtag==='function')gtag('event','iq_price_shown',{long_distance:long?1:0})}catch(e){}}$('price').textContent=(long?'From ':'')+gbp(p);$('priceSub').textContent=long?'Long distance, so we confirm the final price with you.':'Your fixed price. All inclusive, no VAT, held for 14 days.'}
+    $('price').style.fontSize=(sv&&ready)?'':'28px';
     $('payopts').hidden=long||!ready;
+    $('savebox').hidden=!ready;
+    window.__iqQuote={size:state.size,vans:state.vans,hrs:state.hrs,price:p,long:long};
     $('longnote').hidden=!long;
     $('dep').textContent=gbp(dep); $('k1').textContent=gbp(p);
     var KMAX=2000, kopt=document.querySelector('.pay-opt.klarna'), over=p>KMAX;
@@ -455,8 +469,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   ['addrFrom','addrTo','cName','cEmail','cPhone','cTerms','moveDate'].forEach(function(id){$(id).addEventListener('input',calc);$(id).addEventListener('change',calc)});
   // Pay: the server prices the move again from the postcodes, saves the lead and
   // returns a Stripe Checkout link. The browser never sends a price.
+  function track(n,p){try{if(typeof gtag==='function')gtag('event',n,p||{})}catch(e){}}
+  var SIZES=['Studio','1 bed','2 bed','3 bed','4 bed','5 bed'];
+  $('sSave').addEventListener('click',function(){
+    var q=window.__iqQuote||{}, nm=$('sName').value.trim(), em=$('sEmail').value.trim(), ph=$('sPhone').value.trim(), note=$('sNote'), b=$('sSave');
+    if(!nm||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)||ph.replace(/\D/g,'').length<10){note.textContent='Please add your name, a valid email and your mobile number.';return}
+    b.disabled=true; b.textContent='Saving…';
+    var parts=nm.split(/\s+/), fn=parts.shift(), ln=parts.join(' ');
+    fetch('/api/quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      fname:fn, lname:ln, phone:ph, email:em, service:'House removals',
+      from_postcode:$('pcFrom').value, to_postcode:$('pcTo').value,
+      property_size:SIZES[q.size]||'', move_date:$('moveDate').value||'',
+      notes:'SAVED FROM INSTANT QUOTE, NOT PAID. '+(SIZES[q.size]||'')+', '+q.vans+' van'+(q.vans>1?'s':'')+', price shown '+(q.long?'from ':'')+'£'+q.price+'. Customer asked us to call them.',
+      source:'website', from_address:$('addrFrom').value, to_address:$('addrTo').value
+    })}).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})}).then(function(x){
+      if(!(x.ok&&x.j.success))throw new Error('x');
+      track('iq_quote_saved',{});
+      $('savebox').innerHTML='<b>Thank you, your price is saved.</b><p>We will email it to you and call you shortly. If you would rather talk now, call 01634 971005.</p>';
+    }).catch(function(){b.disabled=false;b.textContent='Save my price and call me';note.textContent='Sorry, that did not go through. Please call 01634 971005 or try again.'});
+  });
   $('go').addEventListener('click',function(){
     if(state.hrs===null||state.hrs>=5||$('go').disabled)return;
+    track('iq_pay_click',{pay_option:(function(v){return v==='k'?'klarna':(v==='full'?'full':'deposit')})(document.querySelector('input[name=pay]:checked').value)});
     var go=$('go'), label=go.textContent; go.disabled=true; go.textContent='Taking you to secure payment…';
     $('goNote').textContent='';
     fetch('/api/pay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
