@@ -88,6 +88,8 @@ PAGE = dict(
          'Yes. Our full packing service is the most popular add-on to a house removal, usually carried out the day before moving day using double-walled boxes, wardrobe cartons and proper wrapping materials. You can also choose fragile-only packing. See our packing services page for details and pricing.'),
         ('Do you move houses at weekends?',
          'Yes. We work seven days a week: 7am to 7pm Monday to Friday, 8am to 5pm on Saturdays and 9am to 2pm on Sundays. Weekend dates are popular, so book those as early as you can.'),
+        ('Are house movers and a removal company the same thing?',
+         'Yes. House movers and removal company mean the same service; removals is simply the usual UK term. Medway & Kent Removals are house movers based in Rochester, Kent. We move homes of every size across Medway and Kent and to anywhere in the UK, with a fixed price and full insurance on every move.'),
         ('Which areas do you cover for house removals?',
          'All of Kent. Our base in Rochester ME2 2ZE puts us on the doorstep of Chatham, Gillingham, Strood and Rainham, and we move families across Maidstone, Gravesend, Dartford, Sittingbourne, Canterbury, Ashford, the coast and everywhere in between, plus long-distance moves to and from anywhere in Great Britain.'),
     ],
