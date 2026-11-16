@@ -65,6 +65,7 @@ export default async function handler(req, res) {
     source,
     from_address,
     to_address,
+    iq_value,
   } = req.body;
 
   // Full addresses picked from the postcode lookup (both optional).
@@ -192,14 +193,18 @@ export default async function handler(req, res) {
   // ════════════════════════════════════════════════════════
   // quote.js is CommonJS-style, so the ES-module DB helper must be loaded with a
   // dynamic import (a static import fails with ERR_REQUIRE_ESM on Vercel).
+  // The instant quote page sends the price it showed, so it lands in "Job value".
+  // Only accepted for instant-quote leads, as a whole-pound figure in a sane range.
+  const iqPrice = Math.round(Number(iq_value));
+  const jobValue = (/INSTANT QUOTE, DETAILS GIVEN/.test(String(notes || '')) && iqPrice >= 100 && iqPrice <= 20000) ? iqPrice : null;
   const dbPromise = import('./admin/_sql.mjs').then(({ q }) => q(
     `INSERT INTO quote_requests
-       (name, phone, email, service, from_postcode, to_postcode, property_size, move_date, notes, source, address)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+       (name, phone, email, service, from_postcode, to_postcode, property_size, move_date, notes, source, address, value)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
     [fullName, phone, email, service, from_postcode, to_postcode,
      property_size || '', move_date || '',
      `Access: ${accessText} | ${notesText}` + (toAddr ? ` | Delivery address: ${toAddr}` : ''),
-     leadSource, fromAddr || null],
+     leadSource, fromAddr || null, jobValue],
   ));
 
   // ════════════════════════════════════════════════════════

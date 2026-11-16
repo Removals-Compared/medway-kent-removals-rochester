@@ -481,7 +481,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       from_postcode:$('pcFrom').value, to_postcode:$('pcTo').value,
       property_size:SIZES[q.size]||'', move_date:$('moveDate').value||'',
       notes:'INSTANT QUOTE, DETAILS GIVEN BEFORE PRICE, NOT PAID. '+(SIZES[q.size]||'')+', '+q.vans+' van'+(q.vans>1?'s':'')+', price '+(q.long?'from ':'')+'£'+q.price+'. Follow up if they do not book.',
-      source:'website', from_address:$('addrFrom').value, to_address:$('addrTo').value
+      source:'website', iq_value:q.price, from_address:$('addrFrom').value, to_address:$('addrTo').value
     })}).then(function(r){return r.json()}).then(reveal).catch(reveal);
   });
   $('go').addEventListener('click',function(){
