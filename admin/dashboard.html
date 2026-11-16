@@ -52,6 +52,7 @@
   .pill.contacted{ background:#fff4e0; color:#b45309; }
   .pill.quote_sent{ background:#e0e7ff; color:#4338ca; }
   .pill.prospecting{ background:#ccfbf1; color:#0f766e; }
+  .iq-badge{ display:inline-block; margin-left:6px; vertical-align:middle; font-size:11px; font-weight:800; color:#17120f; background:#ffb3c7; border-radius:6px; padding:2px 8px; letter-spacing:.2px; white-space:nowrap; }
   .rem-badge{ display:inline-block; margin-top:4px; font-size:11px; font-weight:700; color:#0f766e; background:#f0fdfa; border:1px solid #99f6e4; border-radius:6px; padding:2px 7px; }
   .rem-badge.due{ color:#b91c1c; background:#fef2f2; border-color:#fecaca; }
   .pill.survey_booked{ background:#ede9fe; color:#6d28d9; }
@@ -510,6 +511,8 @@
     if ($('select-all')) $('select-all').checked = false;
     if (!rows.length){ $('rows').innerHTML = '<tr><td colspan="10" class="empty">No leads match. New website enquiries land here automatically.</td></tr>'; return; }
     const today = new Date().toISOString().slice(0,10);
+    const isIQ = (r) => /^(INSTANT QUOTE|Instant quote & pay)/i.test(String(r && r.notes || ''));
+    const iqBadge = (r) => isIQ(r) ? '<span class="iq-badge" title="Came through the instant quote page">Klarna instant quote</span>' : '';
     $('rows').innerHTML = rows.map((r) => {
       const st = r.status || 'new';
       const rem = r.reminder;
@@ -518,7 +521,7 @@
         : '';
       return `<tr data-id="${esc(r.id)}">
         <td class="cb-col"><input type="checkbox" class="row-cb" data-id="${esc(r.id)}"></td>
-        <td><strong>${esc(r.name||'—')}</strong><div class="sub">${esc(r.email||'')}</div>${remHtml}</td>
+        <td><strong>${esc(r.name||'—')}</strong>${iqBadge(r)}<div class="sub">${esc(r.email||'')}</div>${remHtml}</td>
         <td><select class="pill-select pill ${st}" data-id="${esc(r.id)}">${STATUSES.filter(([k]) => k !== 'all').map(([k,l]) => `<option value="${k}" ${k===st?'selected':''}>${l}</option>`).join('')}<option value="lost" ${st==='lost'?'selected':''}>Lost</option></select></td>
         <td>${fmtDate(r.move_date)}</td>
         <td>${fmtDate(r.created_at)}</td>
