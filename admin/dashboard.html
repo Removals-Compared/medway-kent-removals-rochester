@@ -511,7 +511,7 @@
     if ($('select-all')) $('select-all').checked = false;
     if (!rows.length){ $('rows').innerHTML = '<tr><td colspan="10" class="empty">No leads match. New website enquiries land here automatically.</td></tr>'; return; }
     const today = new Date().toISOString().slice(0,10);
-    const isIQ = (r) => /^(INSTANT QUOTE|Instant quote & pay)/i.test(String(r && r.notes || ''));
+    const isIQ = (r) => /(INSTANT QUOTE, DETAILS GIVEN|Instant quote & pay)/i.test(String(r && r.notes || ''));
     const iqBadge = (r) => isIQ(r) ? '<span class="iq-badge" title="Came through the instant quote page">Klarna instant quote</span>' : '';
     $('rows').innerHTML = rows.map((r) => {
       const st = r.status || 'new';
