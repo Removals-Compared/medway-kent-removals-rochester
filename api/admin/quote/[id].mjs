@@ -1,6 +1,7 @@
 import { requireAuth } from '../_session.mjs';
 import { sendMail } from '../_email.mjs';
 import crypto from 'crypto';
+import { payToken } from '../../_paylink.mjs';
 import {
   getQuote, updateQuote, deleteQuote, fetchAppointmentsByLeadIds,
   fetchRemindersByLeadIds, appendNote, logActivity, fetchDuplicates,
@@ -92,6 +93,7 @@ export default async function handler(req, res) {
       const duplicates = await fetchDuplicates(id, quote.phone, quote.email);
       return res.status(200).json({ quote, appointments, reminders, duplicates, role,
         accept_token: role === 'staff' ? undefined : acceptToken(id),
+        pay_token: role === 'staff' ? undefined : payToken(id, quote.value),
         staff_name: role === 'staff' ? (req._staffName || process.env.STAFF_NAME || 'Staff') : undefined,
         display_name: role === 'staff' ? (req._staffName || process.env.STAFF_NAME || 'Staff') : (process.env.ADMIN_NAME || 'Amos Osho') });
     }
