@@ -236,7 +236,7 @@ async function payLink(b, req, res) {
 
   const deposit = Math.round(value * PRICES.depositRate);
   const klarnaOk = value <= PRICES.klarnaMax;
-  const depositOk = b.o !== 'full';   // office can send a pay-in-full-only link
+  const depositOk = false;   // office payment links offer only card in full or Klarna (no deposit)
   if (b.mode === 'info') {
     return res.status(200).json({
       first: String(q.name || '').split(' ')[0], total: value, deposit, depositOk, klarnaOk, klarnaMax: PRICES.klarnaMax,

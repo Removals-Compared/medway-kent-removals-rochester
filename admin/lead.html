@@ -387,9 +387,8 @@
         </div>
       </span>
       <button class="btn green" id="send-deposit" type="button">&#128183; WhatsApp 10% deposit link</button>
-      <button class="btn" id="send-paylink" type="button" style="background:#ffb3c7;color:#17120f;border-color:#ffb3c7;font-weight:800">&#128279; WhatsApp payment link (Klarna / card / deposit)</button>
+      <button class="btn" id="send-paylink" type="button" style="background:#ffb3c7;color:#17120f;border-color:#ffb3c7;font-weight:800">&#128279; WhatsApp payment link (Klarna / card)</button>
       <button class="btn" id="copy-paylink" type="button">Copy payment link</button>
-      <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px;margin-left:6px"><input type="checkbox" id="paylink-nodep"> No deposit option (pay in full only)</label>
     </div>
     <p class="flash" id="flash-left"></p>
     <div class="cols">
@@ -1052,7 +1051,7 @@
       const v = Math.round(Number(d && d.quote && d.quote.value) || 0);
       if (!v || v < 100){ flash('flash-left', 'Set the Job value in the Money box and press Save value first, then send the link.', false); return null; }
       if (!d.pay_token){ flash('flash-left', 'Payment link is not available for this login.', false); return null; }
-      const nodep = $('paylink-nodep') && $('paylink-nodep').checked;
+      const nodep = false;
       return 'https://www.medwaykentremovals.co.uk/pay-link?l=' + encodeURIComponent(LEAD_ID) + '&t=' + encodeURIComponent(nodep ? d.pay_token_full : d.pay_token) + (nodep ? '&o=full' : '');
     }
     if ($('send-paylink')) $('send-paylink').addEventListener('click', async () => {
@@ -1061,11 +1060,11 @@
       const waNum = String(QUOTE.phone).replace(/[^\d]/g, '').replace(/^0/, '44');
       const first = (QUOTE.name || 'there').split(' ')[0];
       const msg = 'Hi ' + first + ', here is your secure payment link for your move with Medway and Kent Removals: ' + url
-        + (($('paylink-nodep') && $('paylink-nodep').checked) ? ' \u2014 you can pay in full by card' + (Number(QUOTE.value) <= 2000 ? ' or with Klarna' : '') : ' \u2014 you can pay a 10% deposit, pay in full by card' + (Number(QUOTE.value) <= 2000 ? ', or pay in full with Klarna' : '')) + '. Any questions, just reply here. Thanks!';
+        + (' \u2014 you can pay in full by card' + (Number(QUOTE.value) <= 2000 ? ' or with Klarna' : '')) + '. Any questions, just reply here. Thanks!';
       window.open('https://wa.me/' + waNum + '?text=' + encodeURIComponent(msg), '_blank');
       try {
         const r = await api('/api/admin/quote/' + LEAD_ID + '/note', { method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ text: 'Payment link (Klarna / card / deposit) opened in WhatsApp for ' + QUOTE.phone }) });
+          body: JSON.stringify({ text: 'Payment link (Klarna / card) opened in WhatsApp for ' + QUOTE.phone }) });
         if (r.ok){ QUOTE = (await r.json()).quote; render(); }
       } catch {}
     });
