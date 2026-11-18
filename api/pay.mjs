@@ -20,6 +20,7 @@ import { createQuote, updateQuote, getQuote, appendNote, logActivity } from './a
 import { q as sqlQuery } from './admin/_sql.mjs';
 import { LOGO_PNG_B64 } from './_brand.mjs';
 import { confirmationEmail } from './_email-confirmation.mjs';
+import { payTokenOk } from './_paylink.mjs';
 import { PRICES, isPostcode, tidyPostcode, journeyMinutes, hoursCharged, priceFor } from './_pricing.mjs';
 
 // Stripe needs the exact raw bytes to check its signature.
@@ -216,6 +217,72 @@ async function createCheckout(req, res, raw) {
   return res.status(200).json({ url: session.url, total, amount: amountPence / 100, hours, minutes: mins });
 }
 
+
+// ════════════════════════════════════════════════════════════
+//  1b. Office-sent payment link  (page: /pay-link?l=<lead>&t=<token>)
+//  For a customer who did not pay at the time. Price = the lead's Job value
+//  in the admin (so it matches the quote they were given); the token proves
+//  the office sent the link and stops working if the value is changed.
+// ════════════════════════════════════════════════════════════
+async function payLink(b, req, res) {
+  const id = String(b.l || '').replace(/\D/g, '').slice(0, 12);
+  let q = null;
+  try { q = id ? await getQuote(id) : null; } catch (e) { console.error('paylink lookup', e); }
+  const value = q ? Math.round(Number(q.value)) : 0;
+  if (!q || q.status === 'deleted' || !(value >= 100 && value <= 20000) || !payTokenOk(id, value, b.t)) {
+    return res.status(404).json({ error: 'This payment link is not valid any more. Please call 01634 971005.' });
+  }
+  if (q.payment_status === 'paid') return res.status(409).json({ error: 'This booking has already been paid. Thank you!' });
+
+  const deposit = Math.round(value * PRICES.depositRate);
+  const klarnaOk = value <= PRICES.klarnaMax;
+  if (b.mode === 'info') {
+    return res.status(200).json({
+      first: String(q.name || '').split(' ')[0], total: value, deposit, klarnaOk, klarnaMax: PRICES.klarnaMax,
+      size: q.property_size || '', from: q.from_postcode || '', to: q.to_postcode || '', move_date: q.move_date || '',
+    });
+  }
+  const option = b.pay === 'klarna' ? 'klarna' : (b.pay === 'full' ? 'full' : 'deposit');
+  if (option === 'klarna' && !klarnaOk) return res.status(400).json({ error: 'Klarna is not available for this amount. Please choose card, or call 01634 971005.' });
+  let amountPence = option === 'deposit' ? Math.round(value * 100 * PRICES.depositRate) : value * 100;
+  const testPence = Number(process.env.STRIPE_TEST_AMOUNT_PENCE);
+  if (!isProd() && testPence >= 50) amountPence = testPence;
+
+  const host = req.headers['x-forwarded-host'] || req.headers.host || '';
+  const base = process.env.SITE_URL || (isProd() ? SITE : `${/localhost|127\.0\.0\.1/.test(host) ? 'http' : 'https'}://${host}`);
+  const detail = `${q.property_size || 'Move'}, ${q.from_postcode || ''} to ${q.to_postcode || ''}, ${q.move_date || ''}`;
+  let session;
+  try {
+    session = await stripe('POST', '/checkout/sessions', {
+      mode: 'payment',
+      excluded_payment_method_types: [option === 'klarna' ? 'card' : 'klarna'],
+      customer_email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.email || '') ? q.email : undefined,
+      client_reference_id: String(id),
+      line_items: [{
+        quantity: 1,
+        price_data: {
+          currency: 'gbp', unit_amount: amountPence,
+          product_data: {
+            name: option === 'klarna' ? 'Removal, paid in full with Klarna' : (option === 'full' ? 'Removal, paid in full' : 'Removal booking deposit (10%)'),
+            description: detail,
+          },
+        },
+      }],
+      payment_intent_data: { description: `MKR ${option === 'deposit' ? 'deposit' : 'full payment'} (office link): ${detail}` },
+      metadata: { lead_id: String(id), option, total_pounds: String(value) },
+      success_url: `${base}/booking-confirmed?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${base}/pay-link?l=${id}&t=${encodeURIComponent(String(b.t))}&cancelled=1`,
+    });
+  } catch (e) {
+    console.error('paylink checkout failed', e);
+    return res.status(502).json({ error: 'Payment could not be started. Please try again or call 01634 971005.' });
+  }
+  try {
+    await updateQuote(id, { payment_status: 'awaiting', payment_option: option, stripe_session_id: session.id, updated_at: new Date().toISOString() });
+  } catch (e) { console.error('paylink payment fields failed', e); }
+  return res.status(200).json({ url: session.url });
+}
+
 // ════════════════════════════════════════════════════════════
 //  2. Stripe → webhook
 // ════════════════════════════════════════════════════════════
@@ -292,5 +359,9 @@ export default async function handler(req, res) {
   }
   if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return res.status(405).json({ error: 'Method not allowed' }); }
   const raw = await rawBody(req);
-  return req.headers['stripe-signature'] ? handleWebhook(req, res, raw) : createCheckout(req, res, raw);
+  if (req.headers['stripe-signature']) return handleWebhook(req, res, raw);
+  let peek = null;
+  try { peek = JSON.parse(raw.toString('utf8') || '{}'); } catch {}
+  if (peek && peek.paylink) return payLink(peek, req, res);
+  return createCheckout(req, res, raw);
 }
