@@ -3,13 +3,13 @@
 // in the admin, old links stop working. Forging one needs ADMIN_SESSION_SECRET.
 import crypto from 'crypto';
 
-export function payToken(id, value) {
+export function payToken(id, value, opts = '') {
   return crypto.createHmac('sha256', process.env.ADMIN_SESSION_SECRET || '')
-    .update(`paylink.${String(id)}.${Math.round(Number(value) || 0)}`).digest('hex').slice(0, 24);
+    .update(`paylink.${String(id)}.${Math.round(Number(value) || 0)}` + (opts ? `.${opts}` : '')).digest('hex').slice(0, 24);
 }
 
-export function payTokenOk(id, value, given) {
-  const want = payToken(id, value), got = String(given || '');
+export function payTokenOk(id, value, given, opts = '') {
+  const want = payToken(id, value, opts), got = String(given || '');
   return !!process.env.ADMIN_SESSION_SECRET && got.length === want.length
     && crypto.timingSafeEqual(Buffer.from(got), Buffer.from(want));
 }

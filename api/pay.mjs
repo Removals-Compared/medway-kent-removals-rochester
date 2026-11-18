@@ -229,20 +229,22 @@ async function payLink(b, req, res) {
   let q = null;
   try { q = id ? await getQuote(id) : null; } catch (e) { console.error('paylink lookup', e); }
   const value = q ? Math.round(Number(q.value)) : 0;
-  if (!q || q.status === 'deleted' || !(value >= 100 && value <= 20000) || !payTokenOk(id, value, b.t)) {
+  if (!q || q.status === 'deleted' || !(value >= 100 && value <= 20000) || !payTokenOk(id, value, b.t, b.o === 'full' ? 'full' : '')) {
     return res.status(404).json({ error: 'This payment link is not valid any more. Please call 01634 971005.' });
   }
   if (q.payment_status === 'paid') return res.status(409).json({ error: 'This booking has already been paid. Thank you!' });
 
   const deposit = Math.round(value * PRICES.depositRate);
   const klarnaOk = value <= PRICES.klarnaMax;
+  const depositOk = b.o !== 'full';   // office can send a pay-in-full-only link
   if (b.mode === 'info') {
     return res.status(200).json({
-      first: String(q.name || '').split(' ')[0], total: value, deposit, klarnaOk, klarnaMax: PRICES.klarnaMax,
+      first: String(q.name || '').split(' ')[0], total: value, deposit, depositOk, klarnaOk, klarnaMax: PRICES.klarnaMax,
       size: q.property_size || '', from: q.from_postcode || '', to: q.to_postcode || '', move_date: q.move_date || '',
     });
   }
   const option = b.pay === 'klarna' ? 'klarna' : (b.pay === 'full' ? 'full' : 'deposit');
+  if (option === 'deposit' && !depositOk) return res.status(400).json({ error: 'Please choose to pay in full.' });
   if (option === 'klarna' && !klarnaOk) return res.status(400).json({ error: 'Klarna is not available for this amount. Please choose card, or call 01634 971005.' });
   let amountPence = option === 'deposit' ? Math.round(value * 100 * PRICES.depositRate) : value * 100;
   const testPence = Number(process.env.STRIPE_TEST_AMOUNT_PENCE);
@@ -271,7 +273,7 @@ async function payLink(b, req, res) {
       payment_intent_data: { description: `MKR ${option === 'deposit' ? 'deposit' : 'full payment'} (office link): ${detail}` },
       metadata: { lead_id: String(id), option, total_pounds: String(value) },
       success_url: `${base}/booking-confirmed?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${base}/pay-link?l=${id}&t=${encodeURIComponent(String(b.t))}&cancelled=1`,
+      cancel_url: `${base}/pay-link?l=${id}&t=${encodeURIComponent(String(b.t))}${depositOk ? '' : '&o=full'}&cancelled=1`,
     });
   } catch (e) {
     console.error('paylink checkout failed', e);

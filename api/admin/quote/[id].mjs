@@ -94,6 +94,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ quote, appointments, reminders, duplicates, role,
         accept_token: role === 'staff' ? undefined : acceptToken(id),
         pay_token: role === 'staff' ? undefined : payToken(id, quote.value),
+        pay_token_full: role === 'staff' ? undefined : payToken(id, quote.value, 'full'),
         staff_name: role === 'staff' ? (req._staffName || process.env.STAFF_NAME || 'Staff') : undefined,
         display_name: role === 'staff' ? (req._staffName || process.env.STAFF_NAME || 'Staff') : (process.env.ADMIN_NAME || 'Amos Osho') });
     }
