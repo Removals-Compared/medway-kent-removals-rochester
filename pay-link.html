@@ -26,20 +26,20 @@ a{color:#c94d1e}
 <div class="card" id="card"><p class="sub">Loading your booking&hellip;</p></div>
 <script>
 (function(){
-  var qs=new URLSearchParams(location.search), L=qs.get('l'), T=qs.get('t'), card=document.getElementById('card');
+  var qs=new URLSearchParams(location.search), L=qs.get('l'), T=qs.get('t'), O=qs.get('o')==='full'?'full':'', card=document.getElementById('card');
   function gbp(n){return '\u00a3'+Number(n).toLocaleString('en-GB')}
   function esc(s){return String(s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
   function post(b){return fetch('/api/pay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})})}
   function fail(m){card.innerHTML='<h1>Payment link</h1><p class="sub">'+esc(m)+'</p><p class="sub"><a href="tel:01634971005">Call 01634 971005</a></p>'}
   if(!L||!T){fail('This payment link is not valid. Please call us and we will help.');return}
-  post({paylink:1,mode:'info',l:L,t:T}).then(function(x){
+  post({paylink:1,mode:'info',l:L,t:T,o:O}).then(function(x){
     if(!x.ok){fail(x.j.error||'This payment link is not valid any more.');return}
     var d=x.j, mv='';
     if(d.move_date){try{mv=new Date(d.move_date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}catch(e){}}
     var h='<h1>Hi '+esc(d.first||'there')+', pay for your move</h1><p class="sub">Choose how you would like to pay. It takes a minute and goes through Stripe, our secure payment provider.</p>';
     h+='<div class="sum"><b>Your fixed price: '+gbp(d.total)+'</b><br>'+esc(d.size)+(d.from?' &middot; '+esc(d.from)+' to '+esc(d.to):'')+(mv?'<br>Move date: '+esc(mv):'')+'</div>';
-    h+='<label class="opt sel" id="o-deposit"><input type="radio" name="pay" value="deposit" checked><b>Pay a 10% deposit: '+gbp(d.deposit)+'</b><span>Secures your date. The rest is paid to the crew on moving day.</span></label>';
-    h+='<label class="opt" id="o-full"><input type="radio" name="pay" value="full"><b>Pay in full by card: '+gbp(d.total)+'</b><span>Nothing to pay on the day.</span></label>';
+    if(d.depositOk)h+='<label class="opt sel" id="o-deposit"><input type="radio" name="pay" value="deposit" checked><b>Pay a 10% deposit: '+gbp(d.deposit)+'</b><span>Secures your date. The rest is paid to the crew on moving day.</span></label>';
+    h+='<label class="opt'+(d.depositOk?'':' sel')+'" id="o-full"><input type="radio" name="pay" value="full"'+(d.depositOk?'':' checked')+'><b>Pay in full by card: '+gbp(d.total)+'</b><span>Nothing to pay on the day.</span></label>';
     if(d.klarnaOk)h+='<label class="opt klarna" id="o-klarna"><input type="radio" name="pay" value="klarna"><b>Pay in full with Klarna<span class="badge">Klarna</span></b><span>Choose Klarna at checkout and see the payment options Klarna offers you. Subject to status.</span></label>';
     h+='<button id="go">Continue to secure payment</button><div class="err" id="err">'+(qs.get('cancelled')?'Payment was cancelled. You can choose again when you are ready.':'')+'</div>';
     h+='<p class="small">Questions? Call <a href="tel:01634971005">01634 971005</a>.</p>';
@@ -48,7 +48,7 @@ a{color:#c94d1e}
     card.querySelectorAll('input[name=pay]').forEach(function(r){r.addEventListener('change',function(){opts.forEach(function(o){o.classList.toggle('sel',o.querySelector('input').checked)})})});
     document.getElementById('go').addEventListener('click',function(){
       var b=this, pay=card.querySelector('input[name=pay]:checked').value; b.disabled=true; b.textContent='Taking you to secure payment\u2026';
-      post({paylink:1,mode:'go',l:L,t:T,pay:pay}).then(function(y){
+      post({paylink:1,mode:'go',l:L,t:T,o:O,pay:pay}).then(function(y){
         if(y.ok&&y.j.url){location.href=y.j.url;return}
         document.getElementById('err').textContent=y.j.error||'Something went wrong. Please call 01634 971005.';b.disabled=false;b.textContent='Continue to secure payment';
       }).catch(function(){document.getElementById('err').textContent='Something went wrong. Please call 01634 971005.';b.disabled=false;b.textContent='Continue to secure payment'});
