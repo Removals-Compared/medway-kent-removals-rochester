@@ -183,7 +183,7 @@ async function createCheckout(req, res, raw) {
       mode: 'payment',
       // Methods come from the Stripe dashboard (dynamic payment methods).
       // Keep Klarna off the small deposit, and card off the Klarna option.
-      excluded_payment_method_types: [option === 'klarna' ? 'card' : 'klarna'],
+      excluded_payment_method_types: [option === 'klarna' ? 'card' : 'klarna', 'afterpay_clearpay'],
       customer_email: email,
       client_reference_id: String(leadId),
       line_items: [{
@@ -236,15 +236,17 @@ async function payLink(b, req, res) {
 
   const deposit = Math.round(value * PRICES.depositRate);
   const klarnaOk = value <= PRICES.klarnaMax;
+  const clearpayOk = value <= PRICES.clearpayMax;
   const depositOk = false;   // office payment links offer only card in full or Klarna (no deposit)
   if (b.mode === 'info') {
     return res.status(200).json({
-      first: String(q.name || '').split(' ')[0], total: value, deposit, depositOk, klarnaOk, klarnaMax: PRICES.klarnaMax,
+      first: String(q.name || '').split(' ')[0], total: value, deposit, depositOk, klarnaOk, clearpayOk, klarnaMax: PRICES.klarnaMax,
       size: q.property_size || '', from: q.from_postcode || '', to: q.to_postcode || '', move_date: q.move_date || '',
     });
   }
-  const option = b.pay === 'klarna' ? 'klarna' : (b.pay === 'full' ? 'full' : 'deposit');
+  const option = b.pay === 'klarna' ? 'klarna' : (b.pay === 'clearpay' ? 'clearpay' : (b.pay === 'full' ? 'full' : 'deposit'));
   if (option === 'deposit' && !depositOk) return res.status(400).json({ error: 'Please choose to pay in full.' });
+  if (option === 'clearpay' && !clearpayOk) return res.status(400).json({ error: 'Clearpay is not available for this amount. Please choose card or Klarna, or call 01634 971005.' });
   if (option === 'klarna' && !klarnaOk) return res.status(400).json({ error: 'Klarna is not available for this amount. Please choose card, or call 01634 971005.' });
   let amountPence = option === 'deposit' ? Math.round(value * 100 * PRICES.depositRate) : value * 100;
   const testPence = Number(process.env.STRIPE_TEST_AMOUNT_PENCE);
@@ -257,7 +259,9 @@ async function payLink(b, req, res) {
   try {
     session = await stripe('POST', '/checkout/sessions', {
       mode: 'payment',
-      excluded_payment_method_types: [option === 'klarna' ? 'card' : 'klarna'],
+      ...(option === 'clearpay'
+        ? { payment_method_types: ['afterpay_clearpay'], shipping_address_collection: { allowed_countries: ['GB'] } }
+        : { excluded_payment_method_types: [option === 'klarna' ? 'card' : 'klarna', 'afterpay_clearpay'] }),
       customer_email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.email || '') ? q.email : undefined,
       client_reference_id: String(id),
       line_items: [{
@@ -265,7 +269,7 @@ async function payLink(b, req, res) {
         price_data: {
           currency: 'gbp', unit_amount: amountPence,
           product_data: {
-            name: option === 'klarna' ? 'Removal, paid in full with Klarna' : (option === 'full' ? 'Removal, paid in full' : 'Removal booking deposit (10%)'),
+            name: option === 'klarna' ? 'Removal, paid in full with Klarna' : (option === 'clearpay' ? 'Removal, paid in full with Clearpay' : (option === 'full' ? 'Removal, paid in full' : 'Removal booking deposit (10%)')),
             description: detail,
           },
         },
@@ -309,7 +313,7 @@ async function handleWebhook(req, res, raw) {
     const paid = (s.amount_total || 0) / 100;
     const option = s.metadata.option;
     // Ask Stripe how they actually paid; fall back to the option chosen.
-    let method = option === 'klarna' ? 'klarna' : 'card';
+    let method = option === 'klarna' ? 'klarna' : (option === 'clearpay' ? 'afterpay_clearpay' : 'card');
     try {
       const full = await stripe('GET', `/checkout/sessions/${s.id}?expand[]=payment_intent.latest_charge`);
       const t = full.payment_intent && full.payment_intent.latest_charge && full.payment_intent.latest_charge.payment_method_details;
@@ -320,8 +324,8 @@ async function handleWebhook(req, res, raw) {
       stripe_session_id: s.id, status: 'move_booked', updated_at: new Date().toISOString(),
     });
     const total = Number(s.metadata.total_pounds) || Number(q.value) || paid;
-    const fullPay = option === 'klarna' || option === 'full';
-    const what = option === 'klarna' ? `paid in full with Klarna (${gbp(paid)})` : fullPay ? `paid in full by card (${gbp(paid)})` : `deposit paid by card (${gbp(paid)}), balance ${gbp(total - paid)} on the day`;
+    const fullPay = option === 'klarna' || option === 'full' || option === 'clearpay';
+    const what = option === 'klarna' ? `paid in full with Klarna (${gbp(paid)})` : option === 'clearpay' ? `paid in full with Clearpay (${gbp(paid)})` : fullPay ? `paid in full by card (${gbp(paid)})` : `deposit paid by card (${gbp(paid)}), balance ${gbp(total - paid)} on the day`;
     try { await appendNote(leadId, `Online payment received: ${what}. Stripe session ${s.id}`); } catch {}
     await logActivity({ actor: q.name || 'Customer', action: 'paid online', lead_id: leadId, lead_name: q.name, detail: what });
 
@@ -337,7 +341,7 @@ async function handleWebhook(req, res, raw) {
       moveDate: fmtDate(q.move_date), size: q.property_size, vans: vansMatch ? Number(vansMatch[1]) : 0,
       from: q.address || q.from_postcode, to: q.to_address || q.to_postcode,
       price: gbp(total), paid: gbp(paid),
-      paidLabel: option === 'klarna' ? 'Paid today with Klarna' : fullPay ? 'Paid in full by card' : 'Deposit paid (10%)',
+      paidLabel: option === 'klarna' ? 'Paid today with Klarna' : option === 'clearpay' ? 'Paid today with Clearpay' : fullPay ? 'Paid in full by card' : 'Deposit paid (10%)',
       balance: fullPay ? '£0' : gbp(total - paid),
       balanceNote: fullPay ? 'Paid in full, nothing to pay on the day' : 'Payable to the crew on moving day',
       packing: /Packing: customer/.test(q.notes || ''),
