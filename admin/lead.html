@@ -387,7 +387,7 @@
         </div>
       </span>
       <button class="btn green" id="send-deposit" type="button">&#128183; WhatsApp 10% deposit link</button>
-      <button class="btn" id="send-paylink" type="button" style="background:#ffb3c7;color:#17120f;border-color:#ffb3c7;font-weight:800">&#128279; WhatsApp payment link (Klarna / card)</button>
+      <button class="btn" id="send-paylink" type="button" style="background:#ffb3c7;color:#17120f;border-color:#ffb3c7;font-weight:800">&#128279; WhatsApp payment link (Klarna / Clearpay / card)</button>
       <button class="btn" id="copy-paylink" type="button">Copy payment link</button>
     </div>
     <p class="flash" id="flash-left"></p>
@@ -1060,11 +1060,11 @@
       const waNum = String(QUOTE.phone).replace(/[^\d]/g, '').replace(/^0/, '44');
       const first = (QUOTE.name || 'there').split(' ')[0];
       const msg = 'Hi ' + first + ', here is your secure payment link for your move with Medway and Kent Removals: ' + url
-        + (' \u2014 you can pay in full by card' + (Number(QUOTE.value) <= 2000 ? ' or with Klarna' : '')) + '. Any questions, just reply here. Thanks!';
+        + (' \u2014 you can pay in full by card' + (Number(QUOTE.value) <= 2000 ? (Number(QUOTE.value) <= 1200 ? ', with Klarna or with Clearpay' : ' or with Klarna') : '')) + '. Any questions, just reply here. Thanks!';
       window.open('https://wa.me/' + waNum + '?text=' + encodeURIComponent(msg), '_blank');
       try {
         const r = await api('/api/admin/quote/' + LEAD_ID + '/note', { method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ text: 'Payment link (Klarna / card) opened in WhatsApp for ' + QUOTE.phone }) });
+          body: JSON.stringify({ text: 'Payment link (Klarna / Clearpay / card) opened in WhatsApp for ' + QUOTE.phone }) });
         if (r.ok){ QUOTE = (await r.json()).quote; render(); }
       } catch {}
     });

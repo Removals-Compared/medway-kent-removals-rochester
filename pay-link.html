@@ -14,6 +14,8 @@ h1{font-size:23px;margin:0 0 6px}.sub{font-size:14.5px;color:#3a4763;line-height
 .opt input{margin-right:10px}.opt b{font-size:15.5px}.opt span{display:block;font-size:13px;color:#4a5670;margin:3px 0 0 26px}
 .opt.sel{border-color:#c94d1e;background:#fff8f3}
 .opt.klarna.sel{border-color:#ff8fb0;background:#fff0f5}
+.opt.clearpay.sel{border-color:#7ae0c3;background:#f0fcf8}
+.badge.cp{background:#b2fce4}
 .badge{display:inline-block;background:#ffb3c7;color:#17120f;font-size:11px;font-weight:800;border-radius:5px;padding:2px 7px;margin-left:6px}
 button{width:100%;border:0;border-radius:10px;background:#c94d1e;color:#fff;font:700 16px inherit;padding:14px;cursor:pointer;margin-top:6px}
 button[disabled]{opacity:.6;cursor:default}
@@ -41,6 +43,7 @@ a{color:#c94d1e}
     if(d.depositOk)h+='<label class="opt sel" id="o-deposit"><input type="radio" name="pay" value="deposit" checked><b>Pay a 10% deposit: '+gbp(d.deposit)+'</b><span>Secures your date. The rest is paid to the crew on moving day.</span></label>';
     h+='<label class="opt'+(d.depositOk?'':' sel')+'" id="o-full"><input type="radio" name="pay" value="full"'+(d.depositOk?'':' checked')+'><b>Pay in full by card: '+gbp(d.total)+'</b><span>Nothing to pay on the day.</span></label>';
     if(d.klarnaOk)h+='<label class="opt klarna" id="o-klarna"><input type="radio" name="pay" value="klarna"><b>Pay in full with Klarna<span class="badge">Klarna</span></b><span>Choose Klarna at checkout and see the payment options Klarna offers you. Subject to status.</span></label>';
+    if(d.clearpayOk)h+='<label class="opt clearpay" id="o-clearpay"><input type="radio" name="pay" value="clearpay"><b>Pay in full with Clearpay<span class="badge cp">Clearpay</span></b><span>Choose Clearpay at checkout and see the payment plan Clearpay offers you. Subject to status.</span></label>';
     h+='<button id="go">Continue to secure payment</button><div class="err" id="err">'+(qs.get('cancelled')?'Payment was cancelled. You can choose again when you are ready.':'')+'</div>';
     h+='<p class="small">Questions? Call <a href="tel:01634971005">01634 971005</a>.</p>';
     card.innerHTML=h;
