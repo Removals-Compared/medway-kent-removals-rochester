@@ -8,7 +8,7 @@
     },
     {
       "path": "/api/admin/reminders-run?welcome=1",
-      "schedule": "*/5 * * * *"
+      "schedule": "*/20 * * * *"
     },
     {
       "path": "/api/admin/marketing?run=1",
