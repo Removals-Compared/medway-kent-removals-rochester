@@ -227,6 +227,17 @@
   const LEAD_ID = resolveId();
 
   const $ = (id) => document.getElementById(id);
+  function payBadge(r){
+      r = r || {};
+      const paid = r.payment_status === 'paid';
+      const m = String(paid ? (r.payment_method || r.payment_option) : '').toLowerCase();
+      if (paid) {
+        const kind = /klarna/.test(m) ? ['Klarna', '#ffb3c7'] : /clearpay|afterpay/.test(m) ? ['Clearpay', '#b2fce4'] : ['Card', '#cfe3ff'];
+        return '<span class="iq-badge" style="background:' + kind[1] + '" title="Paid online">PAID &middot; ' + kind[0] + '</span>';
+      }
+      return /(INSTANT QUOTE, DETAILS GIVEN|Instant quote & pay)/i.test(String(r.notes || ''))
+        ? '<span class="iq-badge" title="Came through the instant quote page">Klarna instant quote</span>' : '';
+    }
 
   // Reusable Monzo deposit link — the same link works for every customer.
   const DEPOSIT_LINK = 'https://monzo.com/pay/r/medway-and-kent-removals_mGjPKnMLgxT2qk';
@@ -402,10 +413,11 @@
           <!-- View mode -->
           <div id="details-view">
             <dl>
-              <dt>Name</dt><dd>${esc(q.name||'—')}${/(INSTANT QUOTE, DETAILS GIVEN|Instant quote & pay)/i.test(String(q.notes||'')) ? '<span class="iq-badge" title="Came through the instant quote page">Klarna instant quote</span>' : ''}</dd>
+              <dt>Name</dt><dd>${esc(q.name||'—')}${payBadge(q)}</dd>
               <dt>Phone</dt><dd>${q.phone?`<a href="tel:${esc(q.phone)}">${esc(q.phone)}</a> &nbsp;<a href="https://wa.me/${waPhone}?text=${encodeURIComponent('Hi ' + (q.name||'').split(' ')[0] + ', it\'s Medway & Kent Removals about your removals quote.')}" target="_blank" rel="noopener" style="background:#1EBE57;color:#fff;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:12px;text-decoration:none">WhatsApp</a>`:'—'}</dd>
               <dt>Email</dt><dd>${q.email?`<a href="mailto:${esc(q.email)}">${esc(q.email)}</a>`:'—'}</dd>
               <dt>Service</dt><dd>${esc(q.service||'—')}</dd>
+              ${q.payment_status ? `<dt>Payment</dt><dd>${esc(({paid:'Paid',awaiting:'Awaiting payment'})[q.payment_status] || q.payment_status)}${q.payment_status==='paid' ? ' &middot; &pound;' + Number(q.amount_paid||0).toLocaleString('en-GB') + ' by ' + esc(/klarna/i.test(q.payment_method||'') ? 'Klarna' : /clearpay|afterpay/i.test(q.payment_method||'') ? 'Clearpay' : 'card') + (q.paid_at ? ' on ' + esc(String(q.paid_at).slice(0,10)) : '') : (q.payment_option ? ' (' + esc(q.payment_option) + ')' : '')}</dd>` : ''}
               <dt>Source</dt><dd>${({phone:'Phone call',lsa:'Google Local Services',whatsapp:'WhatsApp',referral:'Referral',website:'Website',other:'Other'})[q.source] || (q.source ? esc(q.source) : 'Website (untagged)')}</dd>
               ${(document.body.classList.contains('staff') && q.value !== undefined && q.value !== null && q.value !== '') ? `<dt>Quoted price</dt><dd>&pound;${Number(q.value).toLocaleString('en-GB')}</dd>` : ''}
               <dt>Moving from</dt><dd>${q.from_postcode ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q.from_postcode)}" target="_blank" rel="noopener" title="Open in Google Maps">${esc(q.from_postcode)} &#128205;</a>` : '—'}</dd>
