@@ -260,7 +260,7 @@ async function payLink(b, req, res) {
     session = await stripe('POST', '/checkout/sessions', {
       mode: 'payment',
       ...(option === 'clearpay'
-        ? { payment_method_types: ['afterpay_clearpay'], shipping_address_collection: { allowed_countries: ['GB'] } }
+        ? { excluded_payment_method_types: ['card', 'klarna', 'link', 'revolut_pay', 'amazon_pay'], shipping_address_collection: { allowed_countries: ['GB'] } }
         : { excluded_payment_method_types: [option === 'klarna' ? 'card' : 'klarna', 'afterpay_clearpay'] }),
       customer_email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.email || '') ? q.email : undefined,
       client_reference_id: String(id),
