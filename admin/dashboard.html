@@ -512,9 +512,18 @@
     if ($('select-all')) $('select-all').checked = false;
     if (!rows.length){ $('rows').innerHTML = '<tr><td colspan="10" class="empty">No leads match. New website enquiries land here automatically.</td></tr>'; return; }
     const today = new Date().toISOString().slice(0,10);
-    const isIQ = (r) => /(INSTANT QUOTE, DETAILS GIVEN|Instant quote & pay)/i.test(String(r && r.notes || ''));
-    const iqBadge = (r) => isIQ(r) ? '<span class="iq-badge" title="Came through the instant quote page">Klarna instant quote</span>' : '';
-    $('rows').innerHTML = rows.map((r) => {
+    function payBadge(r){
+      r = r || {};
+      const paid = r.payment_status === 'paid';
+      const m = String(paid ? (r.payment_method || r.payment_option) : '').toLowerCase();
+      if (paid) {
+        const kind = /klarna/.test(m) ? ['Klarna', '#ffb3c7'] : /clearpay|afterpay/.test(m) ? ['Clearpay', '#b2fce4'] : ['Card', '#cfe3ff'];
+        return '<span class="iq-badge" style="background:' + kind[1] + '" title="Paid online">PAID &middot; ' + kind[0] + '</span>';
+      }
+      return /(INSTANT QUOTE, DETAILS GIVEN|Instant quote & pay)/i.test(String(r.notes || ''))
+        ? '<span class="iq-badge" title="Came through the instant quote page">Klarna instant quote</span>' : '';
+    }
+        $('rows').innerHTML = rows.map((r) => {
       const st = r.status || 'new';
       const rem = r.reminder;
       const remHtml = rem
@@ -522,7 +531,7 @@
         : '';
       return `<tr data-id="${esc(r.id)}">
         <td class="cb-col"><input type="checkbox" class="row-cb" data-id="${esc(r.id)}"></td>
-        <td><strong>${esc(r.name||'—')}</strong>${iqBadge(r)}<div class="sub">${esc(r.email||'')}</div>${remHtml}</td>
+        <td><strong>${esc(r.name||'—')}</strong>${payBadge(r)}<div class="sub">${esc(r.email||'')}</div>${remHtml}</td>
         <td><select class="pill-select pill ${st}" data-id="${esc(r.id)}">${STATUSES.filter(([k]) => k !== 'all').map(([k,l]) => `<option value="${k}" ${k===st?'selected':''}>${l}</option>`).join('')}<option value="lost" ${st==='lost'?'selected':''}>Lost</option></select></td>
         <td>${fmtDate(r.move_date)}</td>
         <td>${fmtDate(r.created_at)}</td>
