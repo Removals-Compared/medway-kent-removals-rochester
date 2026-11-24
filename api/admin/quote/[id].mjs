@@ -5,7 +5,75 @@ import { payToken } from '../../_paylink.mjs';
 import {
   getQuote, updateQuote, deleteQuote, fetchAppointmentsByLeadIds,
   fetchRemindersByLeadIds, appendNote, logActivity, fetchDuplicates,
+  listAttachments, addAttachment, getAttachment, deleteAttachment,
 } from '../_db.mjs';
+
+// ── Lead attachments ─────────────────────────────────────────
+// Only these types can be attached. PDFs and images open in the browser;
+// office files download. Nothing that can run script (html, svg) is allowed.
+const ATT_TYPES = {
+  'application/pdf': true,
+  'image/jpeg': true, 'image/png': true, 'image/webp': true,
+  'application/msword': false,
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': false,
+  'application/vnd.ms-excel': false,
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': false,
+  'text/plain': false, 'text/csv': false,
+};
+const ATT_MAX_BYTES = 3 * 1024 * 1024; // stays under Vercel's 4.5 MB body limit once base64-encoded
+const cleanName = (n) => String(n || 'file').replace(/[\u0000-\u001f\u007f"\\/<>:|?*]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 140) || 'file';
+
+// Quotes and invoices carry prices, so attachments are admin-only,
+// in line with every other money field on the lead.
+async function handleAttachments(req, res, role, id, att) {
+  if (role === 'staff') return res.status(403).json({ error: 'attachments are not available on the staff login' });
+  const actor = process.env.ADMIN_NAME || 'Amos Osho';
+
+  if (req.method === 'GET') {
+    if (att === 'list') return res.status(200).json({ attachments: await listAttachments(id) });
+    if (!/^\d+$/.test(String(att))) return res.status(400).json({ error: 'bad attachment id' });
+    const f = await getAttachment(id, att);
+    if (!f) return res.status(404).json({ error: 'attachment not found' });
+    const inline = ATT_TYPES[f.mime] === true;
+    const name = cleanName(f.filename);
+    res.setHeader('Content-Type', inline || ATT_TYPES[f.mime] === false ? f.mime : 'application/octet-stream');
+    res.setHeader('Content-Disposition',
+      `${inline ? 'inline' : 'attachment'}; filename="${name.replace(/[^\x20-\x7e]/g, '_')}"; filename*=UTF-8''${encodeURIComponent(name)}`);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'private, no-store');
+    return res.status(200).send(Buffer.from(f.data_b64, 'base64'));
+  }
+
+  if (req.method === 'POST') {
+    const b = req.body || {};
+    const mime = String(b.mime || '').toLowerCase();
+    if (!(mime in ATT_TYPES)) return res.status(400).json({ error: 'That file type cannot be attached. Use a PDF, image, Word, Excel or text file.' });
+    const data = String(b.data_b64 || '').replace(/^data:[^,]*,/, '');
+    if (!data || !/^[A-Za-z0-9+/]+={0,2}$/.test(data)) return res.status(400).json({ error: 'file data is missing or not valid' });
+    const size = Buffer.from(data, 'base64').length;
+    if (!size) return res.status(400).json({ error: 'the file is empty' });
+    if (size > ATT_MAX_BYTES) return res.status(413).json({ error: 'File is too large. The limit is 3 MB.' });
+    const lead = await getQuote(id);
+    if (!lead) return res.status(404).json({ error: 'not found' });
+    const filename = cleanName(b.filename);
+    const saved = await addAttachment(id, { filename, mime, size, data_b64: data, uploaded_by: actor });
+    try { await appendNote(id, `File attached by ${actor}: ${filename}`); } catch {}
+    await logActivity({ actor, action: 'attached a file', lead_id: id, lead_name: lead.name, detail: filename });
+    return res.status(200).json({ attachment: saved, attachments: await listAttachments(id) });
+  }
+
+  if (req.method === 'DELETE') {
+    if (!/^\d+$/.test(String(att))) return res.status(400).json({ error: 'bad attachment id' });
+    const gone = await deleteAttachment(id, att);
+    if (!gone) return res.status(404).json({ error: 'attachment not found' });
+    let nm = null; try { nm = (await getQuote(id)).name; } catch {}
+    try { await appendNote(id, `Attachment removed by ${actor}: ${gone.filename}`); } catch {}
+    await logActivity({ actor, action: 'removed an attachment', lead_id: id, lead_name: nm, detail: gone.filename });
+    return res.status(200).json({ success: true, attachments: await listAttachments(id) });
+  }
+
+  return res.status(405).json({ error: 'method not allowed' });
+}
 
 // Token the customer-facing accept link carries; forging it needs the secret.
 export function acceptToken(id) {
@@ -83,15 +151,22 @@ export default async function handler(req, res) {
   if (typeof id === 'string') id = id.replace(/\.html$/, '');
 
   try {
+    // /api/admin/quote/:id?att=list | ?att=<attachment id>
+    if (req.query.att !== undefined) return await handleAttachments(req, res, role, id, req.query.att);
+
     if (req.method === 'GET') {
       const quote = await getQuote(id);
       if (!quote) return res.status(404).json({ error: 'not found' });
+      // Attachment list rides along for admin; a failure here must never
+      // stop the lead itself from loading.
+      let attachments = [];
+      if (role !== 'staff') { try { attachments = await listAttachments(id); } catch (e) { console.error('attachments', e); } }
       const appointments = await fetchAppointmentsByLeadIds([id]);
       const reminders = await fetchRemindersByLeadIds([id]);
       // Staff sessions never receive money fields — stripped server-side.
       stripMoney(quote, role);
       const duplicates = await fetchDuplicates(id, quote.phone, quote.email);
-      return res.status(200).json({ quote, appointments, reminders, duplicates, role,
+      return res.status(200).json({ quote, appointments, reminders, duplicates, attachments, role,
         accept_token: role === 'staff' ? undefined : acceptToken(id),
         pay_token: role === 'staff' ? undefined : payToken(id, quote.value),
         pay_token_full: role === 'staff' ? undefined : payToken(id, quote.value, 'full'),

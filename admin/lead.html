@@ -106,6 +106,10 @@
   .flash.ok{ color:#15803d; } .flash.err{ color:var(--orange); }
   .note{ background:#fafbfc; border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-bottom:8px; font-size:14px; }
   .note .when{ color:#99a; font-size:12px; margin-top:4px; }
+  .att-row{ display:flex; align-items:center; gap:10px; }
+  .att-main{ flex:1; min-width:0; }
+  .att-main a{ color:inherit; font-weight:600; text-decoration:none; overflow-wrap:anywhere; }
+  .att-main a:hover{ text-decoration:underline; }
   .appt{ border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:10px; }
   .appt .when{ font-weight:700; } .appt .meta{ font-size:13px; color:#667; margin-top:4px; }
   .appt .tag{ font-size:11px; text-transform:uppercase; letter-spacing:.4px; font-weight:700; color:var(--orange); }
@@ -342,7 +346,7 @@
     return r;
   }
 
-  let QUOTE = null, APPTS = [], REMINDERS = [], DUPES = [], pendingFlash = null;
+  let QUOTE = null, APPTS = [], REMINDERS = [], DUPES = [], ATTS = [], pendingFlash = null;
 
   async function load(){
     if (!LEAD_ID){ $('content').innerHTML = '<p class="muted">No lead id supplied.</p>'; return; }
@@ -350,7 +354,7 @@
       const r = await api('/api/admin/quote/' + LEAD_ID);
       if (r.status === 404){ $('content').innerHTML = '<p class="muted">Lead not found.</p>'; return; }
       const data = await r.json();
-      QUOTE = data.quote; APPTS = data.appointments || []; REMINDERS = data.reminders || []; DUPES = data.duplicates || [];
+      QUOTE = data.quote; APPTS = data.appointments || []; REMINDERS = data.reminders || []; DUPES = data.duplicates || []; ATTS = data.attachments || [];
       if (data.role === 'staff') document.body.classList.add('staff');
       showStaffChip(data.display_name || data.staff_name || 'Admin');
       render();
@@ -511,6 +515,15 @@
           <p class="flash" id="flash-costs"></p>
         </div>
 
+        <div class="card staff-hide">
+          <h2>Attachments</h2>
+          <div id="att-list">${renderAtts()}</div>
+          <input type="file" id="att-file" hidden accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.txt,.csv">
+          <div class="btn-row"><button class="btn" id="att-add">&#128206; Attach a file</button></div>
+          <p class="flash" id="flash-att"></p>
+          <p class="muted" style="font-size:12px;margin-top:8px">Quotes, photos or signed forms, up to 3 MB each. Only the admin login can see these.</p>
+        </div>
+
         <div class="card">
           <h2>Internal notes</h2>
           <div id="notes-list">${
@@ -628,6 +641,71 @@
     const list = [...ROLES];
     if (chosen && !list.includes(chosen)) list.push(chosen);
     return list.map((r) => `<option${r === (chosen || 'Mover') ? ' selected' : ''}>${esc(r)}</option>`).join('');
+  }
+
+  // ── Attachments: files kept against this lead (admin only) ──
+  const ATT_MAX = 3 * 1024 * 1024;
+  const ATT_MIME = { pdf:'application/pdf', jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png', webp:'image/webp',
+    doc:'application/msword', docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    xls:'application/vnd.ms-excel', xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    txt:'text/plain', csv:'text/csv' };
+  const fmtSize = (n) => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+  function renderAtts(){
+    if (!ATTS.length) return '<p class="muted">No files attached yet.</p>';
+    return ATTS.map((a) => `<div class="note att-row">
+        <div class="att-main"><a href="/api/admin/quote/${encodeURIComponent(LEAD_ID)}?att=${a.id}" target="_blank" rel="noopener">&#128196; ${esc(a.filename)}</a>
+          <div class="when">${fmtSize(a.size)} &middot; ${fmtDT(a.created_at)}${a.uploaded_by ? ' &middot; ' + esc(a.uploaded_by) : ''}</div></div>
+        <button type="button" class="cost-del att-del" data-att="${a.id}" data-name="${esc(a.filename)}" title="Remove this file">&times;</button>
+      </div>`).join('');
+  }
+  function wireAtts(){
+    const list = $('att-list'), pick = $('att-file'), add = $('att-add');
+    if (!list || !pick || !add) return;
+    add.addEventListener('click', () => pick.click());
+    pick.addEventListener('change', async () => {
+      const f = pick.files && pick.files[0];
+      pick.value = '';
+      if (!f) return;
+      const ext = (f.name.split('.').pop() || '').toLowerCase();
+      const mime = ATT_MIME[ext];
+      if (!mime) return flash('flash-att', 'That file type cannot be attached. Use a PDF, image, Word, Excel or text file.', false);
+      if (f.size > ATT_MAX) return flash('flash-att', 'File is too large. The limit is 3 MB.', false);
+      add.disabled = true; flash('flash-att', 'Uploading ' + f.name + '…', true);
+      try {
+        const dataUrl = await new Promise((ok, bad) => {
+          const fr = new FileReader();
+          fr.onload = () => ok(String(fr.result)); fr.onerror = () => bad(new Error('could not read the file'));
+          fr.readAsDataURL(f);
+        });
+        const r = await api('/api/admin/quote/' + LEAD_ID + '?att=new', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: f.name, mime, data_b64: dataUrl.slice(dataUrl.indexOf(',') + 1) }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || 'upload failed');
+        pendingFlash = { id: 'flash-att', msg: 'Attached ' + f.name, ok: true };
+        await load();
+      } catch (e) {
+        add.disabled = false;
+        if (String(e.message) !== 'unauth') flash('flash-att', String(e.message || e), false);
+      }
+    });
+    list.addEventListener('click', async (ev) => {
+      const b = ev.target.closest('.att-del');
+      if (!b) return;
+      if (!confirm('Remove "' + b.dataset.name + '" from this lead? This cannot be undone.')) return;
+      b.disabled = true;
+      try {
+        const r = await api('/api/admin/quote/' + LEAD_ID + '?att=' + b.dataset.att, { method: 'DELETE' });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || 'could not remove the file');
+        pendingFlash = { id: 'flash-att', msg: 'File removed', ok: true };
+        await load();
+      } catch (e) {
+        b.disabled = false;
+        if (String(e.message) !== 'unauth') flash('flash-att', String(e.message || e), false);
+      }
+    });
   }
 
   function renderAppts(){
@@ -880,6 +958,7 @@
   }
 
   function wire(){
+    wireAtts();
     [['menu-docs', 'docs-menu'], ['menu-msg', 'msg-menu']].forEach(([btnId, menuId]) => {
       const b = $(btnId), m = $(menuId);
       if (!b || !m) return;
