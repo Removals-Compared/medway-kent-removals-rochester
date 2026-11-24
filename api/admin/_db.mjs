@@ -56,7 +56,64 @@ export const updateQuote = (id, fields) => updateById(TABLE, id, fields);
 
 export async function deleteQuote(id) {
   await q(`DELETE FROM ${TABLE} WHERE id = $1`, [id]);
+  // A lead deleted for good takes its attached files with it.
+  try { await q(`DELETE FROM ${ATT} WHERE lead_id = $1`, [String(id)]); } catch {}
   return true;
+}
+
+// ── Lead attachments (quotes, photos, signed forms) ────────────
+// Files are small (3 MB cap) and stored base64 in Postgres, the same way
+// the HTTP driver sends everything else. The table is created on first
+// use so no manual SQL step is needed; admin/ATTACHMENTS.sql documents it.
+const ATT = 'lead_attachments';
+let attReady = null;
+function ensureAttachments() {
+  if (!attReady) {
+    attReady = q(`CREATE TABLE IF NOT EXISTS ${ATT} (
+        id bigserial PRIMARY KEY,
+        lead_id text NOT NULL,
+        filename text NOT NULL,
+        mime text NOT NULL,
+        size integer NOT NULL,
+        data_b64 text NOT NULL,
+        uploaded_by text,
+        created_at timestamptz NOT NULL DEFAULT now()
+      )`)
+      .then(() => q(`CREATE INDEX IF NOT EXISTS lead_attachments_lead_idx ON ${ATT} (lead_id)`))
+      .catch((e) => { attReady = null; throw e; });
+  }
+  return attReady;
+}
+
+// Metadata only: the file body is never sent with the lead.
+export async function listAttachments(leadId) {
+  await ensureAttachments();
+  return q(`SELECT id, filename, mime, size, uploaded_by, created_at FROM ${ATT}
+            WHERE lead_id = $1 ORDER BY created_at DESC, id DESC`, [String(leadId)]);
+}
+
+export async function addAttachment(leadId, { filename, mime, size, data_b64, uploaded_by }) {
+  await ensureAttachments();
+  const rows = await q(`INSERT INTO ${ATT} (lead_id, filename, mime, size, data_b64, uploaded_by)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id, filename, mime, size, uploaded_by, created_at`,
+    [String(leadId), filename, mime, size, data_b64, uploaded_by || null]);
+  return rows[0];
+}
+
+// Scoped to the lead so an id from one lead can never open another's file.
+export async function getAttachment(leadId, attId) {
+  await ensureAttachments();
+  const rows = await q(`SELECT id, filename, mime, size, data_b64 FROM ${ATT}
+            WHERE id = $1 AND lead_id = $2 LIMIT 1`, [attId, String(leadId)]);
+  return rows[0] || null;
+}
+
+export async function deleteAttachment(leadId, attId) {
+  await ensureAttachments();
+  const rows = await q(`DELETE FROM ${ATT} WHERE id = $1 AND lead_id = $2 RETURNING id, filename`,
+    [attId, String(leadId)]);
+  return rows[0] || null;
 }
 
 // Insert a lead from the admin "+ Add customer" modal. Only known
