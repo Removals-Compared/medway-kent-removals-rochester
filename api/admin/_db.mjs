@@ -54,6 +54,17 @@ export async function getQuote(id) {
 
 export const updateQuote = (id, fields) => updateById(TABLE, id, fields);
 
+// Per-lead deposit percentage (null = the standard 10%). The column is
+// added on first save so no manual SQL step is needed.
+let depColReady = null;
+export function ensureDepositPct() {
+  if (!depColReady) {
+    depColReady = q(`ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS deposit_pct numeric`)
+      .catch((e) => { depColReady = null; throw e; });
+  }
+  return depColReady;
+}
+
 export async function deleteQuote(id) {
   await q(`DELETE FROM ${TABLE} WHERE id = $1`, [id]);
   // A lead deleted for good takes its attached files with it.
