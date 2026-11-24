@@ -5,7 +5,7 @@ import { payToken } from '../../_paylink.mjs';
 import {
   getQuote, updateQuote, deleteQuote, fetchAppointmentsByLeadIds,
   fetchRemindersByLeadIds, appendNote, logActivity, fetchDuplicates,
-  listAttachments, addAttachment, getAttachment, deleteAttachment,
+  listAttachments, addAttachment, getAttachment, deleteAttachment, ensureDepositPct,
 } from '../_db.mjs';
 
 // ── Lead attachments ─────────────────────────────────────────
@@ -397,6 +397,21 @@ export default async function handler(req, res) {
       if (b.status !== undefined) fields.status = b.status;
       if (b.value !== undefined && role !== 'staff') {
         fields.value = b.value === '' || b.value === null ? null : Number(b.value);
+      }
+
+      // Deposit percentage for this lead (admin only). Blank resets to the
+      // standard 10%. Kept to 4 decimals so a typed pound amount such as
+      // 1500 of 8550 converts back to the same whole-pound deposit.
+      if (b.deposit_pct !== undefined && role !== 'staff') {
+        if (b.deposit_pct === '' || b.deposit_pct === null) {
+          await ensureDepositPct();
+          fields.deposit_pct = null;
+        } else {
+          const p = Number(b.deposit_pct);
+          if (!isFinite(p) || p <= 0 || p > 100) return res.status(400).json({ error: 'deposit must be between 1% and 100%' });
+          await ensureDepositPct();
+          fields.deposit_pct = Math.round(p * 10000) / 10000;
+        }
       }
 
       // Job cost allocation — money, so admin only; validated line items.

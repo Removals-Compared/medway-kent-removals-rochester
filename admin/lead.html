@@ -340,6 +340,12 @@
   function fmtDate(v){ if(!v) return '—'; try{ return new Date(v).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch{ return v; } }
   function fmtDT(v){ if(!v) return '—'; try{ return new Date(v).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); }catch{ return v; } }
 
+  // ── Deposit: each lead can carry its own percentage (default 10%) ──
+  const DEP_PRESETS = [10, 15, 20, 25, 30, 40, 50];
+  const depPct = (q) => { const p = Number(q && q.deposit_pct); return isFinite(p) && p > 0 && p <= 100 ? p : 10; };
+  const pctText = (p) => String(+Number(p).toFixed(2));
+  const depAmount = (value, pct) => Math.round((Number(value) || 0) * pct / 100);
+
   async function api(url, opts){
     const r = await fetch(url, opts);
     if (r.status === 401){ window.location.href = '/admin'; throw new Error('unauth'); }
@@ -401,7 +407,7 @@
           <button type="button" id="review-received">&#10003; Mark review received</button>
         </div>
       </span>
-      <button class="btn green" id="send-deposit" type="button">&#128183; WhatsApp 10% deposit link</button>
+      <button class="btn green" id="send-deposit" type="button">&#128183; WhatsApp ${pctText(depPct(q))}% deposit link</button>
       <button class="btn" id="send-paylink" type="button" style="background:#ffb3c7;color:#17120f;border-color:#ffb3c7;font-weight:800">&#128279; WhatsApp payment link (Klarna / Clearpay / card)</button>
       <button class="btn" id="copy-paylink" type="button">Copy payment link</button>
     </div>
@@ -495,9 +501,14 @@
           <h2>Money</h2>
           <div class="inline">
             <div><label>Job value (£)</label><input type="number" id="value" step="0.01" value="${q.value ?? ''}" placeholder="0.00"></div>
-            <div><label>Deposit (10%)</label><input id="dep-view" disabled value="${q.value ? '£' + Math.round(Number(q.value) * 0.10).toLocaleString('en-GB') : '—'}"></div>
+            <div><label>Deposit %</label>
+              <select id="dep-pct-sel">${DEP_PRESETS.map((p) => `<option value="${p}" ${p === depPct(q) ? 'selected' : ''}>${p}%</option>`).join('')}<option value="other" ${DEP_PRESETS.includes(depPct(q)) ? '' : 'selected'}>Other…</option></select>
+              <input type="number" id="dep-pct" min="1" max="100" step="0.01" placeholder="e.g. 17.5" value="${depPct(q)}" style="margin-top:6px;${DEP_PRESETS.includes(depPct(q)) ? 'display:none' : ''}">
+            </div>
+            <div><label>Deposit (£)</label><input type="number" id="dep-amt" min="0" step="1" placeholder="—" value="${q.value ? depAmount(q.value, depPct(q)) : ''}"></div>
           </div>
-          <div class="btn-row"><button class="btn" id="save-value">Save value</button></div>
+          <p class="muted" id="dep-line" style="font-size:12px;margin:8px 0 0"></p>
+          <div class="btn-row"><button class="btn" id="save-value">Save value &amp; deposit</button></div>
 
           <div class="group-label">Job costs (crew, fuel, van, materials)</div>
           <div id="cost-rows">${(Array.isArray(q.costs) ? q.costs : []).map((c) => `
@@ -1045,16 +1056,56 @@
       try {
         const r = await api('/api/admin/quote/' + LEAD_ID, {
           method:'PATCH', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ value: $('value').value }),
+          body: JSON.stringify({ value: $('value').value, deposit_pct: curPct() }),
         });
         if (r.ok){
+          const d = await r.json().catch(() => ({}));
           QUOTE.value = $('value').value;
-          const v = Number($('value').value);
-          if ($('dep-view')) $('dep-view').value = v ? '£' + Math.round(v * 0.10).toLocaleString('en-GB') : '—';
+          QUOTE.deposit_pct = d.quote ? d.quote.deposit_pct : curPct();
+          $('send-deposit').innerHTML = '&#128183; WhatsApp ' + pctText(depPct(QUOTE)) + '% deposit link';
+          depSync();
+          flash('flash-costs', 'Value and deposit saved.', true);
+        } else {
+          const d = await r.json().catch(() => ({}));
+          flash('flash-costs', 'Could not save: ' + (d.error || 'error'), false);
         }
-        flash('flash-costs', r.ok ? 'Value saved.' : 'Could not save value.', r.ok);
       } catch {}
     });
+
+    // Deposit %: pick a preset or type any figure; the pound amount follows.
+    // Typing a pound amount works the other way and sets the percentage.
+    function curPct(){
+      const sel = $('dep-pct-sel').value;
+      const p = sel === 'other' ? Number($('dep-pct').value) : Number(sel);
+      return isFinite(p) && p > 0 && p <= 100 ? p : 10;
+    }
+    function depSync(fromAmount){
+      const v = Number($('value').value) || 0, p = curPct();
+      if (!fromAmount) $('dep-amt').value = v ? depAmount(v, p) : '';
+      const dep = Number($('dep-amt').value) || 0;
+      $('dep-line').textContent = v
+        ? pctText(p) + '% deposit of £' + dep.toLocaleString('en-GB') + ', balance £' + Math.max(0, v - dep).toLocaleString('en-GB') + ' on the move date.'
+        : 'Enter a job value to work out the deposit.';
+    }
+    $('dep-pct-sel').addEventListener('change', () => {
+      const other = $('dep-pct-sel').value === 'other';
+      $('dep-pct').style.display = other ? '' : 'none';
+      if (other) $('dep-pct').focus();
+      depSync();
+    });
+    $('dep-pct').addEventListener('input', () => depSync());
+    $('value').addEventListener('input', () => depSync());
+    $('dep-amt').addEventListener('input', () => {
+      const v = Number($('value').value) || 0, a = Number($('dep-amt').value);
+      if (!v || !isFinite(a) || a <= 0 || a > v) return;
+      const p = Math.round(a / v * 1000000) / 10000;
+      const preset = DEP_PRESETS.find((x) => x === p);
+      $('dep-pct-sel').value = preset ? String(preset) : 'other';
+      $('dep-pct').style.display = preset ? 'none' : '';
+      $('dep-pct').value = p;
+      depSync(true);
+    });
+    depSync();
 
     $('gen-quote').addEventListener('click', () => {
       window.open('/admin/quote-doc?id=' + encodeURIComponent(LEAD_ID), '_blank');
@@ -1118,11 +1169,12 @@
       if (!QUOTE || !QUOTE.phone){ flash('flash-left', 'No phone number on this lead.', false); return; }
       const waNum = String(QUOTE.phone).replace(/[^\d]/g, '').replace(/^0/, '44');
       const first = (QUOTE.name || 'there').split(' ')[0];
-      const depAmt = Math.round((Number(QUOTE.value) || 0) * 0.10);
+      const depP = depPct(QUOTE);
+      const depAmt = depAmount(QUOTE.value, depP);
       const msg = 'Hi ' + first + ', thank you for confirming your move with Medway and Kent Removals. '
-        + 'To secure your date, please pay your 10% deposit' + (depAmt ? ' of \u00a3' + depAmt.toLocaleString('en-GB') : '') + ' using this secure link: '
+        + 'To secure your date, please pay your ' + pctText(depP) + '% deposit' + (depAmt ? ' of \u00a3' + depAmt.toLocaleString('en-GB') : '') + ' using this secure link: '
         + DEPOSIT_LINK
-        + ' \u2014 the remaining 90% is payable on the move date. Once the deposit is paid, your date is locked in. Any questions, just reply here. Thanks!';
+        + ' \u2014 the remaining ' + pctText(100 - depP) + '% is payable on the move date. Once the deposit is paid, your date is locked in. Any questions, just reply here. Thanks!';
       window.open('https://wa.me/' + waNum + '?text=' + encodeURIComponent(msg), '_blank');
       // Best-effort history entry; opening WhatsApp is not proof of sending,
       // so the note says opened, not sent.

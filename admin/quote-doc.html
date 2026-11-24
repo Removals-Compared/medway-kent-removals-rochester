@@ -383,7 +383,7 @@
       <h3>Terms &amp; Booking</h3>
       <ol>
         <li>This is a fixed, all-inclusive price based on the move details provided. The price is held provided the property contents and access are as described.</li>
-        <li>To secure your moving date, a deposit of <strong>10% (<span id="t-deposit">—</span>)</strong> is payable on booking, with the remaining 90% balance of <strong id="t-balance">—</strong> payable on the move date.</li>
+        <li>To secure your moving date, a deposit of <strong><span id="t-dep-pct">10</span>% (<span id="t-deposit">—</span>)</strong> is payable on booking, with the remaining <span id="t-bal-pct">90</span>% balance of <strong id="t-balance">—</strong> payable on the move date.</li>
         <li>Please ensure all boxes are packed and sealed before the crew arrives, unless a packing service has been separately arranged.</li>
         <li>Parking should be available at both addresses. Please advise us in advance of any permits, restrictions or long carrying distances.</li>
         <li>This quotation is valid for 14 days from the date issued and is subject to availability at the time of booking.</li>
@@ -462,13 +462,17 @@
     return { what: 'your upcoming house move', subject: 'Your removal quote', job: 'your move', move: true };
   }
 
+  function depPct(q){ var p = Number(q && q.deposit_pct); return isFinite(p) && p > 0 && p <= 100 ? p : 10; }
+  function pctText(p){ return String(+Number(p).toFixed(2)); }
+
   function fillMailer(q){
     var first = (q.name || 'there').split(' ')[0];
     var fromS = streetName(q.from_postcode), toS = streetName(q.to_postcode);
     var dShort = q.move_date ? fmtShort(new Date(q.move_date + 'T00:00:00')) : '';
     var v10 = Number(q.value) || 0;
     var amt = money(v10, 0);
-    var dep10 = Math.round(v10 * 0.10);
+    var dP = depPct(q);
+    var dep10 = Math.round(v10 * dP / 100);
     var ph = servicePhrase(q.service);
     document.getElementById('m-to').value = q.email || '';
     document.getElementById('m-subject').value = ph.subject + (dShort ? ' — ' + dShort : '');
@@ -483,7 +487,7 @@
         ? 'Please find your fixed, all-inclusive quote attached. It covers 1 maxi loader Luton van and 2 movers, with full protection and insurance, for ' + amt + ' with no hidden charges.'
         : 'Please find your fixed, all-inclusive quote attached: ' + amt + ' with no hidden charges, fully insured and carried out by our own trained crew.',
       '',
-      'To secure the date we ask for a 10% deposit' + (dep10 ? ' (' + money(dep10, 0) + ')' : '') + ', with the remaining 90%' + (dep10 ? ' (' + money(v10 - dep10, 0) + ')' : '') + ' payable on ' + (ph.move ? 'the move date' : 'the day') + '. If you are happy with everything, just tap the green button below to accept your quote:',
+      'To secure the date we ask for a ' + pctText(dP) + '% deposit' + (dep10 ? ' (' + money(dep10, 0) + ')' : '') + ', with the remaining ' + pctText(100 - dP) + '%' + (dep10 ? ' (' + money(v10 - dep10, 0) + ')' : '') + ' payable on ' + (ph.move ? 'the move date' : 'the day') + '. If you are happy with everything, just tap the green button below to accept your quote:',
       '',
       (window.ACCEPT_LINK || ''),
       '',
@@ -530,7 +534,10 @@
     if (!isFinite(val)) val = 0;
     $('sub-amt').textContent = money(val, 2);
     $('grand-amt').textContent = money(val, 0);
-    var dep = Math.round(val * 0.10);
+    var dP = depPct(q);
+    var dep = Math.round(val * dP / 100);
+    $('t-dep-pct').textContent = pctText(dP);
+    $('t-bal-pct').textContent = pctText(100 - dP);
     $('t-deposit').textContent = money(dep, 0);
     $('t-balance').textContent = money(Math.max(0, val - dep), 0);
     if (!val){
